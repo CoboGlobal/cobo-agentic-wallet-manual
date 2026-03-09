@@ -1,0 +1,42 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Cobo Agentic Wallet",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#1E40AF",
+    "light": "#3B82F6",
+    "dark": "#0F172A"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "introduction"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Recipes",
+        "groups": []
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": []
+      },
+      {
+        "tab": "API Reference",
+        "groups": []
+      }
+    ]
+  }
+}
