@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 510" width="500" height="510">
+  <defs>
+    <filter id="s" x="-5%" y="-5%" width="115%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#94A3B8" flood-opacity="0.18"/>
+    </filter>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#94A3B8"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#CBD5E1"/>
+    </marker>
+  </defs>
+
+  <rect width="500" height="510" fill="#F8FAFC"/>
+
+  <!-- Box 1: Sign up — y=20, h=50, bottom=70 -->
+  <rect x="50" y="20" width="400" height="50" rx="10" fill="white" stroke="#86EFAC" stroke-width="1.5" filter="url(#s)"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="50" font-size="13" font-weight="600" fill="#1E293B">Sign up via Human App</text>
+
+  <line x1="250" y1="70" x2="250" y2="88" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Box 2: Create wallet — y=90, h=55, bottom=145 -->
+  <rect x="50" y="90" width="400" height="55" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" filter="url(#s)"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="113" font-size="13" font-weight="600" fill="#15803D">Create your wallet</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="133" font-size="11" fill="#16A34A">✓ Immediately usable · your device holds key shares · manual signing</text>
+
+  <line x1="250" y1="145" x2="250" y2="163" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Box 3: Run setup instruction — y=165, h=55, bottom=220 -->
+  <rect x="50" y="165" width="400" height="55" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#s)"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="188" font-size="13" font-weight="600" fill="#1E293B">Run the setup instruction in your agent</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="208" font-size="11" fill="#64748B">App provides a ready-made instruction with your pairing token</text>
+
+  <line x1="250" y1="220" x2="250" y2="238" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Box 4: Agent sets up automatically — y=240, h=50, bottom=290 -->
+  <rect x="50" y="240" width="400" height="50" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#s)"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="270" font-size="13" font-weight="600" fill="#1E293B">Agent sets up automatically</text>
+
+  <line x1="250" y1="290" x2="250" y2="308" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Box 5: Delegation — y=310, h=50, bottom=360 -->
+  <rect x="50" y="310" width="400" height="50" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" filter="url(#s)"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="332" font-size="13" font-weight="600" fill="#1D4ED8">Complete delegation in the Human App</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="350" font-size="11" fill="#3B82F6">Authorize agent to operate your wallet</text>
+
+  <line x1="250" y1="360" x2="250" y2="378" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ag)"/>
+
+  <!-- Box 6: Adjust policies (optional) — y=380, h=45, bottom=425 -->
+  <rect x="50" y="380" width="400" height="45" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="400" font-size="12" font-weight="600" fill="#64748B">Adjust policies in the Human App</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="416" font-size="10.5" fill="#94A3B8">Optional</text>
+
+  <line x1="250" y1="425" x2="250" y2="443" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ag)"/>
+
+  <!-- Box 7: Bind IM (optional) — y=445, h=45 -->
+  <rect x="100" y="445" width="300" height="45" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="465" font-size="12" font-weight="600" fill="#64748B">Bind IM channel</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="481" font-size="10.5" fill="#94A3B8">Human App · optional</text>
+</svg>

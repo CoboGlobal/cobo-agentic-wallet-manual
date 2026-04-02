@@ -1,0 +1,390 @@
+---
+title: "SaaS Subscription Renewal"
+description: "Automatic recurring subscription renewal with low-balance alerts."
+icon: "rotate"
+sidebarTitle: "SaaS Subscription"
+---
+
+## Business Context
+
+An agent monitors subscription expiry dates for a company's SaaS tools, auto-renews them before they expire, and alerts the owner when the wallet balance drops below a threshold. The pact restricts transfers to a fixed allowlist of provider payment addresses, caps each renewal at $500, and enforces a $2,000 monthly spending ceiling.
+
+<Accordion title="Permission Architecture">
+```text
+Owner (human)
+  -> Pact (1 year)
+       - Operator: agent principal
+       - Permissions: [write:transfer, read:wallet]
+       - Policies:
+           - allowed_destinations: [GITHUB, LINEAR, FIGMA payment addresses]
+           - max_per_tx_usd: 500
+           - rolling_720h_usd: 2000
+```
+</Accordion>
+
+## Pact Specification
+
+```json
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-subscriptions",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "dst_addr_in": [
+            "<GITHUB_PAYMENT_ADDRESS>",
+            "<LINEAR_PAYMENT_ADDRESS>",
+            "<FIGMA_PAYMENT_ADDRESS>"
+          ]
+        },
+        "deny_if": {
+          "amount_usd_gt": "500",
+          "usage_limits": {
+            "rolling_720h": { "amount_usd_gt": "2000" }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 31536000
+}
+```
+
+## Step-by-Step
+
+### Step 1: Owner sets the task
+
+> **Owner → Agent:** "Monitor our SaaS subscriptions (GitHub, Linear, Figma) and auto-renew them before they expire. Alert me if the wallet balance drops below $1,000. Max $500 per renewal, $2,000 per month, valid 1 year."
+
+### Step 2: Agent submits authorization request
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+caw pact submit \
+  --wallet-id "$WALLET_UUID" \
+  --intent "Auto-renew SaaS subscriptions (GitHub, Linear, Figma). Alert owner on low balance. Max \$500 per renewal, \$2,000/month. Valid 1 year." \
+  --spec-file saas-subscriptions-pact.json \
+  --wait
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+import asyncio
+import os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def submit_subscription_pact():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        result = await client.submit_pact(
+            wallet_id=os.environ["AGENT_WALLET_WALLET_ID"],
+            intent=(
+                "Auto-renew SaaS subscriptions (GitHub, Linear, Figma). "
+                "Alert owner on low balance. Max $500 per renewal, $2,000/month. Valid 1 year."
+            ),
+            spec={
+                "permissions": ["write:transfer", "read:wallet"],
+                "policies": [
+                    {
+                        "name": "allow-subscriptions",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "allow",
+                            "when": {
+                                "dst_addr_in": [
+                                    "<GITHUB_PAYMENT_ADDRESS>",
+                                    "<LINEAR_PAYMENT_ADDRESS>",
+                                    "<FIGMA_PAYMENT_ADDRESS>",
+                                ]
+                            },
+                            "deny_if": {
+                                "amount_usd_gt": "500",
+                                "usage_limits": {
+                                    "rolling_720h": {"amount_usd_gt": "2000"}
+                                }
+                            }
+                        }
+                    }
+                ],
+                "duration_seconds": 31536000,
+            }
+        )
+        pact_id = result["pact_id"]
+        print(f"Pact submitted: {pact_id} — waiting for owner approval in Web Console")
+
+        while True:
+            pact = await client.get_pact(pact_id)
+            if pact["status"] == "active":
+                print("Pact active. Subscription monitor running.")
+                return pact
+            await asyncio.sleep(10)
+
+asyncio.run(submit_subscription_pact())
+```
+  </Tab>
+  <Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({
+  apiKey: process.env.AGENT_WALLET_API_KEY!,
+});
+
+const result = await client.submitPact({
+  wallet_id: process.env.AGENT_WALLET_WALLET_ID!,
+  intent:
+    'Auto-renew SaaS subscriptions (GitHub, Linear, Figma). ' +
+    'Alert owner on low balance. Max $500 per renewal, $2,000/month. Valid 1 year.',
+  spec: {
+    permissions: ['write:transfer', 'read:wallet'],
+    policies: [
+      {
+        name: 'allow-subscriptions',
+        type: 'transfer',
+        rules: {
+          effect: 'allow',
+          when: {
+            dst_addr_in: [
+              '<GITHUB_PAYMENT_ADDRESS>',
+              '<LINEAR_PAYMENT_ADDRESS>',
+              '<FIGMA_PAYMENT_ADDRESS>',
+            ],
+          },
+          deny_if: {
+            amount_usd_gt: '500',
+            usage_limits: {
+              rolling_720h: { amount_usd_gt: '2000' },
+            },
+          },
+        },
+      },
+    ],
+    duration_seconds: 31536000,
+  },
+});
+
+console.log(`Pact submitted: ${result.pact_id} — waiting for owner approval`);
+
+let pact;
+do {
+  await new Promise(r => setTimeout(r, 10000));
+  pact = await client.getPact(result.pact_id);
+} while (pact.status === 'pending_approval');
+
+const pactClient = new WalletAPIClient({ apiKey: pact.api_key });
+console.log('Pact active. Subscription monitor running.');
+```
+  </Tab>
+  <Tab title="Frameworks">
+```python
+import os
+from langchain_openai import ChatOpenAI
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from cobo_agentic_wallet import WalletAPIClient
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+)
+
+result = agent.invoke({
+    "input": (
+        "Monitor our SaaS subscriptions (GitHub, Linear, Figma) and auto-renew "
+        "them before they expire. Alert me if the wallet balance drops below $1,000. "
+        "Max $500 per renewal, $2,000 per month, valid 1 year."
+    )
+})
+print(result["output"])
+```
+  </Tab>
+</Tabs>
+
+### Step 3: Owner approves in Web Console
+
+The agent notifies the owner that an authorization request is pending. The owner reviews the destination address allowlist, the $500 per-renewal cap, the $2,000 rolling 30-day budget, and the 1-year duration, then approves.
+
+### Step 4: Agent monitors and renews
+
+The agent runs a daily check. It verifies the wallet balance, checks each subscription's expiry, and transfers USDC to renew any subscription due within the configured lead time.
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+# Check wallet balance
+BALANCE=$(caw wallet balance "$WALLET_UUID" --token SETH_USDC --format json | jq -r '.amount')
+if (( $(echo "$BALANCE < 1000" | bc -l) )); then
+  echo "ALERT: Low balance — ${BALANCE} USDC remaining"
+fi
+
+# Renew GitHub subscription (due in 3 days, $84/month)
+caw tx transfer "$WALLET_UUID" \
+  --to "<GITHUB_PAYMENT_ADDRESS>" \
+  --token SETH_USDC \
+  --amount 84 \
+  --chain SETH \
+  --request-id "renewal-github-$(date +%Y%m)"
+
+# Renew Linear subscription ($20/month)
+caw tx transfer "$WALLET_UUID" \
+  --to "<LINEAR_PAYMENT_ADDRESS>" \
+  --token SETH_USDC \
+  --amount 20 \
+  --chain SETH \
+  --request-id "renewal-linear-$(date +%Y%m)"
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+import asyncio
+import os
+from datetime import datetime, timezone
+from cobo_agentic_wallet import WalletAPIClient
+
+SUBSCRIPTIONS = [
+    {
+        "name": "GitHub",
+        "address": "<GITHUB_PAYMENT_ADDRESS>",
+        "amount": "84",
+        "renew_days_before": 7,
+    },
+    {
+        "name": "Linear",
+        "address": "<LINEAR_PAYMENT_ADDRESS>",
+        "amount": "20",
+        "renew_days_before": 5,
+    },
+    {
+        "name": "Figma",
+        "address": "<FIGMA_PAYMENT_ADDRESS>",
+        "amount": "45",
+        "renew_days_before": 7,
+    },
+]
+
+async def notify_owner(message: str):
+    """Send an alert to the owner (implement via email, Slack, etc.)."""
+    print(f"[ALERT] {message}")
+
+def get_days_until_expiry(service_name: str) -> int:
+    """Return days until the subscription expires. Replace with your subscription DB."""
+    ...
+
+async def check_and_renew(pact: dict):
+    wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+    pact_client = WalletAPIClient(api_key=pact["api_key"])
+
+    while True:
+        # Check wallet balance
+        balances = await pact_client.list_wallet_balances(wallet_id=wallet_id)
+        usdc_balance = next(
+            (b["amount"] for b in balances.get("items", []) if b["token_id"] == "SETH_USDC"),
+            "0",
+        )
+        if float(usdc_balance) < 1000:
+            await notify_owner(f"Low balance: {usdc_balance} USDC remaining in wallet.")
+
+        # Check each subscription's expiry date
+        for sub in SUBSCRIPTIONS:
+            days_left = get_days_until_expiry(sub["name"])
+            if days_left is not None and days_left <= sub["renew_days_before"]:
+                request_id = f"renewal-{sub['name'].lower()}-{datetime.now(timezone.utc).strftime('%Y%m')}"
+                await pact_client.transfer_tokens(
+                    wallet_id=wallet_id,
+                    chain_id="SETH",
+                    dst_addr=sub["address"],
+                    token_id="SETH_USDC",
+                    amount=sub["amount"],
+                    request_id=request_id,
+                )
+                print(
+                    f"Renewed {sub['name']}: ${sub['amount']} USDC "
+                    f"(expires in {days_left} day{'s' if days_left != 1 else ''})"
+                )
+
+        await asyncio.sleep(86400)  # Check daily
+```
+  </Tab>
+  <Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const SUBSCRIPTIONS = [
+  { name: 'GitHub', address: '<GITHUB_PAYMENT_ADDRESS>', amount: '84', renewDaysBefore: 7 },
+  { name: 'Linear', address: '<LINEAR_PAYMENT_ADDRESS>', amount: '20', renewDaysBefore: 5 },
+  { name: 'Figma',  address: '<FIGMA_PAYMENT_ADDRESS>',  amount: '45', renewDaysBefore: 7 },
+];
+
+async function getDaysUntilExpiry(serviceName: string): Promise<number> {
+  // Replace with your subscription database lookup
+  return 0;
+}
+
+async function notifyOwner(message: string) {
+  console.warn(`[ALERT] ${message}`);
+}
+
+async function checkAndRenew(pact: { api_key: string }) {
+  const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+  const pactClient = new WalletAPIClient({ apiKey: pact.api_key });
+
+  while (true) {
+    // Check wallet balance
+    const balances = await pactClient.listWalletBalances({ wallet_id: walletId });
+    const usdcBalance = balances.items?.find(b => b.token_id === 'SETH_USDC')?.amount ?? '0';
+    if (parseFloat(usdcBalance) < 1000) {
+      await notifyOwner(`Low balance: ${usdcBalance} USDC remaining in wallet.`);
+    }
+
+    // Check each subscription
+    const now = new Date();
+    const yearMonth = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    for (const sub of SUBSCRIPTIONS) {
+      const daysLeft = await getDaysUntilExpiry(sub.name);
+      if (daysLeft <= sub.renewDaysBefore) {
+        await pactClient.transferTokens({
+          wallet_id: walletId,
+          chain_id: 'SETH',
+          dst_addr: sub.address,
+          token_id: 'SETH_USDC',
+          amount: sub.amount,
+          request_id: `renewal-${sub.name.toLowerCase()}-${yearMonth}`,
+        });
+        console.log(`Renewed ${sub.name}: $${sub.amount} USDC (${daysLeft} day(s) until expiry)`);
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 86400000)); // 24 hours
+  }
+}
+```
+  </Tab>
+  <Tab title="Frameworks">
+```python
+result = agent.invoke({
+    "input": (
+        "Check all our SaaS subscriptions. Renew any that expire within the next 7 days. "
+        "Also tell me the current wallet balance."
+    )
+})
+print(result["output"])
+```
+  </Tab>
+</Tabs>
+
+<Warning>
+The `request_id` field ensures idempotency — if the renewal is retried (e.g., after a network failure), the same `request_id` prevents a duplicate transfer. Use a stable identifier like `renewal-{service}-{year-month}`.
+</Warning>
+
+## Audit
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20 --format table
+```
+
+Each renewal appears as a transfer entry with the destination address, token amount, and policy outcome. Use this to confirm that no transfer exceeded $500, and the monthly total stayed within the $2,000 rolling budget.

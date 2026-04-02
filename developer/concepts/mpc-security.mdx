@@ -1,0 +1,71 @@
+---
+title: "MPC Security Model"
+description: "How Cobo Agentic Wallet uses threshold signing to protect wallet keys — technical details for developers."
+---
+
+## Threshold signing
+
+Cobo Agentic Wallet uses Multi-Party Computation (MPC) with a threshold signature scheme (TSS). Instead of a single private key stored in one place, the signing authority is distributed across MPC key shares held by independent parties. A threshold number of shares must cooperate to sign a transaction — no single party can sign alone.
+
+This means that even if one party's infrastructure is fully compromised, an attacker cannot move funds without also compromising the other parties.
+
+## Key group architecture
+
+### Wallet creation — one key group
+
+When your agent runs `caw onboard`, a single key group is created:
+
+| Onboarding step | MPC scheme | Key share holders |
+|---|---|---|
+| `caw onboard` | 2/2 TSS | Agent's machine (TSS node) + Cobo |
+
+### After claiming — two independent key groups
+
+When the wallet owner claims the wallet in the Human App, a second key group is created on their device. The two groups are independent and both valid:
+
+| Group | MPC scheme | Key share holders |
+|---|---|---|
+| Agent group | 2/2 TSS | Agent's machine (TSS node) + Cobo |
+| Mobile group | 2/2 TSS | Owner's mobile device + Cobo |
+
+The agent uses the agent group for everyday signing (transactions within policy limits). The mobile group is used for over-limit operations the owner must approve, and for key backup and recovery. Either group can independently produce a valid on-chain signature.
+
+## Signing flow
+
+**Agent group (2/2) — everyday transactions:**
+
+1. Agent initiates a transaction that passes the policy engine
+2. Transaction request is routed to both the agent's TSS node and Cobo's TSS node
+3. Both nodes compute their partial signatures independently — neither sends their MPC key share to the other
+4. The partial signatures are combined into a complete on-chain signature
+5. No complete private key ever exists — only the final signature
+
+**Mobile group (2/2) — over-limit approvals:**
+
+1. Agent initiates a transaction that exceeds the Default Policy
+2. Transaction is held pending owner approval
+3. Owner approves from the Human App
+4. Owner's device and Cobo compute their partial signatures
+5. Partial signatures are combined into a complete on-chain signature
+
+## Threat model
+
+| Threat | Impact |
+|---|---|
+| Cobo infrastructure compromised | No funds at risk — Cobo's share alone cannot sign |
+| Agent machine compromised | No funds at risk — the TSS node's share alone cannot sign |
+| Owner's device lost | No funds at risk — agent key group continues to function; mobile group recoverable via device backup |
+| Both Cobo and agent machine compromised simultaneously | Agent group funds at risk — this is the 2/2 trust boundary |
+| Both Cobo and owner device compromised simultaneously | Mobile group funds at risk — same 2/2 boundary |
+
+## What this means for your integration
+
+- The TSS node runs as a background process on the agent's machine, started automatically by `caw onboard`
+- MPC key shares are stored locally under `~/.cobo-agentic-wallet/profiles/`
+- Key generation happens once during onboarding — subsequent transactions reuse the shares without regenerating them
+- The mobile key group is created during the claim flow and lives on the owner's device; it is separate from and does not affect the agent key group
+- Loss of the TSS node files (agent-side shares) requires key recovery using the agent's profile credentials
+
+<Warning>
+Back up the profile directory at `~/.cobo-agentic-wallet/profiles/` after onboarding. Loss of this directory without a recovery mechanism means the 2/2 threshold cannot be met and the wallet cannot sign new transactions via the agent group.
+</Warning>

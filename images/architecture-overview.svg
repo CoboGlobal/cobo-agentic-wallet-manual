@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#94A3B8" flood-opacity="0.15"/>
+    </filter>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#94A3B8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="720" height="400" fill="#F8FAFC" rx="12"/>
+
+  <!-- Title -->
+  <text x="360" y="34" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="600" fill="#1E293B">How Cobo Agentic Wallet works</text>
+
+  <!-- ── Owner box ── -->
+  <rect x="44" y="54" width="242" height="100" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="165" y="78" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#15803D">You (the owner)</text>
+  <line x1="64" y1="87" x2="266" y2="87" stroke="#BBF7D0" stroke-width="1"/>
+  <text x="165" y="112" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#166534">Web Console · Human App</text>
+  <text x="165" y="132" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#4ADE80" font-style="italic">AI assistant in Human App</text>
+
+  <!-- ── Agent box ── -->
+  <rect x="434" y="54" width="242" height="100" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="555" y="78" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#1D4ED8">Your AI agent</text>
+  <line x1="454" y1="87" x2="656" y2="87" stroke="#BFDBFE" stroke-width="1"/>
+  <text x="555" y="106" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#1E40AF">Skill · CLI · MCP · Python SDK</text>
+  <text x="555" y="123" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#1E40AF">LangChain · Agno · CrewAI · OpenAI</text>
+
+  <!-- ── Pairing line: Owner ↔ Agent ── -->
+  <line x1="286" y1="104" x2="434" y2="104" stroke="#94A3B8" stroke-width="1.3" stroke-dasharray="6,4"/>
+  <text x="360" y="99" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#64748B">pact</text>
+
+  <!-- ── Arrows: Owner ↔ Service ── -->
+  <line x1="144" y1="155" x2="144" y2="214" stroke="#86EFAC" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="164" y1="214" x2="164" y2="155" stroke="#94A3B8" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arr)"/>
+  <text x="90" y="189" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#64748B">manage</text>
+  <text x="172" y="189" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#64748B">notify</text>
+
+  <!-- ── Arrows: Agent ↔ Service ── -->
+  <line x1="556" y1="155" x2="556" y2="214" stroke="#93C5FD" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="576" y1="214" x2="576" y2="155" stroke="#94A3B8" stroke-width="1.3" stroke-dasharray="4,4" marker-end="url(#arr)"/>
+  <text x="500" y="189" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#64748B">operate</text>
+  <text x="584" y="189" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#64748B">respond</text>
+
+  <!-- ── Service container ── -->
+  <rect x="34" y="216" width="652" height="108" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="360" y="238" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#475569" letter-spacing="0.5">COBO AGENTIC WALLET SERVICE</text>
+
+  <!-- 4 module boxes -->
+  <rect x="56" y="248" width="138" height="58" rx="8" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="125" y="282" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#334155">Wallets &amp; addresses</text>
+
+  <rect x="210" y="248" width="138" height="58" rx="8" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="279" y="282" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#334155">Policies &amp; limits</text>
+
+  <rect x="364" y="248" width="138" height="58" rx="8" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="433" y="282" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#334155">Delegation</text>
+
+  <rect x="518" y="248" width="138" height="58" rx="8" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="587" y="282" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#334155">Audit log</text>
+
+  <!-- ── Arrow: Service → Blockchain ── -->
+  <line x1="360" y1="325" x2="360" y2="356" stroke="#94A3B8" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- ── Blockchain box ── -->
+  <rect x="180" y="358" width="360" height="36" rx="10" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="360" y="381" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#92400E">Blockchain · ETH · BASE · SOL · and more</text>
+</svg>

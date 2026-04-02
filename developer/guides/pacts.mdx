@@ -1,0 +1,342 @@
+---
+title: "Submit and Manage Pacts"
+description: "How to use pacts for task-level authorization — submit, poll, operate, and revoke."
+---
+
+A pact is the agreement between you and your agent. It captures the agent's intent, the permissions you grant, the spending rules you enforce, and when the authority expires. When you approve a pact, Cobo Agentic Wallet creates a scoped delegation with enforced policies — the agent can operate, but only within the boundaries you defined.
+
+## How pacts work
+
+The pact flow has three phases: **propose**, **approve**, **operate**.
+
+```
+1. Agent proposes a pact
+   └── "I want to DCA $500/week into ETH on Base for 3 months"
+   └── Specifies: permissions, spending limits, allowed contracts, duration
+
+2. You review and approve
+   └── Pact appears in the Web Console, Human App, or chat
+   └── You see the intent, execution plan, permissions, and spending rules
+   └── You can revise the permissions and policies before approving
+   └── Approve → agent gets scoped access. Reject → nothing happens.
+
+3. Agent operates within the pact
+   └── Every transaction is checked against the pact's policies
+   └── Exceeds a limit → denied with a clear reason
+   └── Exceeds your threshold → paused for your approval
+   └── Duration expires or task completes → access revoked automatically
+```
+
+## What a pact contains
+
+A pact specification (PactSpec) defines the agent's operating boundaries:
+
+| Field | What it controls |
+|---|---|
+| **Intent** | A plain-language description of what the agent wants to do — e.g., "DCA $500/week into ETH on Base for 3 months" |
+| **Execution plan** | A detailed markdown plan explaining the agent's strategy, steps, and rationale — helps you understand *how* the agent intends to accomplish the intent |
+| **Permissions** | What the agent can do — read wallet info, transfer tokens, call contracts, sign messages |
+| **Policies** | Spending rules — per-transaction limits, daily/weekly budgets, allowed chains/tokens/contracts |
+| **Duration** | How long the pact stays active (e.g., 90 days). When it expires, access is revoked automatically |
+| **Completion conditions** | Optional conditions that end the pact early — e.g., after 12 transactions or $6,000 total spent |
+
+### Example PactSpec
+
+A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
+
+```json
+{
+  "permissions": ["write:contract_call", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-uniswap-base",
+      "type": "contract_call",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "target_in": [{
+            "chain_id": "BASE_ETH",
+            "contract_addr": "0x2626664c2603336E57B271c5C0b26F421741e481"
+          }]
+        },
+        "review_if": {
+          "amount_usd_gt": "500"
+        }
+      }
+    },
+    {
+      "name": "deny-excessive-spending",
+      "type": "contract_call",
+      "rules": {
+        "effect": "deny",
+        "when": {
+          "chain_in": ["BASE_ETH"]
+        },
+        "deny_if": {
+          "amount_usd_gt": "550",
+          "usage_limits": {
+            "rolling_24h": { "amount_usd_gt": "600", "tx_count_gt": 5 }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 7776000,
+  "completion_conditions": [
+    { "type": "tx_count", "threshold": "12" }
+  ]
+}
+```
+
+## Pact lifecycle
+
+A pact moves through these states:
+
+```
+  Submit ──► PENDING_APPROVAL
+                  |
+             ┌────┴────┐
+      approved│        │rejected
+             v        v
+          ACTIVE   REJECTED
+         ┌──┬──┐
+         │  │  │
+  done ◄─┘  │  └─► owner revokes ──► REVOKED
+   v        v
+COMPLETED  EXPIRED
+```
+
+| State | What it means |
+|---|---|
+| `PENDING_APPROVAL` | Agent submitted the pact. Waiting for your approval in the Web Console, Human App, or chat. |
+| `ACTIVE` | You approved. The agent now has a scoped delegation and API key to operate within the pact's boundaries. |
+| `REJECTED` | You rejected the pact. No access was granted. |
+| `COMPLETED` | A completion condition was met (e.g., 12 transactions completed). Access revoked automatically. |
+| `EXPIRED` | The pact's duration elapsed. Access revoked automatically. |
+| `REVOKED` | You revoked the pact manually. Access revoked immediately. |
+
+When a pact reaches any terminal state (`COMPLETED`, `EXPIRED`, `REVOKED`), the delegation and its pact-scoped API key are both revoked. The agent can no longer transact.
+
+## Pact, delegation, and policy relationship
+
+When you approve a pact, Cobo Agentic Wallet creates the underlying infrastructure automatically:
+
+```
+Pact (what you approve)
+  │
+  ├── Delegation (scoped access grant)
+  │     └── permissions, wallet, operator, expiry
+  │
+  ├── Inline policies (spending rules)
+  │     └── transfer limits, contract allowlists, rolling budgets
+  │
+  └── Pact-scoped API key (operator credential)
+        └── bound to the delegation, returned only to the agent
+```
+
+You don't need to create delegations or policies manually when using pacts — the pact does it for you.
+
+## Submit a pact
+
+<Tabs>
+<Tab title="CLI">
+```bash
+# Submit with a spec file
+caw pact submit \
+  --wallet-id <WALLET_UUID> \
+  --intent "DCA $500/week into ETH on Base for 3 months" \
+  --spec-file dca-pact.json \
+  --wait
+
+# Submit with inline spending limits (simplified)
+caw pact submit \
+  --wallet-id <WALLET_UUID> \
+  --intent "Transfer small amounts for testing" \
+  --max-tx 100 \
+  --duration 86400 \
+  --wait
+```
+
+The `--wait` flag blocks until you approve or reject the pact. Without it, the command returns immediately and you can check the status later.
+</Tab>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet import WalletAPIClient
+
+async with WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY) as client:
+    # Submit a pact
+    result = await client.submit_pact(
+        wallet_id="a1b2c3d4-...",
+        intent="Transfer up to $100/day for testing",
+        spec={
+            "permissions": ["write:transfer", "read:wallet"],
+            "policies": [...],
+            "duration_seconds": 86400
+        }
+    )
+    pact_id = result["pact_id"]
+
+    # Poll until approved
+    pact = await client.get_pact(pact_id)
+    # When status is "active", pact["api_key"] contains the scoped key
+
+    # List pacts
+    pacts = await client.list_pacts(status="active")
+
+    # Revoke
+    await client.revoke_pact(pact_id)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({ baseUrl: '...', apiKey: '...' });
+
+// Submit a pact
+const result = await client.submitPact({
+  wallet_id: 'a1b2c3d4-...',
+  intent: 'Transfer up to $100/day for testing',
+  spec: {
+    permissions: ['write:transfer', 'read:wallet'],
+    policies: [...],
+    duration_seconds: 86400,
+  },
+});
+const pactId = result.pact_id;
+
+// Poll until approved
+const pact = await client.getPact(pactId);
+// When status is "active", pact.api_key contains the scoped key
+
+// List active pacts
+const pacts = await client.listPacts({ status: 'active' });
+
+// Revoke
+await client.revokePact(pactId);
+```
+</Tab>
+</Tabs>
+
+### Check pact status
+
+<Tabs>
+<Tab title="CLI">
+```bash
+# Show full pact detail
+caw pact show <PACT_ID>
+
+# Check status (also triggers lazy activation)
+caw pact status <PACT_ID>
+
+# List all pacts
+caw pact list --format table
+
+# List active pacts only
+caw pact list --status active --format table
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+# Get a specific pact
+pact = await client.get_pact(pact_id)
+print(pact["status"])  # pending_approval, active, rejected, completed, expired, revoked
+
+# List pacts with status filter
+pacts = await client.list_pacts(status="active")
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+// Get a specific pact
+const pact = await client.getPact(pactId);
+console.log(pact.status); // pending_approval, active, rejected, completed, expired, revoked
+
+// List pacts with status filter
+const pacts = await client.listPacts({ status: 'active' });
+```
+</Tab>
+</Tabs>
+
+### Revoke a pact
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw pact revoke <PACT_ID>
+```
+
+Revoking immediately revokes the delegation and invalidates the pact-scoped API key.
+</Tab>
+<Tab title="Python SDK">
+```python
+await client.revoke_pact(pact_id)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+await client.revokePact(pactId);
+```
+</Tab>
+</Tabs>
+
+## Approval experience
+
+When your agent submits a pact, you receive a notification in the Web Console, Human App, or chat. The approval screen shows:
+
+- **Intent** — what the agent wants to do, in plain language
+- **Execution plan** — the agent's detailed strategy and steps, so you understand the reasoning
+- **Permissions requested** — read wallet, transfer, contract calls, etc.
+- **Spending rules** — per-transaction limits, daily budgets, allowed chains and contracts
+- **Duration** — how long the pact lasts
+- **Completion conditions** — what triggers automatic completion
+
+You can **approve**, **reject**, or **revise before approving**. If the agent's proposed permissions or policies are too broad (or too narrow), you can adjust them directly before granting access — the agent will operate under your revised terms, not its original proposal. You can also revoke an active pact at any time.
+
+## When to use pacts vs. manual delegation
+
+| Scenario | Use |
+|---|---|
+| Agent needs temporary, scoped access for a specific task | **Pact** — auto-expires, auto-revokes on completion |
+| You want to review what the agent is asking for before granting access | **Pact** — the approval flow shows you exactly what's being requested |
+| Permanent or long-lived delegation managed by an admin | **Manual delegation** — create directly via API or CLI |
+| Programmatic setup without human approval | **Manual delegation** — no approval step required |
+
+## Pact events
+
+Every pact records lifecycle events that you can query:
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw pact events <PACT_ID> --format table
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+events = await client.list_pact_events(pact_id)
+for event in events.get("items", []):
+    print(event["type"], event["created_at"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const events = await client.listPactEvents(pactId);
+for (const event of events.items ?? []) {
+  console.log(event.type, event.created_at);
+}
+```
+</Tab>
+</Tabs>
+
+Events include: `submitted`, `activated`, `rejected`, `completed`, `expired`, `revoked`. Each event records a timestamp and relevant details.
+
+<CardGroup cols={2}>
+  <Card title="Set Policies" icon="shield" href="/developer/guides/set-policies">
+    Deep dive into policy rules — the spending limits enforced by pacts.
+  </Card>
+  <Card title="Delegate Wallet" icon="key" href="/developer/guides/delegate-wallet">
+    Understand delegations — the access grants created when pacts are approved.
+  </Card>
+</CardGroup>

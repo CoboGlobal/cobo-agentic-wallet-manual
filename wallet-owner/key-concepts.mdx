@@ -1,0 +1,91 @@
+---
+title: "Key concepts"
+description: "The core ideas behind Cobo Agentic Wallet — what each part is, what it does, and how they work together."
+---
+
+## Your wallet
+
+Your wallet is an on-chain account that holds your crypto. It has one or more addresses — the identifiers you share when someone wants to send you funds. The wallet itself lives on the blockchain; Cobo Agentic Wallet manages the keys that control it.
+
+Every new wallet starts on a testnet. Testnets are practice environments where tokens have no real value — a safe place to verify everything works before moving to mainnet with real funds. See [Supported chains](/developer/overview/supported-chains) for the full list.
+
+## Your agent
+
+Your agent is an AI system that operates the wallet on your behalf. Once the Cobo Agentic Wallet skill is installed, it can transfer tokens, call smart contracts, check balances, and respond to policy decisions — all without needing you to approve each step manually.
+
+Each agent is connected to exactly one wallet. You can connect multiple agents — each manages its own separate wallet. Currently, one wallet supports one connected agent at a time.
+
+Before you claim the wallet, your agent is the owner and has no restrictions. After you claim, your agent becomes a delegate: it can only act within the rules you set.
+
+## Claiming ownership
+
+Claiming is the step that puts you personally in control of your wallet. When you claim:
+
+- Your signing keys are generated on your device (phone) and never leave it
+- Your agent becomes a delegate bound by your Default Policy
+- Over-limit operations pause and wait for your sign-off before executing
+
+Claiming is optional. Your agent can operate without it — useful for testing and early development. When you're ready to use real funds under your personal control, claiming is how you establish that.
+
+See [Claim your wallet](/wallet-owner/connect-agent-human-app) for the step-by-step process.
+
+## Default Policy
+
+Your Default Policy defines what your agent can do automatically. Any operation within the policy executes without interruption. Any operation outside the policy either pauses for your approval or is blocked — depending on the rule it violates.
+
+The main controls in your Default Policy:
+
+| Control | What it does |
+|---|---|
+| Per-transaction limit | Your agent cannot send more than this in a single transaction |
+| Daily limit | Total your agent can spend per day |
+| Approval threshold | Operations above this amount pause for your approval |
+| Allowed addresses | Your agent can only send to addresses you've approved |
+| Allowed networks | Your agent can only transact on the chains you specify |
+
+You set and update your Default Policy in the Human App — in plain language, through the AI assistant. See [Set rules and limits](/wallet-owner/policies).
+
+## Authorization requests
+
+When your agent wants to take on a new task — one that goes beyond its current permissions or involves a new spending budget — it submits an authorization request. You review and decide: approve, reject, or adjust the terms before approving.
+
+An authorization request describes:
+- What the agent wants to do (plain-language summary)
+- What permissions it's requesting
+- The spending limits it's proposing
+- How long the authorization should last
+
+Once you approve, your agent operates within those exact boundaries. Access expires automatically when the window ends or the budget is exhausted — no lingering permissions.
+
+See [Review and approve agent requests](/wallet-owner/approve) for how to handle these.
+
+## Approval threshold
+
+If a transaction exceeds your approval threshold, it pauses automatically and waits for you to decide. Your agent cannot proceed until you act. You receive a push notification in the Human App; tap to approve or reject. If you don't act within one hour, the transaction expires and your agent is notified.
+
+This is distinct from a hard limit: a hard limit blocks the transaction outright. The approval threshold just routes it to you for review.
+
+See [Handle transactions](/wallet-owner/pending-ops) for the full flow.
+
+## MPC key shares
+
+Your wallet's signing authority is split across multiple independent parties using Multi-Party Computation (MPC). No single party holds a complete key. Moving funds requires cooperation from a threshold of key share holders — which means no single point of failure and no single point of attack.
+
+After claiming, two separate groups of key shares control your wallet:
+
+- **Your agent's group** — agent machine + Cobo. Used for everyday transactions within your policy. Your phone is not involved for routine operations.
+- **Your group** — your phone + Cobo. Required for over-limit operations and ownership actions. Enforced at the cryptographic level, not just by software.
+
+See [MPC key shares](/security/mpc-key-shares) for a full explanation.
+
+## Human App
+
+The Human App is your primary management interface. It runs on your phone, and your key share is stored on the device. You use it to claim your wallet, set rules, review and approve requests, monitor activity, and freeze or revoke your agent's access.
+
+See [The Human App](/wallet-owner/human-app) for a full feature walkthrough.
+
+## Web Console
+
+The Web Console is a browser-based interface for exploring the product and getting guidance from the AI assistant before you set up your wallet. After you've claimed your wallet in the Human App, day-to-day management happens there — the Web Console is mainly used for onboarding and discovery.
+
+See [The Web Console](/wallet-owner/web-console).

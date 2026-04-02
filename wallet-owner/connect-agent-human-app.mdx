@@ -1,0 +1,71 @@
+---
+title: "Claim your wallet"
+sidebarTitle: "Claim your wallet"
+description: "Take ownership of your agent's wallet from your phone. Once you claim, you set the rules — your agent operates within your limits."
+---
+
+When your agent runs `caw onboard`, it creates a wallet and is immediately the owner with no restrictions. Claiming transfers ownership to you: your signing keys are generated on your phone, your agent becomes a delegate operating within your Default Policy, and over-limit operations pause for your approval in the Human App.
+
+## What changes when you claim
+
+| | Before claiming | After claiming |
+|---|---|---|
+| **Owner** | Your agent | You |
+| **Spending limits** | None | Controlled by your Default Policy |
+| **Approval requirement** | None | Over-limit operations pause for your approval |
+| **Signing keys** | Agent machine + Cobo (2-of-2) | Agent machine + Cobo (2-of-2) plus your phone + Cobo (2-of-2) |
+| **Key recovery** | Via agent key share | Via your phone or device backup |
+
+<Info>Claiming is optional and can be done at any time — even after your agent has been transacting for a while. Your wallet history and funds carry over.</Info>
+
+## How it works
+
+**Your key share never leaves your phone**
+
+When you claim the wallet, the Human App generates a cryptographic key share on your device and stores it locally. This share is never sent to Cobo or your agent. A second key group is created with your phone + Cobo — your agent's existing key group (agent machine + Cobo) remains in place for everyday signing. Either group can independently sign transactions.
+
+**Over-limit operations require your approval**
+
+Because your phone holds a key share, operations above your Default Policy limit pause and wait for you to approve from the Human App. Your approval is not just a software check — it requires your device to participate in the signing. There is no way to bypass this without your phone.
+
+**Recovery without losing access**
+
+If you lose your phone, you can recover using your device backup. Your agent's key group continues to function in the meantime.
+
+<Steps>
+
+<Step title="Download and sign in to the Human App">
+Download the Human App on your phone and create an account or sign in.
+</Step>
+
+<Step title="Get the claim code from your agent">
+Ask your agent to generate a claim code:
+
+```bash
+caw claim
+```
+
+The command outputs a claim code in the format `CAW-XXXXX`. It is valid for 30 minutes. If it expires, run the command again to generate a new one.
+</Step>
+
+<Step title="Enter the claim code in the Human App">
+In the Human App, tap **Claim wallet** and enter the claim code. The app looks up your wallet and shows you a confirmation screen with the wallet ID, current balance, and creation date.
+</Step>
+
+<Step title="Confirm and complete the claim">
+Review the wallet details and tap **Confirm**. The app establishes your ownership, creates your agent's delegation, and generates your mobile key group. This takes about 30 seconds.
+</Step>
+
+<Step title="Set your Default Policy">
+Your wallet comes with a conservative Default Policy. Open the Human App and adjust the spending limits to match what you want your agent to be able to do automatically.
+
+> "Set a $500 per-transaction limit and require my approval for anything over $200."
+
+Your agent can now start operating within your policy — transactions within the limits execute automatically, and operations above your threshold pause for your approval in the Human App.
+
+<Tip>You do not need to keep gas tokens in your wallet. Cobo Gasless covers on-chain transaction fees automatically.</Tip>
+</Step>
+
+</Steps>
+
+<Info>For a full overview of the Human App — including how transaction approval works and how your keys are protected — see [The Human App](/wallet-owner/human-app).</Info>
