@@ -2,6 +2,10 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Cobo Agentic Wallet",
+  "basePath": "/products/agentic-wallet/manual",
+  "modeToggle": {
+    "default": "light"
+  },
   "api": {
     "playground": {
       "display": "interactive"
