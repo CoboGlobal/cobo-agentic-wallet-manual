@@ -1,0 +1,59 @@
+---
+title: "Features"
+description: "What Cobo Agentic Wallet gives your agent — and what it enforces on your behalf."
+---
+
+## Integration options
+
+All integrations give your agent the same wallet capabilities. They differ in how your agent is built and how much custom code you want to write.
+
+| Integration | Code required | Install | Best for | Denial handling |
+|---|---|---|---|---|
+| **Skill** | None | Drop a file | Agent owners using skill-compatible agents | Automatic via skill |
+| **CLI** | Shell scripts | Binary download | Terminal workflows, scripts, automation | Structured JSON output |
+| **MCP Server** | Config only | `pip install "cobo-agent-wallet[mcp]"` | Claude Desktop, Cursor, MCP-compatible clients | Tool error messages |
+| **LangChain** | Python | `pip install "cobo-agent-wallet[langchain]"` | LangChain agents with chains/tools | Formatted text in agent context |
+| **OpenAI Agents** | Python | `pip install "cobo-agent-wallet[openai]"` | OpenAI Agents SDK function calling | Injected into conversation |
+| **Agno** | Python | `pip install "cobo-agent-wallet[agno]"` | Agno multi-modal agents | Tool run response |
+| **CrewAI** | Python | `pip install "cobo-agent-wallet[crewai]"` | CrewAI multi-agent crews | Formatted text per agent |
+| **Python SDK** | Python | `pip install cobo-agent-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` exception |
+| **TypeScript SDK** | TypeScript | `npm install cobo-agentic-wallet` | Node.js agents, TypeScript-first stacks | Typed error classes |
+
+## What your agent can do
+
+**Transfer tokens** — send ERC-20 tokens and native assets to any address on supported chains. Every transfer passes through the policy engine before execution.
+
+**Call smart contracts** — invoke contract functions on supported EVM chains and Solana. Contract addresses and functions are checked against the contract call allowlist before execution.
+
+**Query balances and transaction history** — read wallet balances, token holdings, and transaction history programmatically without spending permissions.
+
+**Submit pacts for owner authorization** — when your agent needs scoped access for a specific task, it submits a pact. The owner reviews and approves once; your agent operates within those boundaries automatically.
+
+**Respond to policy denials with self-correction** — when the policy engine denies an operation, your agent receives a structured error with the denial reason. Your agent can adjust its approach — for example, splitting a large transfer or requesting human approval — rather than failing silently.
+
+**Access audit logs for compliance and debugging** — every operation your agent attempts is logged with the decision outcome, policy context, and principal. Your agent can query these logs for compliance reporting or to debug unexpected denials.
+
+## What the policy engine enforces
+
+The policy engine runs before every transaction and applies the most restrictive rule across all active policy tiers:
+
+- Per-transaction spending limits
+- Daily and cumulative budgets
+- Chain and token allowlists
+- Contract and function allowlists
+- Address allowlists and denylists
+- Approval thresholds — operations above a defined value pause for owner review before execution
+
+Your agent does not need to implement these checks itself. The service enforces them on every request, regardless of which integration your agent uses.
+
+## Pact-based authorization
+
+Your agent requests scoped access by submitting a pact — specifying what it wants to do, for how long, and within what constraints. The owner approves once; the agent operates within those boundaries automatically.
+
+When the pact expires or the owner revokes it, access is removed immediately. Your agent cannot continue transacting past its authorized boundaries.
+
+This model means you don't need to build custom approval workflows or access-control logic — pacts handle both.
+
+## Gas
+
+Gas fees are covered automatically via Cobo Gasless (Fee Station). Your agent does not need to hold gas tokens or estimate fees before submitting transactions.

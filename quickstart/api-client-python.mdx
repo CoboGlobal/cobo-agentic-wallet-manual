@@ -1,0 +1,190 @@
+---
+title: "API Client"
+description: "Canonical 5-minute WalletAPIClient quickstart: success, denial, self-correction, and audit verification."
+---
+
+This is the canonical developer path for Cobo Agentic Wallet.
+
+## 5-minute outcome
+
+In one run, you will:
+
+1. Create owner and agent principals
+2. Create wallet and delegation with transfer constraints
+3. Execute one allowed transfer
+4. Trigger one policy denial
+5. Self-correct using denial guidance
+6. Verify allowed plus denied events in audit logs
+
+## Prerequisites
+
+- A running backend API
+- Python 3.12+
+
+If you are running from this repository:
+
+```bash
+cd cobo-agent-wallet
+PYTHONPATH=src .venv/bin/python -m uvicorn api.main:app --reload
+```
+
+## Step 1: Install SDK
+
+```bash
+pip install cobo-agent-wallet
+```
+
+## Step 2: Set API URL
+
+```bash
+export AGENT_WALLET_API_URL=http://localhost:8000
+```
+
+## Step 3: Run the end-to-end script
+
+```python
+from __future__ import annotations
+
+import asyncio
+import os
+from uuid import uuid4
+
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.errors import PolicyDeniedError
+
+CHAIN_ID = "ETH"
+TOKEN_ID = "SETH"
+DESTINATION = "0x1111111111111111111111111111111111111111"
+
+
+async def main() -> None:
+    api_url = os.getenv("AGENT_WALLET_API_URL", "http://localhost:8000")
+    suffix = uuid4().hex[:8]
+
+    bootstrap = WalletAPIClient(base_url=api_url, api_key="", max_retries=0)
+    owner_client: WalletAPIClient | None = None
+    agent_client: WalletAPIClient | None = None
+
+    try:
+        # Bootstrap identities and API keys.
+        owner = await bootstrap.create_principal(
+            external_id=f"qs-owner-{suffix}",
+            principal_type="human",
+            name="Quickstart Owner",
+        )
+        agent = await bootstrap.create_principal(
+            external_id=f"qs-agent-{suffix}",
+            principal_type="agent",
+            name="Quickstart Agent",
+        )
+
+        owner_key = await bootstrap.create_api_key(
+            principal_id=owner["id"],
+            name=f"qs-owner-key-{suffix}",
+            scopes=["*"],
+        )
+        agent_key = await bootstrap.create_api_key(
+            principal_id=agent["id"],
+            name=f"qs-agent-key-{suffix}",
+            scopes=["*"],
+        )
+
+        owner_client = WalletAPIClient(base_url=api_url, api_key=owner_key["raw_key"])
+        agent_client = WalletAPIClient(base_url=api_url, api_key=agent_key["raw_key"])
+
+        wallet = await owner_client.create_wallet(
+            name=f"quickstart-{suffix}",
+            wallet_type="Custodial-Web3",
+        )
+        wallet_uuid = wallet["uuid"]
+
+        await owner_client.create_address(wallet_uuid, chain_id=CHAIN_ID)
+
+        await owner_client.create_delegation(
+            operator_id=agent["id"],
+            wallet_id=wallet_uuid,
+            permissions=["write:transfer"],
+            constraints={
+                "max_per_tx": "100",
+                "daily_cumulative": "500",
+                "monthly_cumulative": "500",
+            },
+        )
+
+        allowed = await agent_client.transfer(
+            wallet_uuid,
+            chain_id=CHAIN_ID,
+            dst_addr=DESTINATION,
+            token_id=TOKEN_ID,
+            amount="50",
+            request_id=f"qs-allow-{suffix}",
+        )
+        print("ALLOWED:", allowed.get("status", "unknown"))
+
+        try:
+            await agent_client.transfer(
+                wallet_uuid,
+                chain_id=CHAIN_ID,
+                dst_addr=DESTINATION,
+                token_id=TOKEN_ID,
+                amount="200",
+                request_id=f"qs-deny-{suffix}",
+            )
+        except PolicyDeniedError as exc:
+            suggestion = exc.denial.suggestion or "Retry with amount <= 100"
+            retry_amount = str(exc.denial.details.get("limit_value", "100"))
+            print("DENIED:", exc.denial.code)
+            print("SUGGESTION:", suggestion)
+
+            retried = await agent_client.transfer(
+                wallet_uuid,
+                chain_id=CHAIN_ID,
+                dst_addr=DESTINATION,
+                token_id=TOKEN_ID,
+                amount=retry_amount,
+                request_id=f"qs-retry-{suffix}",
+            )
+            print("RETRIED:", retried.get("status", "unknown"))
+
+        logs = await owner_client.get_audit_logs(
+            wallet_id=wallet_uuid,
+            action="transfer.initiate",
+            limit=20,
+        )
+        items = logs.get("items", []) if isinstance(logs, dict) else []
+        allowed_count = sum(1 for item in items if item.get("result") == "allowed")
+        denied_count = sum(1 for item in items if item.get("result") == "denied")
+        print(f"AUDIT: allowed={allowed_count}, denied={denied_count}")
+
+    finally:
+        await bootstrap.close()
+        if owner_client is not None:
+            await owner_client.close()
+        if agent_client is not None:
+            await agent_client.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Step 4: Validate output
+
+You should see:
+
+- `ALLOWED: ...`
+- `DENIED: TRANSFER_LIMIT_EXCEEDED` (or equivalent policy code)
+- `SUGGESTION: ...`
+- `RETRIED: ...`
+- `AUDIT: allowed=..., denied=...`
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Error Contract" icon="triangle-exclamation" href="/guides/handle-policy-denial">
+    Understand structured denial fields used for retries.
+  </Card>
+  <Card title="Self-Correction Pattern" icon="rotate-right" href="/guides/handle-policy-denial">
+    Production retry loop patterns for agent runtimes.
+  </Card>
+</CardGroup>

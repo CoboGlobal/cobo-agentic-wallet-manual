@@ -1,0 +1,399 @@
+---
+title: "DCA Trader"
+description: "Build a dollar-cost averaging agent with time-window and cumulative spend policies."
+icon: "chart-line"
+sidebarTitle: "DCA Trader"
+---
+
+## Business Context
+
+Your DCA agent should buy continuously, but not on the wrong chain or outside risk limits. You need automated guardrails that deny invalid routes and let the agent recover with compliant parameters.
+
+Core flow:
+
+- Agent submits a pact requesting ETH-only transfer rights within spend limits
+- Owner approves in the Web Console
+- Agent executes compliant ETH buys within the approved boundaries
+- Policy denies any attempt that exceeds limits; agent retries with a compliant amount
+
+<Accordion title="Policy Architecture">
+```text
+Owner (human)
+  -> Delegation
+       - Operator: trader principal
+       - Permissions: [write:transfer]
+       - Policies:
+           - allowed_chains: [ETH]
+           - max_per_tx: 10
+           - daily_cumulative: 25
+           - monthly_cumulative: 200
+```
+</Accordion>
+
+## Pact Specification
+
+The agent submits this PactSpec when requesting authorization. The owner reviews the chain restriction and cumulative spend limits before approving.
+
+```json
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-eth-only",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["SETH"]
+        }
+      }
+    },
+    {
+      "name": "deny-over-limits",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": {
+          "amount_usd_gt": "10",
+          "usage_limits": {
+            "rolling_24h": { "amount_usd_gt": "25" },
+            "rolling_30d": { "amount_usd_gt": "200" }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 7776000
+}
+```
+
+## Full Flow
+
+### Step 1: Owner sets the task
+
+The owner gives the agent a natural-language instruction:
+
+> "Run my DCA strategy. ETH only, max $10 per buy, $25 daily, $200 monthly. Valid 90 days."
+
+### Step 2: Agent submits authorization request
+
+The agent parses the instruction and submits a pact for owner approval.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+# Write the PactSpec to a file
+cat > dca-pact.json << 'EOF'
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-eth-only",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": { "chain_in": ["SETH"] }
+      }
+    },
+    {
+      "name": "deny-over-limits",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": {
+          "amount_usd_gt": "10",
+          "usage_limits": {
+            "rolling_24h": { "amount_usd_gt": "25" },
+            "rolling_30d": { "amount_usd_gt": "200" }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 7776000
+}
+EOF
+
+# Submit the pact and wait for owner approval
+caw pact submit \
+  --wallet-id "$WALLET_UUID" \
+  --intent "Run DCA strategy: ETH only, max \$10/buy, \$25 daily, \$200 monthly, valid 90 days" \
+  --spec-file dca-pact.json \
+  --wait
+
+# Confirm active
+caw pact status <PACT_ID>
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Submit pact
+        result = await client.submit_pact(
+            wallet_id=wallet_id,
+            intent="Run DCA strategy: ETH only, max $10/buy, $25 daily, $200 monthly, valid 90 days",
+            spec={
+                "permissions": ["write:transfer", "read:wallet"],
+                "policies": [
+                    {
+                        "name": "allow-eth-only",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "allow",
+                            "when": {"chain_in": ["SETH"]},
+                        },
+                    },
+                    {
+                        "name": "deny-over-limits",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "deny",
+                            "when": {},
+                            "deny_if": {
+                                "amount_usd_gt": "10",
+                                "usage_limits": {
+                                    "rolling_24h": {"amount_usd_gt": "25"},
+                                    "rolling_30d":  {"amount_usd_gt": "200"},
+                                },
+                            },
+                        },
+                    },
+                ],
+                "duration_seconds": 7776000,
+            },
+        )
+        pact_id = result["pact_id"]
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+
+        # Poll for activation
+        while True:
+            pact = await client.get_pact(pact_id)
+            if pact["status"] == "active":
+                break
+            await asyncio.sleep(10)
+
+        print(f"Pact active. Scoped API key: {pact['api_key']}")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({ apiKey: process.env.AGENT_WALLET_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Submit pact
+const result = await client.submitPact({
+  wallet_id: walletId,
+  intent: 'Run DCA strategy: ETH only, max $10/buy, $25 daily, $200 monthly, valid 90 days',
+  spec: {
+    permissions: ['write:transfer', 'read:wallet'],
+    policies: [
+      {
+        name: 'allow-eth-only',
+        type: 'transfer',
+        rules: {
+          effect: 'allow',
+          when: { chain_in: ['SETH'] },
+        },
+      },
+      {
+        name: 'deny-over-limits',
+        type: 'transfer',
+        rules: {
+          effect: 'deny',
+          when: {},
+          deny_if: {
+            amount_usd_gt: '10',
+            usage_limits: {
+              rolling_24h: { amount_usd_gt: '25' },
+              rolling_30d:  { amount_usd_gt: '200' },
+            },
+          },
+        },
+      },
+    ],
+    duration_seconds: 7776000,
+  },
+});
+console.log(`Pact ${result.pact_id} submitted — awaiting owner approval`);
+
+// Poll for activation
+let pact;
+do {
+  await new Promise(r => setTimeout(r, 10000));
+  pact = await client.getPact(result.pact_id);
+} while (pact.status === 'pending_approval');
+
+console.log(`Pact active. Scoped API key: ${pact.api_key}`);
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+import os
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt=(
+        "You are a DCA trading agent. Submit a pact for owner authorization "
+        "before executing buys. Respect chain and spend limits."
+    ),
+)
+
+result = agent.invoke({
+    "input": (
+        "Run my DCA strategy. ETH only, max $10 per buy, $25 daily, "
+        "$200 monthly. Valid 90 days."
+    )
+})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 3: Owner approves in Web Console
+
+The pact appears in the Web Console with the intent, execution plan, chain restriction, and cumulative spend limits. The owner reviews and approves. The agent receives a pact-scoped API key and can begin operating.
+
+### Step 4: Agent operates
+
+With an active pact, the agent executes DCA purchases within the approved limits.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+WALLET_UUID=<wallet_uuid>
+DST=0x1111111111111111111111111111111111111111
+
+# Allowed transfer — compliant chain and amount
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 8 --chain SETH
+
+# Oversized order — exceeds per-tx limit, triggers policy denial
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 100 --chain SETH
+
+# Retry with compliant amount
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 10 --chain SETH
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    # Use the pact-scoped API key returned after approval
+    async with WalletAPIClient(api_key=os.environ["PACT_API_KEY"]) as pact_client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Allowed buy — within per-tx and daily limits
+        result = await pact_client.transfer_tokens(
+            wallet_id=wallet_id,
+            chain_id="SETH",
+            dst_addr="0x1111111111111111111111111111111111111111",
+            token_id="SETH_USDC",
+            amount="8",
+        )
+        print(f"DCA buy submitted: {result['tx_id']}")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+// Use the pact-scoped API key returned after approval
+const pactClient = new WalletAPIClient({ apiKey: process.env.PACT_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Allowed buy — within per-tx and daily limits
+const result = await pactClient.transferTokens({
+  wallet_id: walletId,
+  chain_id: 'SETH',
+  dst_addr: '0x1111111111111111111111111111111111111111',
+  token_id: 'SETH_USDC',
+  amount: '8',
+});
+console.log(`DCA buy submitted: ${result.tx_id}`);
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+import os
+
+# Use the pact-scoped API key to operate within approved limits
+pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=pact_client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt="Execute DCA buys within approved chain and spend limits.",
+)
+
+result = agent.invoke({"input": "Buy $8 of ETH on the allowed chain."})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 5: Audit
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+```
+
+## Full Source Code
+
+<Accordion title="View full API Client recipe source">
+
+- [Open full source on GitHub](https://github.com/CoboGlobal/cobo-agentic-wallet/blob/main/cobo-agent-wallet/sdk/examples/recipes/dca-trader/main.py)
+- Local path: `cobo-agent-wallet/sdk/examples/recipes/dca-trader/main.py`
+
+</Accordion>

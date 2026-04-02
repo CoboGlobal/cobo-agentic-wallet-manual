@@ -1,0 +1,55 @@
+---
+title: "Create your wallet"
+sidebarTitle: "Create your wallet"
+description: "Install the skill, run caw onboard, and your agent is ready to transact in minutes — no account required."
+---
+
+The Cobo Agentic Wallet skill gives your agent the knowledge it needs to work with your wallet: how to create addresses, check balances, transfer tokens, call smart contracts, and handle authorization requests and policy decisions correctly.
+
+When you run `caw onboard`, your agent becomes the wallet's owner and can transact without restrictions. You can later claim the wallet in the Human App to take ownership yourself and set approval rules — but that step is optional and can be done any time.
+
+<Steps>
+
+<Step title="Install the skill">
+The skill teaches your agent how to interact with your wallet. Run this in your terminal:
+
+```bash
+npx skills add CoboGlobal/cobo-agentic-wallet-python-sdk --skill cobo-agentic-wallet-dev --yes --global
+```
+
+This also installs the `caw` CLI automatically.
+</Step>
+
+<Step title="Run caw onboard">
+```bash
+caw onboard
+```
+
+No account or sign-up required. This command creates your wallet and starts the TSS node on your machine. Your agent is immediately the wallet owner — it can transact without any spending limits or approval requirements.
+</Step>
+
+<Step title="Create an address and deposit funds">
+Ask your agent to create an address, then deposit funds to that address.
+
+<Tip>You do not need to keep gas tokens in your wallet. Cobo Gasless covers on-chain transaction fees automatically.</Tip>
+</Step>
+
+<Step title="Ask your agent to transact">
+Your agent can now start operating — transfers, contract calls, and more. As the wallet owner, it has no spending limits or approval requirements by default.
+</Step>
+
+</Steps>
+
+## Claim the wallet to take ownership
+
+After your agent creates the wallet, you can claim it in the Human App to become the owner yourself. Once you claim:
+
+- You set the rules — your agent becomes a delegate and can only act within your Default Policy
+- Operations above your policy limits pause and wait for your approval in the Human App
+- Your signing keys are stored on your device — Cobo cannot move your funds without your participation
+
+Claiming is optional. Your agent can continue operating without it. But if you want personal control over your funds, claiming is the step that establishes it.
+
+<Card title="Claim your wallet" icon="mobile" href="/wallet-owner/connect-agent-human-app">
+  Download the Human App, enter the claim code, and take ownership of your wallet.
+</Card>

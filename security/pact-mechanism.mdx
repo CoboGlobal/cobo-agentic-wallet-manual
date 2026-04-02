@@ -1,0 +1,118 @@
+---
+title: "How pacts work"
+description: "Pacts are the authorization layer between agents and wallets — scoped, time-bound, owner-approved access that leaves a complete audit trail."
+---
+
+When an AI agent needs to interact with a wallet, it cannot simply be handed a raw API key with unrestricted access. That approach is unsafe, unauditable, and gives the user no meaningful control over what the agent actually does.
+
+Pacts solve this problem. A pact is a structured authorization agreement: the agent declares exactly what it intends to do, the user reviews and approves the plan, and the system enforces it automatically. Once approved, the agent operates within the agreed boundaries — and those boundaries are enforced cryptographically, not just by trust.
+
+## Two modes: owner and delegate
+
+The pact mechanism behaves differently depending on whether your agent is the wallet owner or a delegate:
+
+| | Agent as owner (before claiming) | Agent as delegate (after claiming) |
+|---|---|---|
+| **Who triggers pacts** | Agent | Agent |
+| **Approval required** | No — automatically processed | Yes — owner reviews and approves in the Human App |
+| **Spending limits** | None | Defined by your Default Policy and any scoped pact policies |
+| **Purpose** | Structured execution framework | Authorization gate for new tasks outside the Default Policy |
+
+When you claim the wallet, your agent transitions from owner to delegate. From that point on, all agent requests for tasks outside the Default Policy require your approval.
+
+## Default Policy
+
+When you claim the wallet, a Default Policy is created for your agent. It defines the boundaries within which your agent can operate automatically — no pact approval required for routine actions that stay within these limits.
+
+You set the Default Policy in the Human App. Common limits:
+
+- Per-transaction cap
+- Daily or rolling budget
+- Allowed destination addresses
+- Allowed chains
+
+Operations within the Default Policy execute automatically. Operations beyond it require your agent to submit a pact for your approval.
+
+## The PactSpec: what the agent declares
+
+When your agent wants access beyond the Default Policy, it submits a **PactSpec** — a machine-readable declaration of the access it needs:
+
+| Field | Type | Description |
+|---|---|---|
+| `permissions` | list | The capabilities being requested. Values include `operator`, `read:wallet`, `write:transfer`, `write:contract_call`, `write:message_sign`, `write:manage`, `write:policy`. |
+| `policies` | list | Inline policy rules constraining the agent's actions — spend limits, address restrictions, review thresholds, and so on. Evaluated by the policy engine on every operation. |
+| `duration_seconds` | integer | How long the pact remains active after approval, in seconds. Null means no time limit. |
+| `completion_conditions` | list | Conditions that automatically complete the pact when reached. Supported types: `tx_count`, `amount_spent_usd`, `time_elapsed`, `manual`. |
+| `resource_scope` | object | Optional constraints on which resources the pact applies to. |
+| `execution_plan` | string | Free-form markdown description of what the agent plans to do. Shown to the owner during approval review. |
+
+## The approval gate
+
+Submitting a pact does not grant access. It creates a pending approval request.
+
+<Steps>
+  <Step title="Agent submits the pact">
+    The agent calls `POST /pacts/submit`. The pact is created in `PENDING_APPROVAL` status.
+  </Step>
+  <Step title="You are notified">
+    You receive a push notification in the Human App. You see the agent's stated intent, the execution plan, and the full set of permissions and policies being requested.
+  </Step>
+  <Step title="You approve or reject">
+    You review the request and either approve or reject it. Approval is an explicit action — it cannot time out into auto-approval. Unanswered requests expire after one hour.
+  </Step>
+  <Step title="On approval: access is provisioned automatically">
+    Approval triggers two automatic actions: a delegation is created with the pact's permissions, and a pact-scoped API key is issued. The pact moves to `ACTIVE` status.
+  </Step>
+  <Step title="On rejection: no access is granted">
+    The pact moves to `REJECTED` status. No delegation or API key is created.
+  </Step>
+</Steps>
+
+## The pact-scoped API key
+
+When a pact is approved, the agent receives an API key scoped to that pact's exact permissions and policies. This key:
+
+- Can only authorize operations permitted by the pact's `permissions` field
+- Is subject to all policies defined in the pact's `policies` field on every call
+- Is bound to the specific wallet identified by `wallet_id`
+- Becomes invalid automatically when the pact expires, is completed, or is revoked
+- Is only visible to the agent that submitted the pact — not to the wallet owner
+
+## Full pact state machine
+
+| State | Meaning |
+|---|---|
+| `pending_approval` | Submitted by the agent, awaiting owner review. No access has been granted. |
+| `active` | Approved by the owner. The delegation and API key are live. The agent can submit operations. |
+| `rejected` | Rejected by the owner during approval review. No access was ever granted. |
+| `completed` | A completion condition was met. The pact has ended naturally. |
+| `expired` | The `duration_seconds` elapsed after activation, or the approval window (1 hour) timed out. |
+| `revoked` | The owner explicitly revoked the pact. Access was terminated immediately. |
+
+```
+PENDING_APPROVAL
+    ├─ approved ──→ ACTIVE
+    │                 ├─ completion condition met ──→ COMPLETED
+    │                 ├─ duration elapsed ──→ EXPIRED
+    │                 └─ owner revokes ──→ REVOKED
+    └─ rejected / expired ──→ REJECTED / EXPIRED
+```
+
+## Pact expiry: no zombie permissions
+
+When a pact transitions out of `ACTIVE` — for any reason — the pact-scoped API key is invalidated immediately on the server side. There is no grace period. The next API call the agent makes with that key will return an authentication error.
+
+## Security properties
+
+| Property | How it is enforced |
+|---|---|
+| **Time-bound** | `duration_seconds` sets a hard expiry. Completion conditions can also terminate the pact when spending or transaction targets are met. |
+| **Scope-bound** | The pact-scoped API key cannot authorize operations outside the declared `permissions`. The policy engine enforces declared `policies` on every operation. |
+| **Owner-controlled** | No access is granted without the owner's explicit approval. The owner can revoke at any time. |
+| **Auditable** | Every lifecycle event is recorded in the pact event log. |
+
+## Further reading
+
+- [Policy Engine](/security/policy-engine) — how every agent operation is evaluated before execution
+- [Spend Limits](/security/spend-limits) — how per-transaction and rolling limits are configured
+- [Freeze and Revoke](/security/freeze-revoke) — how to immediately terminate agent access in an emergency

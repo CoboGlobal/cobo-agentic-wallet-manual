@@ -1,0 +1,930 @@
+---
+title: "CLI"
+description: "Command-line interface for the Cobo Agentic Wallet SDK."
+icon: "terminal"
+sidebarTitle: "CLI"
+---
+
+The `caw` CLI lets you manage wallets, addresses, transactions, delegations, policies, and agents from the terminal.
+
+## Installation
+
+```bash
+npx skills add CoboGlobal/cobo-agentic-wallet-python-sdk --skill --yes --global
+```
+
+## Global options
+
+These options are available on every command.
+
+| Option | Env variable | Default | Description |
+|---|---|---|---|
+| `--api-key` | `AGENT_WALLET_API_KEY` | — | API key for authentication |
+| `--api-url` | `AGENT_WALLET_API_URL` | `http://localhost:8000` | API base URL |
+| `--timeout` | `AGENT_WALLET_TIMEOUT` | `30.0` | Request timeout in seconds |
+| `--format` | — | `json` | Output format: `json` or `table` |
+
+## Config file
+
+The CLI persists your API key, API URL, and default wallet UUID in `~/.cobo-agentic-wallet/config` (JSON format). Override the path with the `CAW_CONFIG_PATH` environment variable.
+
+Most commands that accept a wallet UUID as a positional argument will fall back to the `wallet_uuid` stored in the config file if the argument is omitted.
+
+## Output formats
+
+<CodeGroup>
+
+```json JSON (default)
+{
+  "items": [
+    {"uuid": "abc-123", "name": "My Wallet", "status": "active"}
+  ]
+}
+```
+
+```text Table
+uuid     | name      | status
+---------+-----------+-------
+abc-123  | My Wallet | active
+```
+
+</CodeGroup>
+
+## Error output
+
+Policy denials are written to stderr with structured context and a non-zero exit code:
+
+```json
+{"code": "TRANSFER_LIMIT_EXCEEDED", "reason": "max_per_tx", "details": {"limit_value": "100", "requested": "1000"}, "suggestion": "Retry with amount <= 100."}
+```
+
+## `caw onboard`
+
+Onboard and verify your agent setup.
+
+### `onboard` (provision)
+
+Provision the agent using a pairing code obtained from the Web Console or Human App. This creates an API key and binds it to your owner account.
+
+```bash
+caw onboard --token caw_xxxxxxxxxxxxxxxx
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--token` | Yes* | Pairing code from the Web Console or Human App (`caw_…`) |
+| `--invitation-code` | Yes* | Invitation code for autonomous provisioning (alternative to `--token`) |
+| `--env` | No | Cobo environment: `sandbox`, `dev`, or `prod` (default: `prod`) |
+
+\* One of `--token` or `--invitation-code` is required.
+
+### `self-test`
+
+Verify that the CLI can authenticate and reach the service, and optionally run a transfer policy smoke test.
+
+```bash
+caw onboard self-test
+```
+
+### `health`
+
+Check service health without authentication.
+
+```bash
+caw onboard health
+```
+
+## `caw wallet`
+
+Manage wallets, balances, and node status.
+
+### `list`
+
+List wallets accessible to the authenticated principal.
+
+```bash
+caw wallet list --limit 20 --format table
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+| `--include-archived` | `false` | Include archived wallets |
+
+### `get`
+
+Get wallet details and spend summary.
+
+```bash
+caw wallet get [WALLET_UUID]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--include-spend-summary` | `false` | Include per-delegation spend summary in the response |
+
+### `balance`
+
+List token balances for a wallet.
+
+```bash
+caw wallet balance [WALLET_UUID] --token-id SETH_USDC
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--address` | — | Filter by on-chain address |
+| `--token-id` | — | Filter by token ID (e.g. `SETH`, `SETH_USDC`) |
+| `--chain-id` | — | Filter by chain ID (e.g. `SETH`, `BASE_ETH`, `SOL`) |
+| `--force-refresh` | `false` | Force a fresh sync of balances from on-chain before returning |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `status`
+
+Show wallet status and spend summary.
+
+```bash
+caw wallet status [WALLET_UUID]
+```
+
+### `update`
+
+Update a wallet's display name.
+
+```bash
+caw wallet update [WALLET_UUID] --name "New Name"
+```
+
+| Option | Description |
+|---|---|
+| `--name` / `-n` | New display name for the wallet |
+
+### `archive`
+
+Archive a wallet. Archived wallets are excluded from list results by default and cannot be updated.
+
+<Warning>This action cannot be undone. Archiving a wallet does not delete on-chain assets.</Warning>
+
+```bash
+caw wallet archive [WALLET_UUID] --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+### `node-status`
+
+Check whether the TSS node associated with a wallet is online.
+
+```bash
+caw wallet node-status [WALLET_UUID]
+```
+
+## `caw address`
+
+Manage on-chain addresses for a wallet.
+
+### `list`
+
+List all on-chain addresses for a wallet.
+
+```bash
+caw address list [WALLET_UUID]
+```
+
+### `create`
+
+Generate a new on-chain address for a wallet on the specified chain.
+
+```bash
+caw address create [WALLET_UUID] --chain TBASE_SETH
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--chain` | Yes | Chain ID (e.g. `TBASE_SETH`, `BASE_ETH`, `SOL`). Use the List supported chains operation to retrieve all supported chain IDs |
+
+### `recent`
+
+List the most recently used destination addresses for a wallet.
+
+```bash
+caw address recent [WALLET_UUID] --limit 20
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--limit` | `50` | Maximum number of results to return |
+
+## `caw tx`
+
+Submit and query transactions.
+
+### `transfer`
+
+Transfer tokens with policy enforcement. If a policy denies the transfer, the command exits with a non-zero code and prints the denial details to stderr.
+
+```bash
+caw tx transfer [WALLET_UUID] \
+  --to 0x1234...abcd \
+  --token SETH_USDC \
+  --amount 50
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--to` | Yes | — | Destination on-chain address |
+| `--token` | Yes | — | Token ID (e.g. `SETH`, `SETH_USDC`). Use the List supported assets operation to retrieve all supported token IDs |
+| `--amount` | Yes | — | Transfer amount as a decimal string (e.g. `10.5`) |
+| `--chain` | No | `ETH` | Chain ID. Resolved automatically from token ID if omitted |
+| `--src-addr` | No | — | Source address. Defaults to the wallet's primary address for the chain |
+| `--request-id` | No | — | Client-supplied idempotency key. If a transfer with the same request-id already exists, the existing record is returned |
+| `--fee` | No | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
+| `--gasless` | No | `false` | Use Cobo Gasless (Fee Station) to cover gas fees |
+| `--dry-run` | No | `false` | Simulate: check policy and estimate fee without submitting the transfer |
+
+### `call`
+
+Submit an EVM or Solana contract call with policy enforcement. For EVM chains, provide `--contract` and `--calldata`. For Solana, provide `--instructions`.
+
+```bash
+# EVM
+caw tx call [WALLET_UUID] \
+  --chain SETH \
+  --contract 0xabcd...1234 \
+  --calldata 0xa9059cbb...
+
+# Solana
+caw tx call [WALLET_UUID] \
+  --chain SOL \
+  --instructions '[{"programId": "...", "keys": [...], "data": "..."}]'
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--chain` | Yes | `ETH` | Chain ID (e.g. `SETH`, `BASE_ETH`, `SOL`). Use the List supported chains operation to retrieve all supported chain IDs |
+| `--contract` | No | — | EVM contract address to call |
+| `--calldata` | No | — | EVM calldata as a hex-encoded string (0x-prefixed) |
+| `--value` | No | `0` | Native token amount to send with the call as a decimal string |
+| `--src-addr` | No | — | Source address. Defaults to the wallet's primary address for the chain |
+| `--instructions` | No | — | Solana instructions as a JSON array of SolInstruction objects |
+| `--address-lookup-tables` | No | — | Solana address lookup table accounts as a JSON array |
+| `--fee` | No | — | Custom fee parameters as a JSON object. If omitted, the network default is used |
+| `--request-id` | No | — | Client-supplied idempotency key |
+| `--gasless` | No | `false` | Use Cobo Gasless (Fee Station) to cover gas fees |
+
+### `list`
+
+List on-chain transaction records for a wallet.
+
+```bash
+caw tx list [WALLET_UUID] --status success --limit 20
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--status` | — | Filter by transaction status, e.g. `pending`, `success`, `failed` |
+| `--token` | — | Filter by token ID, e.g. `SETH`, `SETH_USDC` |
+| `--chain` | — | Filter by chain ID, e.g. `SETH`, `BASE_ETH`, `SOL` |
+| `--address` | — | Filter by on-chain address |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `get`
+
+Get details of a single transaction record by on-chain transaction ID.
+
+```bash
+caw tx get <WALLET_UUID> <TX_ID>
+```
+
+### `records`
+
+List on-chain transaction records including deposits.
+
+```bash
+caw tx records [WALLET_UUID] --type deposit --chain SETH
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--type` | — | Filter by record type, e.g. `transfer`, `deposit`, `contract_call` |
+| `--status` | — | Filter by transaction status |
+| `--token` | — | Filter by token ID |
+| `--chain` | — | Filter by chain ID |
+| `--address` | — | Filter by on-chain address |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `record`
+
+Get a single on-chain transaction record by ID.
+
+```bash
+caw tx record <WALLET_UUID> <RECORD_UUID>
+```
+
+### `estimate-transfer-fee`
+
+Estimate the gas fee for a token transfer without submitting it.
+
+```bash
+caw tx estimate-transfer-fee [WALLET_UUID] \
+  --to 0x1234...abcd \
+  --amount 50 \
+  --token SETH_USDC
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--to` | Yes | — | Destination on-chain address |
+| `--amount` | Yes | — | Transfer amount as a decimal string |
+| `--token` | No | — | Token ID, e.g. `SETH`, `SETH_USDC` |
+| `--chain` | No | `ETH` | Chain ID. Resolved automatically from token ID if omitted |
+| `--src-addr` | No | — | Source address. Defaults to the wallet's primary address for the chain |
+
+### `estimate-call-fee`
+
+Estimate the gas fee for a contract call without submitting it.
+
+```bash
+caw tx estimate-call-fee [WALLET_UUID] \
+  --chain SETH \
+  --contract 0xabcd...1234 \
+  --calldata 0xa9059cbb...
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--chain` | Yes | `ETH` | Chain ID |
+| `--contract` | No | — | EVM contract address to call |
+| `--calldata` | No | — | EVM calldata as a hex-encoded string (0x-prefixed) |
+| `--value` | No | `0` | Native token amount to send with the call |
+| `--src-addr` | No | — | Source address. Defaults to the wallet's primary address for the chain |
+| `--instructions` | No | — | Solana instructions as a JSON array of SolInstruction objects |
+| `--address-lookup-tables` | No | — | Solana address lookup table accounts as a JSON array |
+
+### `drop`
+
+Cancel or RBF-drop a pending or broadcasting transaction.
+
+```bash
+caw tx drop <WALLET_UUID> <TRANSACTION_UUID>
+```
+
+| Option | Description |
+|---|---|
+| `--request-id` | Client-supplied idempotency key for the replacement transaction |
+| `--fee` | Custom fee parameters for the replacement transaction as a JSON object. If omitted, a higher fee is chosen automatically |
+| `--cobo-transaction-id` | Cobo internal transaction ID (alternative to the positional `TRANSACTION_UUID`) |
+
+### `speedup`
+
+Speed up a pending transaction by resubmitting it with a higher fee (RBF).
+
+```bash
+caw tx speedup <WALLET_UUID> <TRANSACTION_UUID> \
+  --fee '{"type": "EIP1559", "maxFeePerGas": "30000000000"}'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--fee` | Yes | Higher fee parameters for the replacement transaction as a JSON object |
+| `--request-id` | No | Client-supplied idempotency key for the replacement transaction |
+| `--cobo-transaction-id` | No | Cobo internal transaction ID (alternative to the positional `TRANSACTION_UUID`) |
+
+### `sign-message`
+
+Sign a message (e.g. EIP-712 typed data).
+
+```bash
+caw tx sign-message [WALLET_UUID] \
+  --chain SETH \
+  --destination-type eip712 \
+  --eip712-typed-data '{"domain": {...}, "message": {...}}'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--chain` | Yes | Chain ID (e.g. `SETH`, `BASE_ETH`). Use the List supported chains operation to retrieve all supported chain IDs |
+| `--destination-type` | No | Signing scheme, e.g. `eip712` for EIP-712 typed data |
+| `--eip712-typed-data` | No | EIP-712 typed data as a JSON object (required for `eip712` destination type) |
+| `--source-address` | No | Address to sign with. Defaults to the wallet's primary address for the chain |
+| `--description` | No | Human-readable description of what is being signed |
+| `--request-id` | No | Client-supplied idempotency key |
+
+## `caw delegation`
+
+Manage wallet delegations and access control.
+
+### `create`
+
+Grant an agent operator access to a wallet.
+
+```bash
+caw delegation create [WALLET_UUID] \
+  --to <AGENT_PRINCIPAL_ID> \
+  --max-tx 100
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--to` | Yes | — | Agent principal ID to grant access to |
+| `--permission` | No | `operator` | Delegation permission. Can be specified multiple times (e.g. `--permission operator`) |
+| `--max-tx` | No | — | Maximum USD value allowed per transaction. Creates an inline transfer limit policy |
+| `--expires-at` | No | — | Delegation expiry as an RFC 3339 timestamp, e.g. `2026-12-31T00:00:00Z`. If omitted, the delegation does not expire |
+
+### `list`
+
+List delegations you have granted (as owner).
+
+```bash
+caw delegation list --wallet-id <WALLET_UUID>
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--operator-id` | — | Filter by operator agent principal ID |
+| `--wallet-id` | — | Filter by wallet UUID |
+| `--status` | — | Filter by delegation status, e.g. `active`, `revoked`, `expired` |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `get`
+
+Get details of a specific delegation.
+
+```bash
+caw delegation get <DELEGATION_ID>
+```
+
+### `update`
+
+Update a delegation's permissions or expiry.
+
+```bash
+caw delegation update <DELEGATION_ID> --expires-at 2026-12-31T00:00:00Z
+```
+
+| Option | Description |
+|---|---|
+| `--permission` | New set of delegation permissions. Can be specified multiple times |
+| `--expires-at` | New expiry as an RFC 3339 timestamp |
+
+### `revoke`
+
+Permanently revoke a delegation. The delegated agent loses access immediately.
+
+```bash
+caw delegation revoke <DELEGATION_ID> --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+### `received`
+
+List delegations granted to you by wallet owners (as operator).
+
+```bash
+caw delegation received --limit 20
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--owner-id` | — | Filter by owner principal ID |
+| `--wallet-id` | — | Filter by wallet UUID |
+| `--status` | — | Filter by delegation status |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `freeze`
+
+Suspend one or more delegations. Frozen delegations cannot submit transactions until unfrozen.
+
+```bash
+caw delegation freeze --scope wallet --wallet-id <WALLET_UUID> --yes
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--scope` | Yes | Freeze scope: `owner` (all delegations by owner), `wallet` (all delegations on a wallet), or `delegation` (a single delegation) |
+| `--owner-id` | No | Owner principal ID (required when `--scope owner`) |
+| `--wallet-id` | No | Wallet UUID (required when `--scope wallet`) |
+| `--delegation-id` | No | Delegation ID (required when `--scope delegation`) |
+| `--reason` | No | Human-readable reason for the freeze, stored in the audit log |
+| `--dry-run` | No | Preview how many delegations would be affected without executing |
+| `--yes` / `-y` | No | Skip the confirmation prompt |
+
+### `unfreeze`
+
+Resume one or more suspended delegations.
+
+```bash
+caw delegation unfreeze --scope wallet --wallet-id <WALLET_UUID> --yes
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--scope` | Yes | Unfreeze scope: `owner`, `wallet`, or `delegation` |
+| `--owner-id` | No | Owner principal ID (required when `--scope owner`) |
+| `--wallet-id` | No | Wallet UUID (required when `--scope wallet`) |
+| `--delegation-id` | No | Delegation ID (required when `--scope delegation`) |
+| `--reason` | No | Human-readable reason for the unfreeze, stored in the audit log |
+| `--dry-run` | No | Preview how many delegations would be affected without executing |
+| `--yes` / `-y` | No | Skip the confirmation prompt |
+
+## `caw policy`
+
+Manage spending policies and limits.
+
+### `list`
+
+List policies across all scopes or filtered by scope.
+
+```bash
+caw policy list --scope delegation --delegation-id <DELEGATION_UUID>
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--scope` | — | Policy scope: `global`, `wallet`, or `delegation`. If omitted, all scopes are returned |
+| `--wallet-id` | — | Filter by wallet UUID |
+| `--delegation-id` | — | Filter by delegation ID |
+| `--policy-type` | — | Filter by policy type: `transfer` or `contract_call` |
+| `--include-inactive` | `false` | Include inactive (deactivated) policies in results |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `get`
+
+Get full details for a policy, including its rules and activation status.
+
+```bash
+caw policy get <POLICY_ID>
+```
+
+### `create`
+
+Create a new spending policy.
+
+```bash
+caw policy create \
+  --scope delegation \
+  --delegation-id <DELEGATION_UUID> \
+  --name "Max per tx" \
+  --type transfer \
+  --rules '{"max_per_tx": "100"}'
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--scope` | Yes | `delegation` | Policy scope: `global`, `wallet`, or `delegation` |
+| `--name` | Yes | — | Display name for the policy |
+| `--type` | Yes | — | Policy type: `transfer` or `contract_call` |
+| `--rules` | Yes | — | Policy rules as a JSON object (e.g. `'{"max_per_tx": "100"}'`) |
+| `--wallet-id` | No | — | Wallet UUID (required when `--scope wallet` or `--scope delegation`) |
+| `--delegation-id` | No | — | Delegation ID (required when `--scope delegation`) |
+| `--priority` | No | `0` | Evaluation priority — higher values are evaluated first |
+| `--active` | No | `true` | Whether the policy is active on creation |
+
+### `update`
+
+Update a policy's name or rules.
+
+```bash
+caw policy update <POLICY_ID> --rules '{"max_per_tx": "200"}'
+```
+
+| Option | Description |
+|---|---|
+| `--name` | New display name |
+| `--rules` | Updated policy rules as a JSON object |
+
+### `deactivate`
+
+Deactivate a policy so it is no longer evaluated. The policy record is preserved.
+
+```bash
+caw policy deactivate <POLICY_ID> --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+### `dry-run`
+
+Simulate a policy evaluation for a transfer or contract call without submitting it. Returns whether the operation would be allowed or denied, and which policy matched.
+
+```bash
+caw policy dry-run <WALLET_UUID> \
+  --operation-type transfer \
+  --amount 50 \
+  --chain-id SETH \
+  --token-id SETH_USDC
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--operation-type` | Yes | Operation to simulate: `transfer` or `contract_call` |
+| `--amount` | Yes | Operation amount as a decimal string |
+| `--chain-id` | Yes | Chain ID (e.g. `SETH`, `BASE_ETH`, `SOL`) |
+| `--token-id` | No | Token ID (e.g. `SETH`, `SETH_USDC`) |
+| `--dst-addr` | No | Destination on-chain address (for `transfer`) |
+| `--contract-addr` | No | EVM contract address (for `contract_call`) |
+| `--calldata` | No | EVM calldata as a hex-encoded string (0x-prefixed) |
+| `--delegation-id` | No | Evaluate policies for this specific delegation |
+| `--principal-id` | No | Evaluate as this operator principal ID |
+| `--instructions` | No | Solana instructions as a JSON array of SolInstruction objects |
+
+## `caw pending`
+
+Manage pending operations awaiting approval.
+
+### `list`
+
+List operations awaiting approval.
+
+```bash
+caw pending list --status pending_approval
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--status` | — | Filter by status, e.g. `pending_approval`, `executing`, `completed`, `rejected` |
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `get`
+
+Get details of a specific pending operation, including the type, amount, and policy that triggered the hold.
+
+```bash
+caw pending get <OPERATION_ID>
+```
+
+### `approve`
+
+Approve a pending operation so it proceeds to execution.
+
+```bash
+caw pending approve <OPERATION_ID> --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+### `reject`
+
+Reject a pending operation. The operation is cancelled and not executed.
+
+```bash
+caw pending reject <OPERATION_ID> --reason "Amount too high" --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--reason` | — | Human-readable reason for the rejection |
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+## `caw approval`
+
+Manage Human App approval requests.
+
+### `list`
+
+List approval requests.
+
+```bash
+caw approval list --status pending
+```
+
+| Option | Description |
+|---|---|
+| `--status` | Filter by approval status: `pending`, `approved`, `rejected`, or `expired` |
+
+### `get`
+
+Get details of an approval request.
+
+```bash
+caw approval get <APPROVAL_ID>
+```
+
+### `create`
+
+Create a new approval request.
+
+```bash
+caw approval create \
+  --wallet-id <WALLET_UUID> \
+  --type <TYPE> \
+  --payload '{"key": "value"}'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--wallet-id` | Yes | Wallet UUID the approval request applies to |
+| `--type` | Yes | Approval request type |
+| `--payload` | Yes | Approval payload as a JSON string |
+
+### `resolve`
+
+Approve or reject an approval request.
+
+```bash
+caw approval resolve <APPROVAL_ID> --action approve --approval-result '{"result": "..."}'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--action` | Yes | Resolution action: `approve` or `reject` |
+| `--approval-result` | No | Approval result as a JSON string (required when `--action approve`) |
+| `--rejection-reason` | No | Human-readable reason for rejection (used when `--action reject`) |
+
+## `caw agent`
+
+Manage agents and API keys.
+
+### `status`
+
+Get the current status and configuration of an agent.
+
+```bash
+caw agent status --agent-id <AGENT_ID>
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--agent-id` | Yes | Agent principal ID to query |
+
+### `list`
+
+List agents owned by the current user.
+
+```bash
+caw agent list --limit 20
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `api-key create`
+
+Create a new API key. The key value is returned once and cannot be retrieved again.
+
+```bash
+caw agent api-key create --name "prod-key"
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--name` | Yes | Display name for the API key |
+| `--agent-id` | No | Agent principal ID to create the key for. Defaults to the authenticated agent |
+| `--scopes` | No | Comma-separated permission scopes, e.g. `read:wallet,write:transfer` |
+| `--expires-at` | No | API key expiry as an RFC 3339 timestamp. If omitted, the key does not expire |
+
+### `api-key list`
+
+List API keys for the authenticated agent.
+
+```bash
+caw agent api-key list
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--limit` | `50` | Maximum results (1–200) |
+| `--offset` | `0` | Number of results to skip |
+
+### `api-key revoke`
+
+Permanently revoke an API key. Any requests using the key will immediately start failing.
+
+```bash
+caw agent api-key revoke <API_KEY_ID> --yes
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--yes` / `-y` | `false` | Skip the confirmation prompt |
+
+## `caw audit`
+
+### `logs`
+
+List policy evaluation audit log entries. Each entry records whether an operation was allowed, denied, or errored, and which policy matched.
+
+```bash
+caw audit logs --wallet <WALLET_UUID> --result denied --limit 20
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--wallet` | — | Filter by wallet UUID |
+| `--principal-id` | — | Filter by the operator principal ID that triggered the operation |
+| `--result` | — | Filter by policy result: `allowed`, `denied`, or `error` |
+| `--action` | — | Filter by action type: `transfer` or `contract_call` |
+| `--start-time` | — | Return entries at or after this time (RFC 3339, e.g. `2026-01-01T00:00:00Z`) |
+| `--end-time` | — | Return entries at or before this time (RFC 3339, e.g. `2026-12-31T23:59:59Z`) |
+| `--cursor` | — | Pagination cursor from a prior response |
+| `--limit` | `50` | Maximum results (1–200) |
+
+## `caw faucet`
+
+Request testnet tokens. Only available on testnet environments.
+
+### `tokens`
+
+List available testnet tokens.
+
+```bash
+caw faucet tokens
+```
+
+### `deposit`
+
+Request testnet tokens for a wallet address.
+
+```bash
+caw faucet deposit --address 0x1234...abcd --token SETH_USDC
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--address` / `-a` | Yes | On-chain address to receive the testnet tokens |
+| `--token` / `-t` | Yes | Testnet token ID to request, e.g. `SOLDEV_SOL_USDC`. Use `caw faucet tokens` to list available tokens |
+
+## `caw meta`
+
+Query supported chains, tokens, and prices.
+
+### `chains`
+
+List supported chains and their chain IDs.
+
+```bash
+caw meta chains --chain-ids SETH,BASE_ETH
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--wallet-type` | `MPC-UCW` | Wallet type to filter by |
+| `--chain-ids` | — | Filter by chain ID. Accepts a comma-separated list, e.g. `SETH,BASE_ETH` |
+| `--limit` | `50` | Maximum results |
+| `--before` | — | Cursor for the previous page (from a prior response) |
+| `--after` | — | Cursor for the next page (from a prior response) |
+
+### `chain-info`
+
+Get chain details by chain ID.
+
+```bash
+caw meta chain-info SETH
+```
+
+### `tokens`
+
+List supported token IDs and their metadata.
+
+```bash
+caw meta tokens --chain-ids SETH
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--wallet-type` | `MPC-UCW` | Wallet type to filter by |
+| `--chain-ids` | — | Filter by chain ID. Accepts a comma-separated list, e.g. `SETH,BASE_ETH` |
+| `--token-ids` | — | Filter by token ID. Accepts a comma-separated list, e.g. `SETH,SETH_USDC` |
+| `--limit` | `50` | Maximum results |
+| `--before` | — | Cursor for the previous page (from a prior response) |
+| `--after` | — | Cursor for the next page (from a prior response) |
+
+### `prices`
+
+Get current market prices for one or more assets.
+
+```bash
+caw meta prices ETH,BTC,USDC --currency USD
+```
+
+| Argument/Option | Required | Default | Description |
+|---|---|---|---|
+| `ASSET_COINS` (positional) | Yes | — | Comma-separated asset coin IDs (e.g. `ETH,BTC,USDC`) |
+| `--currency` | No | `USD` | Quote currency |
+
+## `caw demo`
+
+Run the quickstart demo workflow end-to-end.
+
+```bash
+caw demo
+```

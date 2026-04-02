@@ -2,41 +2,312 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Cobo Agentic Wallet",
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "python",
+        "bash"
+      ]
+    }
+  },
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#1E40AF",
-    "light": "#3B82F6",
-    "dark": "#0F172A"
+    "primary": "#1F32D6",
+    "light": "#1F32D6",
+    "dark": "#1F32D6"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/CoboGlobal/cobo-agentic-wallet"
+      },
+      {
+        "label": "PyPI",
+        "href": "https://pypi.org/project/cobo-agentic-wallet/"
+      }
+    ],
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/CoboGlobal/cobo-agentic-wallet"
+    }
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Get Started",
         "groups": [
           {
             "group": "Overview",
             "pages": [
-              "introduction"
+              "introduction",
+              "wallet-owner/features",
+              "wallet-owner/key-concepts",
+              "developer/overview/supported-chains"
+            ]
+          },
+          {
+            "group": "Connect Your Agent",
+            "pages": [
+              "wallet-owner/connect-agent-web-console",
+              "wallet-owner/connect-agent-human-app"
+            ]
+          },
+          {
+            "group": "Control Your Agent",
+            "pages": [
+              "wallet-owner/approve",
+              "wallet-owner/pending-ops",
+              "wallet-owner/freeze"
+            ]
+          },
+          {
+            "group": "Manage Your Wallet",
+            "pages": [
+              "wallet-owner/activity",
+              "wallet-owner/policies"
+            ]
+          },
+          {
+            "group": "Human Interfaces",
+            "pages": [
+              "wallet-owner/web-console",
+              "wallet-owner/human-app"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Security & Controls",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "security/overview"
+            ]
+          },
+          {
+            "group": "Why Your Funds Stay Yours",
+            "pages": [
+              "security/custodial-model",
+              "security/mpc-key-shares"
+            ]
+          },
+          {
+            "group": "Authorization & Enforcement",
+            "pages": [
+              "security/pact-mechanism",
+              "security/policy-engine",
+              "security/spend-limits",
+              "security/address-allowlists"
+            ]
+          },
+          {
+            "group": "Monitoring & Response",
+            "pages": [
+              "security/freeze-revoke"
+            ]
+          },
+          {
+            "group": "Key Share Management",
+            "pages": [
+              "security/keygen-resharing",
+              "security/key-share-recovery"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Blockchain basics",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "learn/overview"
+            ]
+          },
+          {
+            "group": "Agentic Wallets",
+            "pages": [
+              "learn/agentic-wallets/what-is-agentic-wallet",
+              "learn/agentic-wallets/delegated-authority",
+              "learn/agentic-wallets/policy-first-design",
+              "learn/agentic-wallets/autonomy-spectrum",
+              "learn/agentic-wallets/ai-specific-risks",
+              "learn/agentic-wallets/multi-agent-trust"
+            ]
+          },
+          {
+            "group": "Blockchain Basics",
+            "pages": [
+              "learn/blockchain-basics/chains",
+              "learn/blockchain-basics/tokens",
+              "learn/blockchain-basics/wallets",
+              "learn/blockchain-basics/transactions",
+              "learn/blockchain-basics/smart-contracts",
+              "learn/blockchain-basics/testnets"
+            ]
+          },
+          {
+            "group": "DeFi Fundamentals",
+            "pages": [
+              "learn/defi/overview",
+              "learn/defi/token-swaps",
+              "learn/defi/lending-borrowing",
+              "learn/defi/liquidity-pools",
+              "learn/defi/staking"
+            ]
+          },
+          {
+            "group": "Working with Contracts",
+            "pages": [
+              "learn/contracts/abi-calldata",
+              "learn/contracts/erc20-approvals",
+              "learn/contracts/common-protocols"
             ]
           }
         ]
       },
       {
         "tab": "Recipes",
-        "groups": []
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "recipes"
+            ]
+          },
+          {
+            "group": "DeFi & Trading",
+            "pages": [
+              "recipes/trading-execution",
+              "recipes/dca-trader",
+              "recipes/defi-yield-optimizer",
+              "recipes/lending-arbitrage",
+              "recipes/prediction-market"
+            ]
+          },
+          {
+            "group": "Payments",
+            "pages": [
+              "recipes/discord-tip-bot",
+              "recipes/api-micropayment",
+              "recipes/org-payroll",
+              "recipes/streaming-payroll",
+              "recipes/saas-subscription"
+            ]
+          },
+          {
+            "group": "Agent Infrastructure",
+            "pages": [
+              "recipes/emergency-kill-switch",
+              "recipes/agent-to-agent"
+            ]
+          }
+        ]
       },
       {
-        "tab": "SDK Reference",
-        "groups": []
+        "tab": "Developer",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "developer/overview/integration-modes",
+              "developer/overview/features",
+              "developer/overview/technical-architecture",
+              "developer/overview/supported-chains",
+              "developer/overview/glossary"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "developer/concepts/pact-lifecycle",
+              "developer/concepts/mpc-security"
+            ]
+          },
+          {
+            "group": "Quick Start",
+            "pages": [
+              "developer/quickstart/overview",
+              "developer/quickstart/guide-users",
+              "developer/quickstart/cli",
+              "developer/quickstart/custom-skill",
+              "developer/quickstart/mcp",
+              "developer/quickstart/api-client-python",
+              "developer/quickstart/langchain",
+              "developer/quickstart/openai",
+              "developer/quickstart/agno",
+              "developer/quickstart/crewai"
+            ]
+          },
+          {
+            "group": "How-to",
+            "pages": [
+              "developer/guides/pacts",
+              "developer/guides/transact",
+              "developer/guides/handle-policy-denial",
+              "developer/guides/batch-operations",
+              "developer/guides/manage-wallet",
+              "developer/guides/audit"
+            ]
+          },
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog"
+            ]
+          }
+        ]
       },
       {
-        "tab": "API Reference",
-        "groups": []
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Tools",
+            "pages": [
+              "sdk/cli",
+              "sdk/mcp"
+            ]
+          },
+          {
+            "group": "SDK",
+            "pages": [
+              "sdk/python",
+              "sdk/typescript"
+            ]
+          },
+          {
+            "group": "Framework Integrations",
+            "pages": [
+              "sdk/integrations/toolkit",
+              "sdk/integrations/langchain",
+              "sdk/integrations/openai",
+              "sdk/integrations/agno",
+              "sdk/integrations/crewai"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/overview"
+            ],
+            "openapi": "openapi.json"
+          }
+        ]
       }
     ]
+  },
+  "footerSocials": {
+    "x": "https://x.com/Cobo_Global",
+    "github": "https://github.com/CoboGlobal",
+    "linkedin": "https://www.linkedin.com/company/cobo"
   }
 }

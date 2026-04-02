@@ -1,0 +1,179 @@
+---
+title: "ABIs and calldata"
+description: "How function selectors and ABI encoding work, and how to generate calldata for Cobo contract calls."
+---
+
+## What is an ABI
+
+An **ABI** (Application Binary Interface) is a JSON document that describes a smart contract's interface: every function, its parameter types, and its return types. It is the schema you need to encode calls to the contract and decode responses.
+
+Example: the ERC-20 `transfer` function in ABI format:
+
+```json
+{
+  "name": "transfer",
+  "type": "function",
+  "inputs": [
+    {"name": "to", "type": "address"},
+    {"name": "amount", "type": "uint256"}
+  ],
+  "outputs": [{"name": "", "type": "bool"}],
+  "stateMutability": "nonpayable"
+}
+```
+
+Without the ABI, you must manually encode raw bytes. With the ABI, libraries like `eth_abi` (Python) or `viem` (TypeScript) generate calldata for you.
+
+## Function selector
+
+Every contract function call starts with a **4-byte selector** — the first 4 bytes of the Keccak-256 hash of the function signature.
+
+The function signature is: function name + `(` + comma-separated parameter types + `)`. No spaces, no parameter names.
+
+```
+transfer(address,uint256)
+approve(address,uint256)
+exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))
+supply(address,uint256,address,uint16)
+```
+
+Computing a selector in Python:
+
+```python
+from web3 import Web3
+
+signatures = [
+    "transfer(address,uint256)",
+    "approve(address,uint256)",
+    "supply(address,uint256,address,uint16)",
+]
+
+for sig in signatures:
+    selector = Web3.keccak(text=sig)[:4].hex()
+    print(f"0x{selector}  {sig}")
+```
+
+Output:
+```
+0xa9059cbb  transfer(address,uint256)
+0x095ea7b3  approve(address,uint256)
+0x617ba037  supply(address,uint256,address,uint16)
+```
+
+These selectors are deterministic and universal — `0xa9059cbb` always means `transfer(address,uint256)` on any EVM contract.
+
+## ABI encoding
+
+After the 4-byte selector, parameters are **ABI-encoded**: each value is padded to 32 bytes.
+
+### Static types
+
+Static types have fixed size:
+
+| Type | Encoding |
+|---|---|
+| `address` | 12 zero bytes + 20-byte address (right-aligned) |
+| `uint256` | 32-byte big-endian integer |
+| `bool` | 32 bytes, 0x01 = true, 0x00 = false |
+| `bytes32` | 32 bytes, right-padded with zeroes |
+
+### Dynamic types
+
+Dynamic types (bytes, string, arrays) use an **offset + length + data** encoding:
+1. A 32-byte offset pointing to where the data starts.
+2. At the data location: a 32-byte length, then the data (right-padded to 32-byte boundary).
+
+For most DeFi work you will deal with static types. Use a library — never encode dynamic types by hand.
+
+### Tuple (struct) types
+
+Uniswap v3 and many modern contracts use `(type1,type2,...)` tuple notation in function signatures. Tuples are encoded by concatenating their fields in order.
+
+## Generating calldata in Python
+
+```python
+from web3 import Web3
+from eth_abi import encode
+
+def build_calldata(func_sig: str, types: list, args: list) -> str:
+    """Build ABI-encoded calldata for a function call."""
+    selector = Web3.keccak(text=func_sig)[:4].hex()
+    encoded = encode(types, args).hex()
+    return "0x" + selector + encoded
+
+# ERC-20 approve(spender, amount)
+calldata = build_calldata(
+    "approve(address,uint256)",
+    ["address", "uint256"],
+    ["0xSpenderAddress...", 1_000 * 10**6]  # 1000 USDC
+)
+
+# Uniswap v3 exactInputSingle with tuple param
+calldata = build_calldata(
+    "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))",
+    ["(address,address,uint24,address,uint256,uint256,uint160)"],
+    [(
+        "0xTokenIn...",
+        "0xTokenOut...",
+        500,               # fee tier (0.05%)
+        "0xRecipient...",
+        1_000 * 10**6,     # amountIn
+        990 * 10**18,      # amountOutMinimum (0.99 ETH)
+        0,                 # sqrtPriceLimitX96
+    )]
+)
+```
+
+## Generating calldata in TypeScript
+
+```typescript
+import { encodeFunctionData, parseAbi } from 'viem';
+
+// ERC-20 approve
+const approveCd = encodeFunctionData({
+  abi: parseAbi(['function approve(address spender, uint256 amount) returns (bool)']),
+  functionName: 'approve',
+  args: ['0xSpenderAddress', BigInt(1000) * BigInt(10**6)],
+});
+
+// Aave supply
+const supplyCd = encodeFunctionData({
+  abi: parseAbi([
+    'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
+  ]),
+  functionName: 'supply',
+  args: ['0xUSDC...', BigInt(1000) * BigInt(10**6), '0xWalletAddress...', 0],
+});
+```
+
+## Passing calldata to Cobo
+
+Once you have the calldata hex string, pass it to the contract call:
+
+```bash
+caw tx call <WALLET_ID> \
+  --contract 0xContractAddress \
+  --calldata 0xa9059cbb000000000000000000000000... \
+  --chain BASE_ETH
+```
+
+```python
+result = await client.call_contract(
+    wallet_id=wallet_id,
+    chain_id="BASE_ETH",
+    contract_addr="0xContractAddress",
+    calldata="0xa9059cbb000000000000000000000000...",
+)
+```
+
+The Cobo policy engine reads the function selector from your calldata to match against `function_in` rules in your Pact. Make sure the function signature in your policy matches exactly the one you use to generate the selector.
+
+## Finding a contract's ABI
+
+**Etherscan / Basescan** — Search for the contract address → Contract tab → ABI. Any contract with a green checkmark is verified with a readable ABI.
+
+**Protocol GitHub** — Most DeFi protocols publish ABIs in their repositories, usually in the `artifacts/` or `abi/` directory.
+
+**4byte.directory** — Look up a function by its 4-byte selector if you have raw calldata and need to identify the function.
+
+**npm packages** — Some protocols publish ABIs as npm packages (e.g., `@uniswap/v3-core`, `@aave/core-v3`).

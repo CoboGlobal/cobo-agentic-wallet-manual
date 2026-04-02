@@ -1,6 +1,78 @@
 ---
 title: "Introduction"
-description: "A crypto wallet engine for AI agents"
+description: "The trust layer between you and your agent. Don't give your agent a wallet — give it a budget and a rulebook."
 ---
 
-This documentation helps you build and integrate with a wallet service designed for AI agents. Use it to create agents that can perform transfers, manage balances, and execute on-chain actions in a controlled way.
+## What is Cobo Agentic Wallet?
+
+Cobo Agentic Wallet is a crypto wallet service designed for AI agents. It gives your agent the ability to hold and move crypto, while you stay in control through spend limits, approval workflows, and a full activity log — all manageable from your phone with no code required.
+
+## How it works
+
+1. **Create your wallet** — install the Cobo Agentic Wallet skill and run `caw onboard`. No account required. Your agent can start transacting immediately.
+2. **Claim ownership** — download the Human App and enter the claim code your agent generates. Your signing keys are created on your device. Your agent becomes a delegate operating within your rules.
+3. **Your agent operates** — transactions within your policy execute automatically. Operations above your threshold pause for your approval in the Human App.
+
+<Info>Claiming is optional. If you are building or testing, your agent can operate without a human owner. Claim when you are ready to put real funds under your personal control.</Info>
+
+## Key features
+
+| Feature | What it means |
+|---|---|
+| **No-registration start** | Your agent creates the wallet with one command — no account or sign-up needed |
+| **Claim and control** | Transfer ownership to yourself via the Human App; your agent becomes a delegate bound by your rules |
+| **Authorization requests** | When your agent wants to take on a new task, it submits a request you review and approve — then it operates within those exact boundaries |
+| **Approval workflows** | Operations above your threshold pause and wait for your go-ahead from the Human App |
+| **Structured denials** | When a request is blocked, the agent gets a clear reason so it can adjust and retry |
+| **Full audit trail** | Every action — allowed, denied, or approved — is logged with timestamps and details |
+
+## Tools
+
+Your agent and your management tools all connect through Cobo Agentic Wallet. Your agent handles execution — it calls the SDK or API to submit transactions, read balances, and respond to policy decisions. You use the Human App to set rules, review approvals, and monitor activity.
+
+<img src="/images/tools-overview.svg" alt="Diagram showing your agent on the left connecting to Cobo Agentic Wallet in the center via the SDK or API, with the Web Console and Human App on the right for owner-side management" />
+
+**Your agent** — the AI you've built or deployed. Connects to Cobo Agentic Wallet using the Python SDK, TypeScript SDK, CLI, or REST API. Transactions within your rules execute automatically; anything above your threshold pauses for your go-ahead.
+
+**Human App** — your primary owner interface. Claim your wallet, set rules, approve transactions, review activity, and freeze your agent — all from your phone. Your signing keys are stored on the device, not on a server.
+
+**Web Console** — a browser-based interface for exploring the product and getting guidance from an AI assistant before you set up your wallet.
+
+## Common questions
+
+<AccordionGroup>
+  <Accordion title="Can the agent send money without my approval?">
+    Before you claim the wallet, yes — your agent is the owner and has no restrictions. After you claim, your agent operates within your Default Policy. You set a threshold — transactions below it execute automatically, and anything above it pauses until you approve. You can also require approval for every transaction. You always decide where the line is.
+  </Accordion>
+  <Accordion title="Does the agent ever hold my private keys?">
+    No. Keys are never held by the agent or stored in any one place. Signing authority is split across multiple independent parties using Multi-Party Computation. No single party — including the agent or Cobo — can move your funds alone.
+  </Accordion>
+  <Accordion title="What's the worst that can happen?">
+    After claiming, your agent can only access the one wallet you connected it to, and only within the rules you set. Transactions above your approval threshold are blocked until you review them. You can pause your agent at any time — pausing takes effect immediately with no delay or grace period.
+  </Accordion>
+  <Accordion title="Who pays gas fees?">
+    You do not need to keep gas tokens in your agent wallet. Cobo Gasless handles on-chain transaction fees automatically.
+  </Accordion>
+  <Accordion title="How do I stop everything immediately if something looks wrong?">
+    From the Human App or the AI assistant (say "Freeze my agent"), you can pause your agent in one action. There is no delay — it takes effect the moment you confirm.
+  </Accordion>
+</AccordionGroup>
+
+## Where would you like to start?
+
+<CardGroup cols={2}>
+  <Card
+    title="I own a wallet"
+    icon="wallet"
+    href="/wallet-owner/connect-agent-web-console"
+  >
+    Create your wallet with one command, then claim it in the Human App to take control.
+  </Card>
+  <Card
+    title="I'm building an agent"
+    icon="code"
+    href="/developer/overview/integration-modes"
+  >
+    Integrate wallet tools into your agent, handle policy enforcement, and manage the full transaction lifecycle.
+  </Card>
+</CardGroup>
