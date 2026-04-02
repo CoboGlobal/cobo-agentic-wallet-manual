@@ -1,0 +1,715 @@
+---
+title: "Set Policies"
+description: "Control what your agent can do: restrict chains and tokens, set spending limits, require approvals, and more."
+---
+
+Policies define the rules your agent must follow. Every operation is evaluated against your active policies before executing on-chain. Every decision is logged in the audit trail.
+
+For common usage, go straight to [examples](#examples). For a full field listing, see the [rules reference](#rules-reference).
+
+## How policies work
+
+**Types** — Two policy types are available:
+
+| Type | Controls |
+|---|---|
+| `transfer` | Token transfers — which chains, tokens, and destinations are permitted; spending limits; approval thresholds |
+| `contract_call` | Contract calls — which contracts and functions the agent may call; parameter guards; spending limits; approval thresholds |
+
+**Scopes** — Each policy has a scope that determines what it applies to. All three tiers are evaluated in parallel; a DENY from any tier blocks the operation.
+
+| Scope | Applied to | Supports |
+|---|---|---|
+| `global` | All operations for this owner, across all wallets | DENY rules only |
+| `wallet` | All operations on a specific wallet | ALLOW and DENY |
+| `delegation` | Only operations through a specific delegation | ALLOW and DENY |
+
+**Allow vs. deny** — The `effect` field in `rules` controls what the policy does when it matches.
+
+- **`"allow"`** — defines what the agent is permitted to do. At each scope tier, at least one ALLOW rule must match for the operation to proceed. If ALLOW rules exist at a tier and none of them match, the operation is denied.
+- **`"deny"`** — acts as a veto. If any DENY rule matches, the operation is blocked immediately.
+
+If no policies are configured, all operations are **allowed by default**.
+
+<Note>Global-scope policies only support DENY rules. ALLOW rules at global scope are not permitted.</Note>
+
+## Rules syntax
+
+Each policy's `rules` object follows a three-segment pattern:
+
+```json
+{
+  "effect": "allow",
+  "when": { ... },
+  "review_if": { ... }
+}
+```
+
+| Segment | On `allow` | On `deny` |
+|---|---|---|
+| `when` | What the rule matches (required unless `always_review: true`) | What the rule matches (optional — omit to match everything) |
+| `review_if` | Conditions that escalate an allowed operation to require approval | Not applicable |
+| `always_review` | Route all matched operations to approval | Not applicable |
+| `deny_if` | Not applicable | Conditions that trigger the denial (omit to deny on `when` match) |
+
+**Summary:**
+- `effect=allow` supports: `when`, `review_if`, `always_review`
+- `effect=deny` supports: `when`, `deny_if`
+
+## How the engine decides
+
+The engine evaluates all three scope tiers in parallel. For each tier:
+
+1. **DENY rules first** — if any DENY policy in that tier matches, the operation is immediately denied.
+2. **ALLOW rules next** — if ALLOW policies exist in that tier and at least one matches, the tier passes. If ALLOW policies exist but none match, the operation is denied.
+3. **Approval check** — for each matched ALLOW rule, the engine checks `review_if` and `always_review`. If any condition triggers, the operation is escalated to `require_approval`.
+
+If no tier denies and no approval condition triggers, the final result is `allow`.
+
+**Decision outcomes:**
+
+- **`allow`** — executes immediately, no human action needed.
+- **`require_approval`** — paused as a pending operation. The owner must approve before execution.
+- **`deny`** — rejected. No pending operation is created.
+
+**Priority** — When multiple policies of the same type exist at the same scope, `priority` controls evaluation order within that tier. Higher values are evaluated first; for equal priorities, newer policies come first. Default is `0`.
+
+## Managing policies
+
+### Create
+
+```json
+POST /policies
+
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "my-policy",
+  "policy_type": "transfer",
+  "priority": 0,
+  "is_active": true,
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["SETH"]
+    }
+  }
+}
+```
+
+### List
+
+```json
+GET /policies?scope=wallet&wallet_id=<WALLET_ID>
+```
+
+### Update
+
+Update is a partial patch — only the fields you include are changed. When `rules` is included, the entire rules object is replaced.
+
+```json
+PATCH /policies/{policy_id}
+
+{
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["SETH", "BASE"]
+    }
+  }
+}
+```
+
+### Deactivate
+
+Deactivating a policy disables it without deleting it.
+
+```json
+DELETE /policies/{policy_id}
+```
+
+### Dry-run
+
+Test how your policies would evaluate an operation without executing it. Uses the same evaluation logic as live execution.
+
+```json
+POST /policies/dry-run
+
+{
+  "wallet_id": "<WALLET_ID>",
+  "operation_type": "transfer",
+  "amount": "1500",
+  "chain_id": "SETH",
+  "token_id": "USDC",
+  "dst_addr": "0xRecipient..."
+}
+```
+
+Response:
+
+```json
+{
+  "effect": "require_approval",
+  "reason": "operation_matched_approval_conditions",
+  "approval_trigger_policy_ids": ["<POLICY_ID>"],
+  "applicable_limits": [],
+  "tier_evaluations": [...]
+}
+```
+
+`effect` is one of `"allow"`, `"require_approval"`, or `"deny"`.
+
+## Pending operations
+
+When an operation triggers `require_approval`, it is paused as a pending operation. The owner must approve before execution proceeds.
+
+```
+Agent calls transfer(amount=2000)
+  ↓
+API responds HTTP 202
+  { "status": "require_approval", "pending_operation_id": "op-abc-123" }
+  ↓
+Cobo Agentic Wallet service emits SSE: approval.requested
+  ↓
+Owner approves via Human App or API
+  ↓
+Transfer executes on-chain
+```
+
+Pending operations expire after **1 hour** if not acted on.
+
+**List pending operations:**
+
+```json
+GET /pending-operations
+```
+
+**Get one:**
+
+```json
+GET /pending-operations/{pending_operation_id}
+```
+
+**Approve:**
+
+```json
+POST /pending-operations/{pending_operation_id}/approve
+```
+
+**Reject:**
+
+```json
+POST /pending-operations/{pending_operation_id}/reject
+
+{
+  "reason": "Amount too large for this operation"
+}
+```
+
+## Rules reference
+
+### Transfer rules (`policy_type: transfer`)
+
+**Top-level fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `effect` | string | `"allow"` (default) or `"deny"` |
+| `when` | object | Match conditions. Required for `allow` unless `always_review: true` |
+| `always_review` | boolean | ALLOW only. If `true`, all matched operations require approval. Can be set with or without `when` |
+| `review_if` | object | ALLOW only. Conditions under which an allowed operation is escalated to approval |
+| `deny_if` | object | DENY only. Conditions under which the denial is triggered. If omitted, denies on `when` match |
+
+**`when` conditions** — all present conditions are ANDed:
+
+| Field | Type | Description |
+|---|---|---|
+| `chain_in` | `string[]` | Match transfers on these Cobo chain IDs (e.g. `["SETH", "BASE"]`) |
+| `token_in` | `{chain_id, token_id}[]` | Match transfers of these tokens |
+| `destination_address_in` | `{chain_id, address}[]` | Match transfers to these destination addresses |
+
+**`review_if` conditions** (ALLOW only) — any condition triggers approval:
+
+| Field | Type | Description |
+|---|---|---|
+| `amount_gt` | string | Trigger when token amount exceeds this value |
+| `amount_usd_gt` | string | Trigger when USD equivalent exceeds this value |
+| `chain_in` | `string[]` | Only trigger on these chains |
+| `token_in` | `{chain_id, token_id}[]` | Only trigger for these tokens |
+| `destination_address_in` | `{chain_id, address}[]` | Only trigger for these destination addresses |
+
+**`deny_if` conditions** (DENY only) — any condition triggers denial:
+
+| Field | Type | Description |
+|---|---|---|
+| `amount_gt` | string | Deny when token amount exceeds this value |
+| `amount_usd_gt` | string | Deny when USD equivalent exceeds this value |
+| `usage_limits` | object | Rolling window limits (see below) |
+
+**`deny_if.usage_limits`** — each window can define one or more metrics. Windows are sliding, not calendar-reset.
+
+| Window | Description |
+|---|---|
+| `rolling_1h` | Sliding 1-hour window |
+| `rolling_24h` | Sliding 24-hour window |
+| `rolling_7d` | Sliding 7-day window |
+| `rolling_30d` | Sliding 30-day window |
+
+Each window object accepts:
+
+| Field | Type | Description |
+|---|---|---|
+| `amount_gt` | string | Deny when cumulative token amount in the window exceeds this value |
+| `amount_usd_gt` | string | Deny when cumulative USD amount in the window exceeds this value |
+| `tx_count_gt` | integer | Deny when transaction count in the window exceeds this value |
+
+<Note>ALLOW transfer policies must define at least one `when` condition, or set `always_review: true`.</Note>
+
+### Contract call rules (`policy_type: contract_call`)
+
+**Top-level fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `effect` | string | `"allow"` (default) or `"deny"` |
+| `when` | object | Match conditions. Required for `allow` unless `always_review: true` |
+| `always_review` | boolean | ALLOW only. Route all matched calls to approval |
+| `review_if` | object | ALLOW only. Conditions that escalate a matched call to approval |
+| `deny_if` | object | DENY only. Conditions that trigger the denial. If omitted, denies on `when` match |
+| `function_abis` | `{selector, inputs}[]` | Required when `params_match` is used anywhere in the rule. Provides the ABI for decoding calldata |
+
+**`when` conditions** — all present conditions are ANDed:
+
+| Field | Type | Description |
+|---|---|---|
+| `chain_in` | `string[]` | Match calls on these chains |
+| `target_in` | `{chain_id, contract_addr, function_id?}[]` | Match calls to these contracts or functions. `function_id` is the 4-byte selector (e.g. `"0x38ed1739"`). Omit `function_id` to match any function on that contract |
+| `params_match` | `{param_name, op, value}[]` | Match calls where decoded parameters satisfy these constraints. Requires `function_abis` |
+
+**`review_if` conditions** (ALLOW only):
+
+| Field | Type | Description |
+|---|---|---|
+| `amount_gt` | string | Trigger when native token value sent exceeds this value |
+| `amount_usd_gt` | string | Trigger when USD equivalent exceeds this value |
+| `chain_in` | `string[]` | Only trigger on these chains |
+| `target_in` | `{chain_id, contract_addr, function_id?}[]` | Only trigger for these targets |
+| `params_match` | `{param_name, op, value}[]` | Trigger when decoded parameters satisfy these constraints |
+
+**`deny_if` conditions** (DENY only):
+
+| Field | Type | Description |
+|---|---|---|
+| `amount_gt` | string | Deny when native token value exceeds this value |
+| `amount_usd_gt` | string | Deny when USD equivalent exceeds this value |
+| `usage_limits` | object | Rolling window limits — same structure as transfer rules |
+
+**`params_match` operators:**
+
+| Operator | Meaning |
+|---|---|
+| `eq` | Equal |
+| `neq` | Not equal |
+| `in` | Value is in the list |
+| `not_in` | Value is not in the list |
+| `lt` | Less than |
+| `lte` | Less than or equal |
+| `gt` | Greater than |
+| `gte` | Greater than or equal |
+
+**`function_abis` format:**
+
+```json
+{
+  "selector": "0x38ed1739",
+  "inputs": [
+    { "name": "amountIn", "type": "uint256" },
+    { "name": "recipient", "type": "address" }
+  ]
+}
+```
+
+Supported input types for parameter decoding: `uint*`, `int*`, `bool`, `address`, `bytes32`.
+
+<Note>ALLOW contract call policies must define at least one `when` condition, or set `always_review: true`. If `params_match` is used in `when` or `review_if`, `function_abis` is required.</Note>
+
+<Note>If `function_abis` is configured and the engine cannot decode the calldata using the provided ABI, the operation is denied. This is intentional — a mismatch between the expected and actual function signature likely indicates a malformed or unexpected call.</Note>
+
+## Recommended configurations
+
+These patterns cover the most common agent setups. Adjust chain IDs, token IDs, and thresholds to match your agent's actual use case. All `when` conditions are ANDed.
+
+### Conservative — small automated payments
+
+Allow USDC transfers on Base only; require approval above $100; hard cap at $500/day.
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "small-payments-allow",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["BASE"],
+      "token_in": [{ "chain_id": "BASE", "token_id": "USDC" }]
+    },
+    "review_if": {
+      "amount_usd_gt": "100"
+    }
+  }
+}
+```
+
+Pair with a rolling-window deny policy at the same scope:
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "small-payments-daily-cap",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "deny",
+    "when": { "chain_in": ["BASE"] },
+    "deny_if": {
+      "usage_limits": {
+        "rolling_24h": { "amount_usd_gt": "500", "tx_count_gt": 20 }
+      }
+    }
+  }
+}
+```
+
+- `review_if.amount_usd_gt: "100"` — anything over $100 pauses for owner approval
+- `rolling_24h.amount_usd_gt: "500"` — daily outflow ceiling across all transactions in the window
+
+### DeFi execution — contract whitelist with approval threshold
+
+Allow calls to specific DeFi contracts only; require approval for large positions.
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "defi-contracts-allow",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "target_in": [
+        { "chain_id": "SETH", "contract_addr": "0xUniswapRouter..." },
+        { "chain_id": "SETH", "contract_addr": "0xAavePool..." }
+      ]
+    },
+    "review_if": {
+      "amount_usd_gt": "1000"
+    }
+  }
+}
+```
+
+- Whitelisting `target_in` means calls to any other contract are implicitly denied
+- `review_if.amount_usd_gt: "1000"` — large positions still require owner sign-off
+
+---
+
+## Common mistakes
+
+| Mistake | What goes wrong |
+|---|---|
+| No policies at all | Default is allow-all — the agent operates with no guardrails |
+| `always_review: true` at global scope | Invalid — global scope supports DENY rules only; this will error |
+| ALLOW `contract_call` with no `when` and no `always_review` | Invalid — ALLOW rules require at least one `when` condition or `always_review: true` |
+| `review_if.amount_usd_gt` higher than any realistic transfer | The approval threshold is never triggered; all transfers execute automatically |
+| DENY policy with `deny_if` but no corresponding ALLOW policy | Operations are allowed by default (no ALLOW exists), so the DENY is never evaluated |
+| `function_abis` with the wrong ABI | If the engine can't decode calldata against the provided ABI, the call is denied — a misconfigured ABI becomes an accidental blanket block |
+| Rolling window using only `tx_count_gt` | A single large transfer below the count limit bypasses all spending controls; combine with `amount_usd_gt` |
+| `review_if` threshold higher than `deny_if` threshold | Operations are denied before they can reach the approval check |
+
+---
+
+## Examples
+
+### Transfer examples
+
+#### Allow specific chains
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "allow-seth-only",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["SETH"]
+    }
+  }
+}
+```
+
+#### Allow with token and destination restrictions
+
+All `when` conditions are ANDed — all must match.
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "usdc-to-approved-address",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["SETH"],
+      "token_in": [
+        { "chain_id": "SETH", "token_id": "USDC" }
+      ],
+      "destination_address_in": [
+        { "chain_id": "SETH", "address": "0xPayroll..." }
+      ]
+    }
+  }
+}
+```
+
+#### Allow but require approval for large amounts
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "seth-with-approval-threshold",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "chain_in": ["SETH"]
+    },
+    "review_if": {
+      "amount_gt": "1000"
+    }
+  }
+}
+```
+
+#### Always require approval
+
+`always_review: true` with no `when` conditions matches every transfer and routes it to approval.
+
+```json
+{
+  "scope": "delegation",
+  "delegation_id": "<DELEGATION_ID>",
+  "name": "always-approve",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "allow",
+    "always_review": true
+  }
+}
+```
+
+#### Block a chain (global deny)
+
+```json
+{
+  "scope": "global",
+  "name": "block-bsc",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "deny",
+    "when": {
+      "chain_in": ["BSC_BNB"]
+    }
+  }
+}
+```
+
+#### Deny only above a threshold
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "deny-large-transfers",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "deny",
+    "when": {
+      "chain_in": ["SETH"]
+    },
+    "deny_if": {
+      "amount_gt": "5000"
+    }
+  }
+}
+```
+
+#### Rolling window spending limits
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "rolling-limits",
+  "policy_type": "transfer",
+  "rules": {
+    "effect": "deny",
+    "when": {
+      "chain_in": ["SETH"]
+    },
+    "deny_if": {
+      "usage_limits": {
+        "rolling_1h":  { "tx_count_gt": 5 },
+        "rolling_24h": { "amount_gt": "20000", "tx_count_gt": 20 },
+        "rolling_7d":  { "amount_usd_gt": "100000" }
+      }
+    }
+  }
+}
+```
+
+### Contract call examples
+
+#### Allow a specific contract
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "allow-uniswap",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "target_in": [
+        { "chain_id": "SETH", "contract_addr": "0xrouter..." }
+      ]
+    }
+  }
+}
+```
+
+#### Allow a specific function only
+
+`function_id` is the 4-byte ABI selector (first 4 bytes of the calldata).
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "swap-function-only",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "target_in": [
+        {
+          "chain_id": "SETH",
+          "contract_addr": "0xrouter...",
+          "function_id": "0x38ed1739"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Guard on a decoded parameter
+
+Use `params_match` to restrict allowed parameter values. `function_abis` is required to decode the calldata.
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "min-amount-guard",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "target_in": [
+        {
+          "chain_id": "SETH",
+          "contract_addr": "0xrouter...",
+          "function_id": "0x38ed1739"
+        }
+      ],
+      "params_match": [
+        { "param_name": "amountIn", "op": "gte", "value": "1000000000000000000" }
+      ]
+    },
+    "function_abis": [
+      {
+        "selector": "0x38ed1739",
+        "inputs": [
+          { "name": "amountIn", "type": "uint256" },
+          { "name": "recipient", "type": "address" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Require approval for large call amounts
+
+```json
+{
+  "scope": "wallet",
+  "wallet_id": "<WALLET_ID>",
+  "name": "large-call-approval",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "target_in": [
+        {
+          "chain_id": "SETH",
+          "contract_addr": "0xrouter...",
+          "function_id": "0x38ed1739"
+        }
+      ]
+    },
+    "review_if": {
+      "params_match": [
+        { "param_name": "amountIn", "op": "gt", "value": "50000000000000000000" }
+      ]
+    },
+    "function_abis": [
+      {
+        "selector": "0x38ed1739",
+        "inputs": [
+          { "name": "amountIn", "type": "uint256" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Block a specific function
+
+```json
+{
+  "scope": "global",
+  "name": "block-token-transfer-fn",
+  "policy_type": "contract_call",
+  "rules": {
+    "effect": "deny",
+    "when": {
+      "target_in": [
+        {
+          "chain_id": "SETH",
+          "contract_addr": "0xtoken...",
+          "function_id": "0xa9059cbb"
+        }
+      ]
+    }
+  }
+}
+```

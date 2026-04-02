@@ -1,0 +1,79 @@
+---
+title: "OpenAI Agents SDK"
+description: "5-minute OpenAI Agents quickstart with policy denial feedback and compliant retry."
+---
+
+## 5-minute outcome
+
+1. Create Cobo-enabled OpenAI agent
+2. Execute success plus denial transfer sequence
+3. Let agent adapt using denial context
+4. Verify with audit logs
+
+## Step 1: Install
+
+```bash
+pip install "cobo-agent-wallet[openai]"
+```
+
+## Step 2: Configure environment
+
+```bash
+export AGENT_WALLET_API_URL=http://localhost:8000
+export AGENT_WALLET_API_KEY=your-api-key
+export OPENAI_API_KEY=your-openai-api-key
+```
+
+## Step 3: Run agent flow
+
+```python
+from __future__ import annotations
+
+import asyncio
+import os
+
+from agents import Runner
+
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.integrations.openai import create_cobo_agent, create_cobo_agent_context
+
+
+def main() -> None:
+    client = WalletAPIClient(
+        base_url=os.environ["AGENT_WALLET_API_URL"],
+        api_key=os.environ["AGENT_WALLET_API_KEY"],
+    )
+    agent = create_cobo_agent(client=client, model="gpt-4.1-mini")
+    context = create_cobo_agent_context()
+
+    wallet_uuid = "your-wallet-uuid"
+    destination = "0x1111111111111111111111111111111111111111"
+
+    prompt = (
+        f"Use wallet {wallet_uuid}. Transfer 50 SETH to {destination}. "
+        "Then attempt 200 SETH. If denied, read suggestion and retry with compliant amount. "
+        f"After retry, query audit logs for wallet {wallet_uuid}."
+    )
+
+    result = Runner.run_sync(agent, prompt, context=context, max_turns=8)
+    print(result.final_output)
+
+    asyncio.run(client.close())
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Step 4: Validate results
+
+Confirm final output includes:
+
+- success event
+- denial reason and suggestion
+- successful compliant retry
+- audit confirmation
+
+<Card title="OpenAI Integration Details" icon="brain" href="/integrations/openai">
+  Includes context handling for repeated denials.
+</Card>

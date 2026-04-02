@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 452" width="430" height="452">
+  <defs>
+    <filter id="card-shadow" x="-4%" y="-8%" width="108%" height="124%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+    <linearGradient id="gradHeader" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#DCFCE7"/>
+      <stop offset="100%" stop-color="#F0FDF4"/>
+    </linearGradient>
+    <linearGradient id="gradWallet" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,1 L7,4 L1,7 Z" fill="#86EFAC"/>
+    </marker>
+  </defs>
+
+  <rect width="430" height="452" rx="14" fill="#F8FAFC"/>
+
+  <!-- Header -->
+  <rect x="16" y="16" width="398" height="44" rx="10" fill="url(#gradHeader)" stroke="#BBF7D0" stroke-width="1"/>
+  <text x="215" y="43" text-anchor="middle" font-family="Inter,-apple-system,sans-serif" font-size="15" font-weight="700" fill="#15803D" letter-spacing="0.2">On-device</text>
+
+  <!-- Step 1 -->
+  <rect x="16" y="76" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
+  <circle cx="42" cy="103" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
+  <text x="42" y="107" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">1</text>
+  <text x="66" y="97" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Create wallet in Human App</text>
+  <text x="66" y="114" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Sign in → follow setup — key shares stay on your phone</text>
+  <line x1="215" y1="130" x2="215" y2="148" stroke="#86EFAC" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 2 -->
+  <rect x="16" y="152" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
+  <circle cx="42" cy="179" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
+  <text x="42" y="183" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">2</text>
+  <text x="66" y="173" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Tap Connect Agent</text>
+  <text x="66" y="190" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Get pairing code + setup instruction</text>
+  <line x1="215" y1="206" x2="215" y2="224" stroke="#86EFAC" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 3 -->
+  <rect x="16" y="228" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
+  <circle cx="42" cy="255" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
+  <text x="42" y="259" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">3</text>
+  <text x="66" y="249" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Run setup instruction in agent</text>
+  <text x="66" y="266" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#64748B">caw onboard --token &lt;CODE&gt;</text>
+  <line x1="215" y1="282" x2="215" y2="300" stroke="#86EFAC" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 4 -->
+  <rect x="16" y="304" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
+  <circle cx="42" cy="331" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
+  <text x="42" y="335" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">4</text>
+  <text x="66" y="325" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Delegate wallet to agent in Human App</text>
+  <text x="66" y="342" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Authorize agent via chat assistant</text>
+
+  <!-- Convergence -->
+  <line x1="215" y1="358" x2="215" y2="394" stroke="#C4B5FD" stroke-width="1.5"/>
+  <circle cx="215" cy="396" r="3" fill="#C4B5FD"/>
+
+  <!-- Wallet active -->
+  <rect x="65" y="400" width="300" height="38" rx="10" fill="url(#gradWallet)" stroke="#A78BFA" stroke-width="1"/>
+  <text x="215" y="424" text-anchor="middle" font-family="Inter,-apple-system,sans-serif" font-size="14" font-weight="700" fill="#4ADE80">✓  Wallet ready</text>
+</svg>

@@ -1,0 +1,74 @@
+---
+title: "How your wallet protects your assets"
+description: "What safeguards are in place, what your agent can and cannot do, and how to stay in control — in plain language."
+---
+
+## What your agent can and cannot do
+
+| Your agent can | Your agent cannot |
+|---|---|
+| Transfer tokens within your spending limits | Raise or modify your spending limits |
+| Query your wallet balance and transaction history | Access wallets you have not connected it to |
+| Interact with protocols within your approved rules | Approve its own requests on your behalf |
+| Request your approval for larger operations | Execute transactions after you pause or revoke access |
+| | Hold or reconstruct your private keys |
+
+Giving an AI agent access to your crypto is a meaningful decision. Cobo Agentic Wallet is built so that you define exactly what your agent is allowed to do, and those boundaries are enforced automatically at every step. The agent cannot work around them.
+
+## Your funds cannot be moved by any single party
+
+Your wallet does not use a single private key stored in one place. Signing authority is split across multiple independent parties using Multi-Party Computation. No single party — not you, not your agent, not Cobo — can move funds alone. Every transaction requires cooperation, and that cooperation only happens when your rules allow it.
+
+This means:
+
+- Cobo cannot move your funds without the other parties cooperating
+- Your agent cannot move your funds without Cobo co-signing
+- Every transaction must pass your rules before Cobo co-signs — rules are enforced at the protocol level, not just by policy
+
+<Info>New wallets start on testnet by default. Moving to mainnet requires an explicit confirmation step to ensure your rules are in place before real funds are at risk.</Info>
+
+## Your agent can only act within what you approved
+
+After you claim the wallet, before your agent can take on a new task beyond your Default Policy, it must describe what it plans to do and request specific permissions. You review this request and approve or reject it — no access is granted until you confirm.
+
+Once you approve, your agent is bound to the operations you authorized, the spending limits you set, the addresses you allow, and the wallet you designated. Your agent cannot raise its own limits, add operation types you did not approve, change which addresses it can send to, or access your wallet after you pause or revoke it.
+
+<Info>Before you claim the wallet, your agent is the owner and operates without restrictions. Claiming is the step that puts your rules in place.</Info>
+
+[How agent access works →](/wallet-owner/approve) · [How every operation is checked →](/wallet-owner/policies)
+
+## Set limits that match your comfort level
+
+You control how much your agent can move and how often:
+
+- **Per-transaction cap** — no single transfer can exceed this amount
+- **Rolling limits** — cumulative caps over a day, week, or month
+- **Review threshold** — operations above a certain value pause and wait for your explicit approval before anything executes on-chain
+- **Address restrictions** — restrict your agent to a specific set of destination addresses or contracts
+
+[Spending limits and rules →](/wallet-owner/policies)
+
+## Every action is recorded
+
+Every operation your agent attempts — allowed, paused for your review, or blocked — is logged with a timestamp and reason. Nothing happens silently.
+
+From the Human App, you can see your agent's full history at any time, review why an operation was blocked or held for approval, and approve or reject transactions waiting for your review.
+
+[Activity and pending operations →](/wallet-owner/activity)
+
+## Pause or revoke access in one step
+
+- **Pause** — suspends your agent immediately. Your rules and access terms are preserved. Unpausing restores access with no re-approval needed.
+- **Revoke** — permanently terminates access. Your agent must submit a new request and go through the approval process before it can act again.
+
+Both take effect the moment you confirm. There is no delay or grace period.
+
+[Pause and revoke →](/wallet-owner/freeze)
+
+## What's at risk if something goes wrong?
+
+Your agent can only access the wallet you connected it to — not any other wallets you own, and not more than your current balance. Within that wallet, it can only act within the rules you set.
+
+If your agent is compromised or makes a mistake, the impact is bounded by what you authorized. Transactions above your approval threshold are blocked until you review them. Pausing your agent stops all new transaction attempts immediately.
+
+The one thing rules cannot undo is a transaction your agent already executed within its approved limits. Set your limits at a level you are comfortable losing in a worst case, and review your activity regularly.

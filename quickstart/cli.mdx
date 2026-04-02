@@ -1,0 +1,86 @@
+---
+title: "CLI"
+description: "Set up and operate a wallet from the terminal using the caw CLI."
+---
+
+Use this path when you want a no-code terminal workflow.
+
+## Install
+
+The `caw` CLI is a standalone binary. Download and install it using the bootstrap script:
+
+```bash
+curl -sL https://download.agenticwallet.cobo.com/bootstrap-env.sh | bash -s -- --env sandbox
+```
+
+This downloads the `caw` binary to `~/.cobo-agentic-wallet/bin/caw`. Add it to your PATH:
+
+```bash
+export PATH="$HOME/.cobo-agentic-wallet/bin:$PATH"
+```
+
+Verify the installation:
+
+```bash
+caw --version
+```
+
+## Onboard your agent
+
+Obtain a pairing code from the Web Console or Human App, then run:
+
+```bash
+caw onboard provision --token <PAIRING_CODE>
+```
+
+This creates an API key, binds it to your owner account, and saves config to `~/.cobo-agentic-wallet/config`.
+
+## Verify the setup
+
+```bash
+caw onboard self-test
+```
+
+## Explore your wallet
+
+```bash
+# List accessible wallets
+caw wallet list --format table
+
+# Check balance
+caw wallet balance
+
+# Get wallet details
+caw wallet get
+```
+
+## Transfer tokens
+
+```bash
+WALLET_UUID=<wallet-uuid>
+DST=0x1111111111111111111111111111111111111111
+
+# Allowed transfer
+caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 2 --chain BASE
+
+# Oversized transfer — triggers policy denial
+caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 500 --chain BASE
+```
+
+On denial, output includes `code`, `reason`, `details`, and `suggestion`.
+
+## Check audit logs
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --result denied --format table
+```
+
+## Optional: run the demo
+
+```bash
+caw demo
+```
+
+<Card title="CLI Reference" icon="terminal" href="/sdk/cli">
+  Full command surface, options, and error handling.
+</Card>

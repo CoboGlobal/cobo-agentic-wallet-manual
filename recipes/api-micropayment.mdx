@@ -1,0 +1,399 @@
+---
+title: "API Micropayment"
+description: "Low-value autonomous API payments with strict per-tx and daily guardrails."
+icon: "coins"
+sidebarTitle: "API Micropayment"
+---
+
+## Business Context
+
+Agents paying for data or compute APIs should handle tiny recurring payments without exposing a wallet to runaway spend.
+
+<Accordion title="Policy Architecture">
+```
+Owner (human)
+  -> Delegation (operator: API agent)
+       - Permissions: [write:transfer]
+       - Transfer Policy:
+           - max_per_tx_value: 10
+           - daily_value_limit: 100
+       - Address Policy (allow):
+           - data-feed endpoint
+           - compute-api endpoint
+```
+</Accordion>
+
+## Pact Specification
+
+The agent submits this PactSpec when requesting authorization. The owner reviews the endpoint allowlist, per-payment cap, and daily budget before approving.
+
+```json
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-api-endpoints",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "dst_in": [
+            "0xDataFeed...",
+            "0xComputeAPI..."
+          ]
+        }
+      }
+    },
+    {
+      "name": "deny-over-limits",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": {
+          "amount_usd_gt": "10",
+          "usage_limits": {
+            "rolling_24h": { "amount_usd_gt": "100" }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 2592000
+}
+```
+
+## Full Flow
+
+### Step 1: Owner sets the task
+
+The owner gives the agent a natural-language instruction:
+
+> "Pay for API calls as needed. Max $10 per payment, $100 daily. Only to these endpoints: 0xDataFeed..., 0xComputeAPI.... Valid 30 days."
+
+### Step 2: Agent submits authorization request
+
+The agent parses the instruction and submits a pact for owner approval.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+# Write the PactSpec to a file
+cat > micropayment-pact.json << 'EOF'
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-api-endpoints",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "dst_in": ["0xDataFeed...", "0xComputeAPI..."]
+        }
+      }
+    },
+    {
+      "name": "deny-over-limits",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": {
+          "amount_usd_gt": "10",
+          "usage_limits": {
+            "rolling_24h": { "amount_usd_gt": "100" }
+          }
+        }
+      }
+    }
+  ],
+  "duration_seconds": 2592000
+}
+EOF
+
+# Submit the pact and wait for owner approval
+caw pact submit \
+  --wallet-id "$WALLET_UUID" \
+  --intent "Pay for API calls: max \$10/payment, \$100 daily, approved endpoints only, valid 30 days" \
+  --spec-file micropayment-pact.json \
+  --wait
+
+# Confirm active
+caw pact status <PACT_ID>
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Submit pact
+        result = await client.submit_pact(
+            wallet_id=wallet_id,
+            intent=(
+                "Pay for API calls: max $10/payment, $100 daily, "
+                "approved endpoints only, valid 30 days"
+            ),
+            spec={
+                "permissions": ["write:transfer", "read:wallet"],
+                "policies": [
+                    {
+                        "name": "allow-api-endpoints",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "allow",
+                            "when": {"dst_in": ["0xDataFeed...", "0xComputeAPI..."]},
+                        },
+                    },
+                    {
+                        "name": "deny-over-limits",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "deny",
+                            "when": {},
+                            "deny_if": {
+                                "amount_usd_gt": "10",
+                                "usage_limits": {
+                                    "rolling_24h": {"amount_usd_gt": "100"}
+                                },
+                            },
+                        },
+                    },
+                ],
+                "duration_seconds": 2592000,
+            },
+        )
+        pact_id = result["pact_id"]
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+
+        # Poll for activation
+        while True:
+            pact = await client.get_pact(pact_id)
+            if pact["status"] == "active":
+                break
+            await asyncio.sleep(10)
+
+        print(f"Pact active. Scoped API key: {pact['api_key']}")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({ apiKey: process.env.AGENT_WALLET_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Submit pact
+const result = await client.submitPact({
+  wallet_id: walletId,
+  intent: 'Pay for API calls: max $10/payment, $100 daily, approved endpoints only, valid 30 days',
+  spec: {
+    permissions: ['write:transfer', 'read:wallet'],
+    policies: [
+      {
+        name: 'allow-api-endpoints',
+        type: 'transfer',
+        rules: {
+          effect: 'allow',
+          when: { dst_in: ['0xDataFeed...', '0xComputeAPI...'] },
+        },
+      },
+      {
+        name: 'deny-over-limits',
+        type: 'transfer',
+        rules: {
+          effect: 'deny',
+          when: {},
+          deny_if: {
+            amount_usd_gt: '10',
+            usage_limits: {
+              rolling_24h: { amount_usd_gt: '100' },
+            },
+          },
+        },
+      },
+    ],
+    duration_seconds: 2592000,
+  },
+});
+console.log(`Pact ${result.pact_id} submitted — awaiting owner approval`);
+
+// Poll for activation
+let pact;
+do {
+  await new Promise(r => setTimeout(r, 10000));
+  pact = await client.getPact(result.pact_id);
+} while (pact.status === 'pending_approval');
+
+console.log(`Pact active. Scoped API key: ${pact.api_key}`);
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+import os
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt=(
+        "You are an API payment agent. Submit a pact for owner authorization "
+        "before paying for API services. Only pay approved endpoints within limits."
+    ),
+)
+
+result = agent.invoke({
+    "input": (
+        "Pay for API calls as needed. Max $10 per payment, $100 daily. "
+        "Only to 0xDataFeed... and 0xComputeAPI.... Valid 30 days."
+    )
+})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 3: Owner approves in Web Console
+
+The pact appears in the Web Console with the intent, execution plan, endpoint allowlist, per-payment cap, and daily budget. The owner reviews and approves. The agent receives a pact-scoped API key and can begin paying for API services.
+
+### Step 4: Agent operates
+
+With an active pact, the agent makes micropayments to approved API endpoints within the daily budget.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+WALLET_UUID=<wallet_uuid>
+DATA_FEED=0xDataFeed...
+COMPUTE_API=0xComputeAPI...
+
+# Allowed payment — within per-tx and daily limits
+caw tx transfer "$WALLET_UUID" --to "$DATA_FEED" --token SETH_USDC --amount 5 --chain SETH
+
+# Oversized payment — exceeds $10 per-tx cap, triggers policy denial
+caw tx transfer "$WALLET_UUID" --to "$COMPUTE_API" --token SETH_USDC --amount 150 --chain SETH
+
+# Retry with compliant amount
+caw tx transfer "$WALLET_UUID" --to "$COMPUTE_API" --token SETH_USDC --amount 10 --chain SETH
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    # Use the pact-scoped API key returned after approval
+    async with WalletAPIClient(api_key=os.environ["PACT_API_KEY"]) as pact_client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Pay for a data feed query — within per-tx and daily limits
+        result = await pact_client.transfer_tokens(
+            wallet_id=wallet_id,
+            chain_id="SETH",
+            dst_addr="0xDataFeed...",
+            token_id="SETH_USDC",
+            amount="5",
+        )
+        print(f"API payment submitted: {result['tx_id']}")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+// Use the pact-scoped API key returned after approval
+const pactClient = new WalletAPIClient({ apiKey: process.env.PACT_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Pay for a data feed query — within per-tx and daily limits
+const result = await pactClient.transferTokens({
+  wallet_id: walletId,
+  chain_id: 'SETH',
+  dst_addr: '0xDataFeed...',
+  token_id: 'SETH_USDC',
+  amount: '5',
+});
+console.log(`API payment submitted: ${result.tx_id}`);
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+import os
+
+# Use the pact-scoped API key to operate within approved limits
+pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=pact_client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt="Make micropayments to approved API endpoints within per-tx and daily limits.",
+)
+
+result = agent.invoke({
+    "input": "Pay $5 to the data feed endpoint 0xDataFeed... for the latest price query."
+})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 5: Audit
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+```
+
+## Full Source Code
+
+<Accordion title="View full API Client recipe source">
+
+- [Open full source on GitHub](https://github.com/CoboGlobal/cobo-agentic-wallet/blob/main/cobo-agent-wallet/sdk/examples/recipes/api-micropayment/main.py)
+- Local path: `cobo-agent-wallet/sdk/examples/recipes/api-micropayment/main.py`
+
+</Accordion>

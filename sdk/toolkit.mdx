@@ -1,0 +1,81 @@
+---
+title: "AgentWalletToolkit"
+description: "Framework-agnostic tool definitions for AI agent integrations."
+icon: "toolbox"
+sidebarTitle: "Toolkit"
+---
+
+## Overview
+
+`AgentWalletToolkit` provides 7 canonical tool definitions that framework-specific integrations (LangChain, OpenAI, Agno, CrewAI, MCP) consume and adapt to their runtimes.
+
+## Constructor
+
+```python
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.toolkit import AgentWalletToolkit
+
+client = WalletAPIClient(base_url="http://localhost:8000", api_key="...")
+toolkit = AgentWalletToolkit(client=client)
+```
+
+## `get_tools()`
+
+Returns 7 `ToolDefinition` objects:
+
+| Tool | Required Parameters | Description |
+|---|---|---|
+| `list_wallets` | — | List wallets accessible to the caller |
+| `get_balance` | `wallet_uuid` | Get wallet balances |
+| `transfer_tokens` | `wallet_uuid`, `dst_addr`, `token_id`, `amount` | Transfer tokens with policy enforcement |
+| `list_transactions` | `wallet_uuid` | List transactions with optional status filter |
+| `get_audit_logs` | — | Query audit logs with filters |
+| `create_delegation` | `operator_id`, `wallet_id`, `permissions` | Create operator delegation |
+| `evaluate_policy` | `wallet_uuid`, `action`, `params` | Dry-run policy evaluation |
+
+## ToolDefinition
+
+```python
+@dataclass(frozen=True)
+class ToolDefinition:
+    name: str                    # Unique tool ID
+    description: str             # Human/LLM description
+    parameters: dict[str, Any]   # JSON Schema
+    handler: ToolHandler         # async callable
+```
+
+Each `ToolDefinition` includes a JSON Schema for parameters that framework adapters use to generate type-safe input models (e.g., Pydantic schemas for LangChain, function schemas for OpenAI).
+
+## Handler Pattern
+
+Tool handlers are async callables that invoke `WalletAPIClient` methods:
+
+```python
+tools = toolkit.get_tools()
+transfer_tool = next(t for t in tools if t.name == "transfer_tokens")
+
+# Call the handler directly
+result = await transfer_tool.handler(
+    wallet_uuid="...",
+    dst_addr="0x...",
+    token_id="USDT",
+    amount="10",
+)
+```
+
+## Denial Formatting
+
+The toolkit provides a static method for formatting policy denials into LLM-readable guidance:
+
+```python
+from cobo_agentic_wallet.toolkit import AgentWalletToolkit
+
+formatted = AgentWalletToolkit._format_denial(denial)
+# Output:
+# Policy Denied [TRANSFER_LIMIT_EXCEEDED]: max_per_tx
+#   limit_value: 100
+#   requested: 1000
+# Suggestion: Retry with amount <= 100.
+```
+
+Framework integrations use this formatting to return denials as readable tool output rather than raising exceptions — enabling agent self-correction.

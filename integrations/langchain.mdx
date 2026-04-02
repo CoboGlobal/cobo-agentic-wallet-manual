@@ -1,0 +1,106 @@
+---
+title: "LangChain"
+description: "Integrate Cobo Agentic Wallet with LangChain agents."
+icon: "link"
+sidebarTitle: "LangChain"
+---
+
+## Overview
+
+The LangChain integration adapts Cobo wallet tools as `StructuredTool` instances. Policy denials are returned as readable tool output so the agent can self-correct.
+
+## Installation
+
+<CodeGroup>
+
+```bash pip
+pip install "cobo-agent-wallet[langchain]"
+```
+
+```bash uv
+uv sync --extra langchain
+```
+
+</CodeGroup>
+
+## Quick Start
+
+<Steps>
+
+<Step title="Create the toolkit">
+```python
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+
+client = WalletAPIClient(base_url="http://localhost:8000", api_key="<api_key>")
+toolkit = CoboAgentWalletToolkit(client=client)
+tools = toolkit.get_tools()  # list[StructuredTool]
+```
+</Step>
+
+<Step title="Build the agent">
+```python
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0)
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a wallet operator. If denied, read the suggestion and retry."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+
+agent = create_openai_tools_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+```
+</Step>
+
+<Step title="Run a transfer">
+```python
+result = executor.invoke({"input": "Transfer 1000 USDT to 0x1111..."})
+```
+</Step>
+
+</Steps>
+
+## Tools
+
+The toolkit exposes 7 `StructuredTool` instances, each with a Pydantic `args_schema` auto-generated from the canonical JSON Schema:
+
+| Tool | Description |
+|---|---|
+| `list_wallets` | List available wallets |
+| `get_balance` | Get wallet balance |
+| `transfer_tokens` | Transfer tokens between wallets |
+| `list_transactions` | List wallet transactions |
+| `get_audit_logs` | Query audit logs |
+| `create_delegation` | Create operator delegation |
+| `evaluate_policy` | Dry-run policy evaluation |
+
+## Denial Behavior
+
+When a transfer is denied by policy, the tool returns formatted text instead of raising an exception:
+
+```
+Policy Denied [TRANSFER_LIMIT_EXCEEDED]: max_per_tx
+  limit_value: 100
+  requested: 1000
+Suggestion: Retry with amount <= 100.
+```
+
+The LLM reads this output and can retry with compliant parameters.
+
+## Error Contract
+
+- **Policy denials** — returned as formatted text (tool succeeds)
+- **Other API errors** — raised as `ToolException` (tool fails, agent can retry)
+
+<Accordion title="Advanced: Custom error handling">
+  You can override how denials are surfaced by subclassing `CoboAgentWalletToolkit`
+  and implementing a custom `_format_denial` method.
+</Accordion>
+
+<Card title="Source Code" icon="github" href="https://github.com/CoboGlobal/cobo-agentic-wallet">
+  `src/cobo_agentic_wallet/integrations/langchain/toolkit.py`
+</Card>
