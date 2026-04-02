@@ -1,0 +1,27 @@
+---
+title: "Supported chains"
+description: "Cobo chain IDs for all chains supported by Cobo Agentic Wallet."
+---
+
+Wherever a `chain_id` is required — in CLI commands, API requests, or policy rules — use the Cobo chain ID from the table below, not the public chain name.
+
+| Cobo chain ID | Chain name | Network |
+|---|---|---|
+| `BASE_ETH` | Base | Mainnet |
+| `MATIC` | Polygon | Mainnet |
+| `SOL` | Solana | Mainnet |
+| `SETH` | Ethereum Sepolia | Testnet |
+| `TBASE_SETH` | Base Sepolia | Testnet |
+| `SOLDEV_SOL` | Solana Devnet | Testnet |
+
+<Info>
+New wallets start on Base Sepolia (`TBASE_SETH`) and Solana Devnet (`SOLDEV_SOL`) by default. Adding a mainnet chain requires an explicit confirmation step in the Human App or Web Console.
+</Info>
+
+To retrieve this list programmatically:
+
+```bash
+caw meta chains
+```
+
+Or via the API: [List chains](/api-reference/metadata/list-chains).

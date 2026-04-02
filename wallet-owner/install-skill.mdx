@@ -1,0 +1,30 @@
+---
+title: "Install the skill"
+description: "Before your agent can use your wallet, it needs the Cobo Agentic Wallet skill installed."
+---
+
+The Cobo Agentic Wallet skill teaches your agent how to interact with your wallet — how to check balances, transfer tokens, handle approvals, and stay within your rules. Without it, your agent has no knowledge of Cobo Agentic Wallet.
+
+Installation takes less than a minute and only needs to happen once.
+
+```bash
+npx skills add CoboGlobal/cobo-agentic-wallet-python-sdk --skill cobo-agentic-wallet-dev --yes --global
+```
+
+## What happens next
+
+The skill installs the `caw` CLI automatically. Then run:
+
+```bash
+caw onboard
+```
+
+This is an interactive command that walks you through setup. It will ask which path you want:
+
+**Option 1 — Sign up and connect your wallet**
+
+You create an account at the Web Console, get a setup token, and paste it back into `caw onboard`. Your wallet is fully connected to your account and you get the complete owner experience: spending rules, approval flows, and activity history.
+
+**Option 2 — Try it out first**
+
+You skip sign-up and get a temporary wallet immediately. Your agent can start transacting right away. When you're ready, you can sign up and claim the wallet to unlock the full features — your history and funds carry over.

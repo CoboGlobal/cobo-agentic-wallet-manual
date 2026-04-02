@@ -1,0 +1,86 @@
+---
+title: "Agno"
+description: "5-minute Agno quickstart with denial-aware tool behavior and audit checks."
+---
+
+## 5-minute outcome
+
+1. Register `CoboAgentWalletTools` with Agno agent
+2. Execute success plus denial sequence
+3. Retry based on denial guidance
+4. Validate in audit logs
+
+## Step 1: Install
+
+```bash
+pip install "cobo-agent-wallet[agno]"
+```
+
+## Step 2: Configure environment
+
+```bash
+export AGENT_WALLET_API_URL=http://localhost:8000
+export AGENT_WALLET_API_KEY=your-api-key
+export OPENAI_API_KEY=your-openai-api-key
+```
+
+## Step 3: Create Agno agent
+
+```python
+from __future__ import annotations
+
+import asyncio
+import os
+
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.integrations.agno import CoboAgentWalletTools
+
+
+def main() -> None:
+    client = WalletAPIClient(
+        base_url=os.environ["AGENT_WALLET_API_URL"],
+        api_key=os.environ["AGENT_WALLET_API_KEY"],
+    )
+    tools = CoboAgentWalletTools(client=client)
+
+    wallet_uuid = "your-wallet-uuid"
+    destination = "0x1111111111111111111111111111111111111111"
+
+    agent = Agent(
+        model=OpenAIChat(id="gpt-4.1-mini"),
+        tools=[tools],
+        markdown=True,
+        instructions=(
+            "Use Cobo tools. If transfer is denied, parse suggestion and retry with compliant amount."
+        ),
+    )
+
+    prompt = (
+        f"Transfer 50 SETH from wallet {wallet_uuid} to {destination}. "
+        "Then attempt 200 SETH. If denied, retry with a compliant amount from suggestion. "
+        f"Finally fetch audit logs for wallet {wallet_uuid}."
+    )
+
+    asyncio.run(agent.aprint_response(prompt))
+    asyncio.run(client.close())
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Step 4: Validate behavior
+
+Look for:
+
+- successful first transfer
+- denial details surfaced as tool output
+- corrected retry
+- audit confirmation
+
+<Card title="Agno Integration Details" icon="gear" href="/integrations/agno">
+  Includes sync/async tool surfaces and metadata behavior.
+</Card>

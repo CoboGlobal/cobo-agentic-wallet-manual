@@ -1,0 +1,75 @@
+name: Sync Docs from cobo-agent-wallet
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 02:17 UTC
+    - cron: '17 2 * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout manual repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up SSH access to internal repo
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.INTERNAL_REPO_SSH_KEY }}
+
+      - name: Add internal server to known_hosts
+        run: |
+          ssh-keyscan code.1cobo.com >> ~/.ssh/known_hosts
+
+      - name: Clone mintlify source
+        run: |
+          git clone --depth=1 git@code.1cobo.com:cobo-agent-wallets.git /tmp/cobo-agent-wallet
+          echo "SOURCE_COMMIT=$(git -C /tmp/cobo-agent-wallet rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Sync content
+        run: |
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.DS_Store' \
+            --exclude='scripts/' \
+            --exclude='.github/' \
+            /tmp/cobo-agent-wallet/mintlify/ ./
+
+      - name: Create PR if changes exist
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No changes to sync."
+            exit 0
+          fi
+
+          BRANCH="sync/docs-$(date +%Y%m%d-%H%M%S)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "sync: update docs from cobo-agent-wallet mintlify
+
+Source: cobo-agent-wallets@${{ env.SOURCE_COMMIT }}"
+
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --repo CoboGlobal/cobo-agentic-wallet-manual \
+            --title "sync: update docs from cobo-agent-wallet mintlify" \
+            --body "$(cat <<EOF
+Automated sync from \`cobo-agent-wallet/mintlify\`.
+
+**Source commit:** \`${{ env.SOURCE_COMMIT }}\`
+
+---
+_Created by GitHub Actions_
+EOF
+)" \
+            --base master \
+            --head "rcsh1:${BRANCH}"

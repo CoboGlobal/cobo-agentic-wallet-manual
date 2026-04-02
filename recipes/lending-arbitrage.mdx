@@ -1,0 +1,430 @@
+---
+title: "Lending Rate Arbitrage"
+description: "Move lending positions to lower-rate platforms automatically."
+icon: "right-left"
+sidebarTitle: "Lending Arbitrage"
+---
+
+## Business Context
+
+An agent monitors supply interest rates on Aave v3 and Compound v3 on Base. When the rate difference exceeds 1%, it migrates the lending position to the better-rate platform — withdrawing from the high-rate protocol and depositing into the lower-rate one. The pact authorizes both protocol contracts, caps each operation at $10,000, and runs for 30 days.
+
+<Accordion title="Permission Architecture">
+```text
+Owner (human)
+  -> Pact (30 days)
+       - Operator: agent principal
+       - Permissions: [write:contract_call, read:wallet]
+       - Policies:
+           - allowed_contracts: [AAVE_V3_POOL, COMPOUND_V3_COMET, USDC_ADDRESS]
+           - chain: BASE_ETH
+           - max_per_operation_usd: 10000
+```
+</Accordion>
+
+## Pact Specification
+
+```json
+{
+  "permissions": ["write:contract_call", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-aave-compound",
+      "type": "contract_call",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "target_in": [
+            { "chain_id": "BASE_ETH", "contract_addr": "<AAVE_V3_POOL>" },
+            { "chain_id": "BASE_ETH", "contract_addr": "<COMPOUND_V3_COMET>" },
+            { "chain_id": "BASE_ETH", "contract_addr": "<USDC_ADDRESS>" }
+          ]
+        },
+        "deny_if": {
+          "amount_usd_gt": "10000"
+        }
+      }
+    }
+  ],
+  "duration_seconds": 2592000
+}
+```
+
+<Note>
+The USDC contract address is included in `target_in` because the agent must approve USDC spending for both Aave and Compound before depositing.
+</Note>
+
+## Step-by-Step
+
+### Step 1: Owner sets the task
+
+> **Owner → Agent:** "Monitor my USDC lending positions on Aave and Compound on Base. If the rate difference exceeds 1%, move my position to whichever has the better rate. Max $10,000 per move, valid for 30 days."
+
+### Step 2: Agent submits authorization request
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+caw pact submit \
+  --wallet-id "$WALLET_UUID" \
+  --intent "Monitor USDC lending rates on Aave v3 and Compound v3 on Base. Migrate position to the better-rate protocol when spread exceeds 1%. Max \$10,000 per operation, 30 days." \
+  --spec-file aave-compound-pact.json \
+  --wait
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+import asyncio
+import os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def submit_arbitrage_pact():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        result = await client.submit_pact(
+            wallet_id=os.environ["AGENT_WALLET_WALLET_ID"],
+            intent=(
+                "Monitor USDC lending rates on Aave v3 and Compound v3 on Base. "
+                "Migrate position to the better-rate protocol when spread exceeds 1%. "
+                "Max $10,000 per operation, 30 days."
+            ),
+            spec={
+                "permissions": ["write:contract_call", "read:wallet"],
+                "policies": [
+                    {
+                        "name": "allow-aave-compound",
+                        "type": "contract_call",
+                        "rules": {
+                            "effect": "allow",
+                            "when": {
+                                "chain_in": ["BASE_ETH"],
+                                "target_in": [
+                                    {"chain_id": "BASE_ETH", "contract_addr": "<AAVE_V3_POOL>"},
+                                    {"chain_id": "BASE_ETH", "contract_addr": "<COMPOUND_V3_COMET>"},
+                                    {"chain_id": "BASE_ETH", "contract_addr": "<USDC_ADDRESS>"},
+                                ]
+                            },
+                            "deny_if": {
+                                "amount_usd_gt": "10000"
+                            }
+                        }
+                    }
+                ],
+                "duration_seconds": 2592000,
+            }
+        )
+        pact_id = result["pact_id"]
+        print(f"Pact submitted: {pact_id} — waiting for owner approval in Web Console")
+
+        while True:
+            pact = await client.get_pact(pact_id)
+            if pact["status"] == "active":
+                print("Pact active. Starting rate monitor.")
+                return pact
+            await asyncio.sleep(10)
+
+asyncio.run(submit_arbitrage_pact())
+```
+  </Tab>
+  <Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({
+  apiKey: process.env.AGENT_WALLET_API_KEY!,
+});
+
+const result = await client.submitPact({
+  wallet_id: process.env.AGENT_WALLET_WALLET_ID!,
+  intent:
+    'Monitor USDC lending rates on Aave v3 and Compound v3 on Base. ' +
+    'Migrate position to the better-rate protocol when spread exceeds 1%. ' +
+    'Max $10,000 per operation, 30 days.',
+  spec: {
+    permissions: ['write:contract_call', 'read:wallet'],
+    policies: [
+      {
+        name: 'allow-aave-compound',
+        type: 'contract_call',
+        rules: {
+          effect: 'allow',
+          when: {
+            chain_in: ['BASE_ETH'],
+            target_in: [
+              { chain_id: 'BASE_ETH', contract_addr: '<AAVE_V3_POOL>' },
+              { chain_id: 'BASE_ETH', contract_addr: '<COMPOUND_V3_COMET>' },
+              { chain_id: 'BASE_ETH', contract_addr: '<USDC_ADDRESS>' },
+            ],
+          },
+          deny_if: {
+            amount_usd_gt: '10000',
+          },
+        },
+      },
+    ],
+    duration_seconds: 2592000,
+  },
+});
+
+console.log(`Pact submitted: ${result.pact_id} — waiting for owner approval`);
+
+let pact;
+do {
+  await new Promise(r => setTimeout(r, 10000));
+  pact = await client.getPact(result.pact_id);
+} while (pact.status === 'pending_approval');
+
+const pactClient = new WalletAPIClient({ apiKey: pact.api_key });
+console.log('Pact active. Starting rate monitor.');
+```
+  </Tab>
+  <Tab title="Frameworks">
+```python
+import os
+from langchain_openai import ChatOpenAI
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from cobo_agentic_wallet import WalletAPIClient
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+)
+
+result = agent.invoke({
+    "input": (
+        "Monitor my USDC lending positions on Aave and Compound on Base. "
+        "If the rate difference exceeds 1%, move my position to whichever has "
+        "the better rate. Max $10,000 per move, valid for 30 days."
+    )
+})
+print(result["output"])
+```
+  </Tab>
+</Tabs>
+
+### Step 3: Owner approves in Web Console
+
+The agent notifies the owner that an authorization request is pending. The owner reviews the allowed contracts (Aave Pool, Compound Comet, USDC on Base), the $10,000 per-operation cap, and the 30-day duration, then approves.
+
+### Step 4: Agent monitors and migrates
+
+Once active, the agent checks rates hourly. When the spread exceeds 1%, it executes a three-step migration: withdraw from the current protocol, approve USDC for the destination, then supply to the destination.
+
+<Tabs>
+  <Tab title="CLI">
+```bash
+# Check rates (placeholder — use on-chain call or indexer API)
+AAVE_RATE=$(cast call "<AAVE_V3_POOL>" "getReserveData(address)(uint256,...)" "<USDC_ADDRESS>" --rpc-url "$BASE_RPC" | jq '.[3]')
+COMPOUND_RATE=$(cast call "<COMPOUND_V3_COMET>" "getSupplyRate(uint256)(uint64)" 0 --rpc-url "$BASE_RPC")
+
+# If Compound rate is higher, migrate from Aave to Compound:
+
+# Step 1: Withdraw from Aave
+caw tx call "$WALLET_UUID" \
+  --chain BASE_ETH \
+  --to "<AAVE_V3_POOL>" \
+  --calldata "$(cast calldata 'withdraw(address,uint256,address)' '<USDC_ADDRESS>' '<AMOUNT>' '<WALLET_ADDR>')"
+
+# Step 2: Approve USDC for Compound
+caw tx call "$WALLET_UUID" \
+  --chain BASE_ETH \
+  --to "<USDC_ADDRESS>" \
+  --calldata "$(cast calldata 'approve(address,uint256)' '<COMPOUND_V3_COMET>' '<AMOUNT>')"
+
+# Step 3: Supply to Compound
+caw tx call "$WALLET_UUID" \
+  --chain BASE_ETH \
+  --to "<COMPOUND_V3_COMET>" \
+  --calldata "$(cast calldata 'supply(address,uint256)' '<USDC_ADDRESS>' '<AMOUNT>')"
+```
+  </Tab>
+  <Tab title="Python SDK">
+```python
+import asyncio
+import os
+from cobo_agentic_wallet import WalletAPIClient
+
+# Calldata encoders — replace with real ABI encoding (e.g., web3.py or eth_abi)
+def encode_aave_withdraw(asset: str, amount: int, recipient: str) -> str: ...
+def encode_erc20_approve(spender: str, amount: int) -> str: ...
+def encode_compound_supply(asset: str, amount: int) -> str: ...
+def encode_aave_supply(asset: str, amount: int, on_behalf_of: str) -> str: ...
+def encode_compound_withdraw(asset: str, amount: int) -> str: ...
+
+async def get_aave_supply_rate() -> float: ...   # Ray units → APY
+async def get_compound_supply_rate() -> float: ...
+
+async def monitor_and_migrate(pact: dict):
+    wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+    pact_client = WalletAPIClient(api_key=pact["api_key"])
+
+    while True:
+        aave_rate = await get_aave_supply_rate()
+        compound_rate = await get_compound_supply_rate()
+        spread = abs(aave_rate - compound_rate)
+
+        if spread > 0.01:  # 1% threshold
+            amount = int(10_000 * 10**6)  # $10,000 in USDC (6 decimals)
+
+            if compound_rate > aave_rate:
+                print(f"Migrating to Compound: Compound {compound_rate:.2%} > Aave {aave_rate:.2%}")
+
+                # Step 1: Withdraw from Aave
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<AAVE_V3_POOL>",
+                    calldata=encode_aave_withdraw("<USDC_ADDRESS>", amount, wallet_id),
+                )
+
+                # Step 2: Approve USDC for Compound
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<USDC_ADDRESS>",
+                    calldata=encode_erc20_approve("<COMPOUND_V3_COMET>", amount),
+                )
+
+                # Step 3: Supply to Compound
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<COMPOUND_V3_COMET>",
+                    calldata=encode_compound_supply("<USDC_ADDRESS>", amount),
+                )
+                print("Migration complete: Aave → Compound")
+
+            else:
+                print(f"Migrating to Aave: Aave {aave_rate:.2%} > Compound {compound_rate:.2%}")
+
+                # Step 1: Withdraw from Compound
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<COMPOUND_V3_COMET>",
+                    calldata=encode_compound_withdraw("<USDC_ADDRESS>", amount),
+                )
+
+                # Step 2: Approve USDC for Aave
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<USDC_ADDRESS>",
+                    calldata=encode_erc20_approve("<AAVE_V3_POOL>", amount),
+                )
+
+                # Step 3: Supply to Aave
+                await pact_client.contract_call(
+                    wallet_id=wallet_id,
+                    chain_id="BASE_ETH",
+                    contract_addr="<AAVE_V3_POOL>",
+                    calldata=encode_aave_supply("<USDC_ADDRESS>", amount, wallet_id),
+                )
+                print("Migration complete: Compound → Aave")
+
+        await asyncio.sleep(3600)  # Check hourly
+```
+  </Tab>
+  <Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+import { encodeFunctionData, erc20Abi } from 'viem';
+
+const AAVE_POOL_ABI = [...];    // Aave v3 Pool ABI
+const COMPOUND_COMET_ABI = [...]; // Compound v3 Comet ABI
+
+async function monitorAndMigrate(pact: { api_key: string }) {
+  const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+  const pactClient = new WalletAPIClient({ apiKey: pact.api_key });
+
+  while (true) {
+    const aaveRate = await getAaveSupplyRate();       // placeholder
+    const compoundRate = await getCompoundSupplyRate(); // placeholder
+
+    if (Math.abs(aaveRate - compoundRate) > 0.01) {
+      const amount = 10_000n * 10n ** 6n; // $10,000 USDC
+
+      if (compoundRate > aaveRate) {
+        // Withdraw from Aave
+        await pactClient.contractCall({
+          wallet_id: walletId,
+          chain_id: 'BASE_ETH',
+          contract_addr: '<AAVE_V3_POOL>',
+          calldata: encodeFunctionData({
+            abi: AAVE_POOL_ABI,
+            functionName: 'withdraw',
+            args: ['<USDC_ADDRESS>', amount, walletId],
+          }),
+        });
+
+        // Approve USDC for Compound
+        await pactClient.contractCall({
+          wallet_id: walletId,
+          chain_id: 'BASE_ETH',
+          contract_addr: '<USDC_ADDRESS>',
+          calldata: encodeFunctionData({
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: ['<COMPOUND_V3_COMET>', amount],
+          }),
+        });
+
+        // Supply to Compound
+        await pactClient.contractCall({
+          wallet_id: walletId,
+          chain_id: 'BASE_ETH',
+          contract_addr: '<COMPOUND_V3_COMET>',
+          calldata: encodeFunctionData({
+            abi: COMPOUND_COMET_ABI,
+            functionName: 'supply',
+            args: ['<USDC_ADDRESS>', amount],
+          }),
+        });
+        console.log('Migration complete: Aave → Compound');
+      }
+      // Reverse direction (Compound → Aave) is symmetric
+    }
+
+    await new Promise(r => setTimeout(r, 3600000)); // 1 hour
+  }
+}
+```
+  </Tab>
+  <Tab title="Frameworks">
+```python
+import os
+from langchain_openai import ChatOpenAI
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from cobo_agentic_wallet import WalletAPIClient
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+)
+
+result = agent.invoke({
+    "input": (
+        "Check current USDC supply rates on Aave v3 and Compound v3 on Base. "
+        "If the spread is over 1%, move my full USDC position to the higher-rate protocol."
+    )
+})
+print(result["output"])
+```
+  </Tab>
+</Tabs>
+
+<Warning>
+Gas costs on Base are low, but frequent migrations still erode yield. Consider adding a minimum spread threshold (e.g., 2%) to account for gas and slippage before triggering a migration.
+</Warning>
+
+## Audit
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 50 --format table
+```
+
+Each migration produces three contract call entries (withdraw, approve, supply). The audit log shows the contract address, calldata hash, USD value, and policy outcome for each operation.

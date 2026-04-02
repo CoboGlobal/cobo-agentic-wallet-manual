@@ -1,0 +1,67 @@
+---
+title: "NFT Minter"
+description: "Build an automated NFT minting workflow with contract and parameter policy checks."
+icon: "image"
+sidebarTitle: "NFT Minter"
+---
+
+## Business Context
+
+An NFT agent should only mint on approved contracts and safe parameters. Without parameter-level controls, a bad prompt can mint zero-value or unbounded transactions.
+
+Core flow:
+
+- Owner creates contract-call policy with contract/function allowlists
+- Policy adds parameter constraints via ABI decoding
+- Agent evaluates valid mint calldata (allow)
+- Agent evaluates invalid quantity (deny with details)
+- Agent retries with compliant quantity and confirms in audit logs
+
+<Accordion title="Policy Architecture">
+```text
+Owner (human)
+  -> Policy
+       - effect: allow
+       - contract allowlist: [0xabc]
+       - function allowlist: [0x40c10f19]
+       - function_abis for parameter decoding
+       - min_output_amount: 1 (quantity)
+```
+</Accordion>
+
+## Step-by-Step
+
+## Setup
+
+<Snippet file="recipe-setup-cli.mdx" />
+
+## Success + Denial + Retry Flow
+
+```bash
+WALLET_UUID=<wallet_uuid>
+NFT_CONTRACT=0xabc0000000000000000000000000000000000000
+
+# Allowed mint — valid quantity within policy bounds
+caw tx call "$WALLET_UUID" --contract "$NFT_CONTRACT" --calldata <mint_qty_5_calldata> --chain ETH
+
+# Denied mint — quantity exceeds policy limit
+caw tx call "$WALLET_UUID" --contract "$NFT_CONTRACT" --calldata <mint_qty_100_calldata> --chain ETH
+
+# Retry with compliant quantity from denial suggestion
+caw tx call "$WALLET_UUID" --contract "$NFT_CONTRACT" --calldata <mint_qty_5_calldata> --chain ETH
+```
+
+## Audit Trail
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 20
+```
+
+## Full Source Code
+
+<Accordion title="View full API Client recipe source">
+
+- [Open full source on GitHub](https://github.com/CoboGlobal/cobo-agentic-wallet/blob/main/cobo-agent-wallet/sdk/examples/recipes/nft-minter/main.py)
+- Local path: `cobo-agent-wallet/sdk/examples/recipes/nft-minter/main.py`
+
+</Accordion>

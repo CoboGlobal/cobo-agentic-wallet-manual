@@ -1,0 +1,62 @@
+---
+title: "CrewAI"
+description: "Integrate Cobo Agentic Wallet with CrewAI multi-agent workflows."
+icon: "users-gear"
+sidebarTitle: "CrewAI"
+---
+
+## Overview
+
+The CrewAI integration builds dynamic `BaseTool` classes from canonical tool schemas, enabling multi-agent role-based workflows with wallet operations.
+
+## Installation
+
+<CodeGroup>
+
+```bash pip
+pip install "cobo-agent-wallet[crewai]"
+```
+
+```bash uv
+uv sync --extra crewai
+```
+
+</CodeGroup>
+
+## Quick Start
+
+<Steps>
+
+<Step title="Create the toolkit">
+```python
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.integrations.crewai import CoboAgentWalletCrewAIToolkit
+
+client = WalletAPIClient(base_url="http://localhost:8000", api_key="<api_key>")
+toolkit = CoboAgentWalletCrewAIToolkit(client=client)
+tools = toolkit.get_tools()
+```
+</Step>
+
+<Step title="Use with a CrewAI agent">
+```bash
+uv run --extra crewai python examples/crewai_agent.py
+```
+</Step>
+
+</Steps>
+
+## Denial Behavior
+
+- **Policy denials** — returned as tool output so agents can adjust
+- **Other API failures** — raised as runtime errors
+
+<Accordion title="Multi-agent workflow example">
+  CrewAI enables role-based workflows where different agents handle different
+  responsibilities. For example, a "researcher" agent checks balances while
+  a "trader" agent executes transfers — each with their own delegation policies.
+</Accordion>
+
+<Card title="Source Code" icon="github" href="https://github.com/CoboGlobal/cobo-agentic-wallet">
+  `src/cobo_agentic_wallet/integrations/crewai/toolkit.py`
+</Card>

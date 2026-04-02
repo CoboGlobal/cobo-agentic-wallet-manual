@@ -1,0 +1,67 @@
+---
+title: "Cross-chain Arbitrageur"
+description: "Build a cross-chain routing agent with chain-level and function-level policy controls."
+icon: "arrows-cross"
+sidebarTitle: "Cross-chain Arb"
+---
+
+## Business Context
+
+Cross-chain agents can move fast and lose faster if chains, routers, and slippage are unconstrained. You need policy checks that block unsafe paths and return enough context for automatic retries.
+
+Core flow:
+
+- Owner defines chain-level and function-level allowlists
+- Policy enforces slippage and minimum output constraints
+- Agent evaluates high-slippage route (deny)
+- Agent retries with compliant slippage (allow)
+- Agent verifies outcomes through audit logs
+
+<Accordion title="Policy Architecture">
+```text
+Owner (human)
+  -> Policy
+       - allowed_chains: [eth, bsc_bnb]
+       - router allowlist per chain
+       - function allowlist per chain
+       - max_slippage_bps: 50
+       - min_output_amount: 100
+```
+</Accordion>
+
+## Step-by-Step
+
+## Setup
+
+<Snippet file="recipe-setup-cli.mdx" />
+
+## Success + Denial + Retry Flow
+
+```bash
+WALLET_UUID=<wallet_uuid>
+CONTRACT=<allowlisted_router_contract>
+
+# Allowed call — compliant slippage within policy bounds
+caw tx call "$WALLET_UUID" --contract "$CONTRACT" --calldata <calldata_slippage_30bps> --chain ETH
+
+# Blocked call — slippage exceeds policy limit
+caw tx call "$WALLET_UUID" --contract "$CONTRACT" --calldata <calldata_slippage_120bps> --chain ETH
+
+# Retry with compliant slippage from denial suggestion
+caw tx call "$WALLET_UUID" --contract "$CONTRACT" --calldata <calldata_slippage_30bps> --chain ETH
+```
+
+## Audit Trail
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 20
+```
+
+## Full Source Code
+
+<Accordion title="View full API Client recipe source">
+
+- [Open full source on GitHub](https://github.com/CoboGlobal/cobo-agentic-wallet/blob/main/cobo-agent-wallet/sdk/examples/recipes/crosschain-arbitrageur/main.py)
+- Local path: `cobo-agent-wallet/sdk/examples/recipes/crosschain-arbitrageur/main.py`
+
+</Accordion>

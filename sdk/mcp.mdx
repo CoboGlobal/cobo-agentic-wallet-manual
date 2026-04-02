@@ -1,0 +1,122 @@
+---
+title: "MCP Server"
+description: "FastMCP stdio server exposing wallet tools for Claude and other MCP clients."
+icon: "server"
+sidebarTitle: "MCP"
+---
+
+## Overview
+
+The MCP server exposes all 7 wallet tools via the Model Context Protocol (MCP) stdio transport, powered by FastMCP. It can be used with Claude Desktop, Claude Code, and other MCP-compatible clients.
+
+## Running the Server
+
+```bash
+python -m cobo_agentic_wallet.mcp
+```
+
+Or programmatically:
+
+```python
+from cobo_agentic_wallet.mcp.server import create_server
+
+server = create_server()
+server.run()  # starts stdio transport
+```
+
+## Tools
+
+The MCP server exposes 7 tools:
+
+| Tool | Description |
+|---|---|
+| `list_wallets` | List wallets accessible to the caller |
+| `get_balance` | Get wallet balance by wallet UUID |
+| `transfer_tokens` | Transfer tokens with policy enforcement |
+| `list_transactions` | List transactions with optional filters |
+| `get_audit_logs` | Query audit trail with filters and cursor pagination |
+| `create_delegation` | Delegate scoped permissions to an operator |
+| `evaluate_policy` | Dry-run a policy decision before execution |
+
+## Claude Desktop Configuration
+
+Add this to your Claude Desktop `claude_desktop_config.json`:
+
+<CodeGroup>
+
+```json python (global install)
+{
+  "mcpServers": {
+    "cobo-agent-wallet": {
+      "command": "python",
+      "args": ["-m", "cobo_agentic_wallet.mcp"],
+      "env": {
+        "AGENT_WALLET_API_URL": "http://localhost:8000",
+        "AGENT_WALLET_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+```json uv (no global install needed)
+{
+  "mcpServers": {
+    "cobo-agent-wallet": {
+      "command": "uv",
+      "args": ["run", "--with", "cobo-agent-wallet[mcp]", "python", "-m", "cobo_agentic_wallet.mcp"],
+      "env": {
+        "AGENT_WALLET_API_URL": "http://localhost:8000",
+        "AGENT_WALLET_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `AGENT_WALLET_API_URL` | `http://localhost:8000` | API base URL |
+| `AGENT_WALLET_API_KEY` | — | API key (required) |
+| `AGENT_WALLET_TIMEOUT` | `30.0` | Request timeout in seconds |
+| `AGENT_WALLET_MAX_RETRIES` | `3` | Retry count on 5xx errors |
+| `AGENT_WALLET_RETRY_BACKOFF` | `1.0` | Backoff multiplier |
+
+## Error Contract
+
+The MCP server handles errors with the following semantics:
+
+- **Policy denials** — Returned as successful tool results with denial payload (not an MCP error). This allows the LLM to read the denial and self-correct.
+- **API errors** — Raised as `RuntimeError` with JSON payload containing `status_code`, `message`, and `response`. These become MCP protocol errors (`isError: true`).
+- **Missing API key** — Raises `RuntimeError` at tool invocation time with a descriptive message.
+
+```json
+{
+  "error": "POLICY_DENIED",
+  "code": "TRANSFER_LIMIT_EXCEEDED",
+  "reason": "max_per_tx",
+  "details": {"limit_value": 100, "requested": 1000},
+  "suggestion": "Retry with amount <= 100."
+}
+```
+
+## Server Configuration
+
+```python
+from cobo_agentic_wallet.mcp.server import MCPServerConfig, create_server
+
+config = MCPServerConfig(
+    api_url="http://localhost:8000",
+    api_key="your-api-key",
+    timeout=30.0,
+    max_retries=3,
+    retry_backoff=1.0,
+)
+
+server = create_server(config=config)
+server.run()
+```

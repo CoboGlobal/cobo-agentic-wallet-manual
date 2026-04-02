@@ -1,0 +1,106 @@
+---
+title: "MCP Integration"
+description: "Use Cobo Agentic Wallet as an MCP server for Claude and other LLM clients."
+icon: "plug"
+sidebarTitle: "MCP"
+---
+
+## Overview
+
+The Model Context Protocol (MCP) integration provides a stdio server that exposes all 7 wallet tools. Any MCP-compatible client (Claude Desktop, Claude Code, etc.) can connect and use wallet operations as tools.
+
+## Installation
+
+<CodeGroup>
+
+```bash pip
+pip install "cobo-agent-wallet[mcp]"
+```
+
+```bash uv
+uv sync --extra mcp
+```
+
+</CodeGroup>
+
+## Quick Start
+
+<Steps>
+
+<Step title="Set environment variables">
+```bash
+export AGENT_WALLET_API_URL=http://localhost:8000
+export AGENT_WALLET_API_KEY=your-api-key
+```
+</Step>
+
+<Step title="Start the MCP server">
+```bash
+python -m cobo_agentic_wallet.mcp
+```
+</Step>
+
+<Step title="Configure Claude Desktop">
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "cobo-agent-wallet": {
+      "command": "python",
+      "args": ["-m", "cobo_agentic_wallet.mcp"],
+      "env": {
+        "AGENT_WALLET_API_URL": "http://localhost:8000",
+        "AGENT_WALLET_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+</Step>
+
+</Steps>
+
+## Available Tools
+
+Once connected, the MCP client can invoke these tools:
+
+| Tool | Description |
+|---|---|
+| `list_wallets` | List wallets accessible to the caller |
+| `get_balance` | Get wallet balance by UUID |
+| `transfer_tokens` | Transfer tokens with policy enforcement |
+| `list_transactions` | List transactions with optional filters |
+| `get_audit_logs` | Query audit trail with filters |
+| `create_delegation` | Delegate scoped permissions to an operator |
+| `evaluate_policy` | Dry-run a policy decision |
+
+## Error Handling
+
+- **Policy denials** — returned as tool results (not errors), so Claude can read and self-correct
+- **API errors** — raised as MCP protocol errors (`isError: true`)
+
+<Accordion title="Why denials aren't protocol errors">
+  Policy denials are expected outcomes in normal operation. By returning them
+  as successful tool results with structured denial data, the LLM can parse
+  the suggestion field and retry with adjusted parameters — without the MCP
+  client treating it as a fatal error.
+</Accordion>
+
+## Programmatic Usage
+
+```python
+from cobo_agentic_wallet.mcp.server import MCPServerConfig, create_server
+
+config = MCPServerConfig(
+    api_url="http://localhost:8000",
+    api_key="your-api-key",
+)
+
+server = create_server(config=config)
+server.run()
+```
+
+<Card title="Full MCP Reference" icon="book" href="/sdk/mcp">
+  See the SDK MCP reference for complete server configuration options.
+</Card>

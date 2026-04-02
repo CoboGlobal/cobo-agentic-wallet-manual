@@ -1,0 +1,355 @@
+---
+title: "Emergency Kill Switch"
+description: "Freeze all delegations instantly and force owner re-authorization before agents can move funds."
+icon: "shield-halved"
+sidebarTitle: "Emergency Kill Switch"
+---
+
+## Business Context
+
+When suspicious behavior appears, owners need a one-command control to stop all delegated operations.
+
+<Accordion title="Control Architecture">
+```
+Owner (human)
+  -> Delegation A (agent A)  ← backed by active pact
+  -> Delegation B (agent B)  ← backed by active pact
+
+Emergency action:
+  caw delegation freeze --scope owner
+
+Effect:
+  - All active delegations become frozen
+  - Agent transfer attempts are denied until owner intervention
+```
+</Accordion>
+
+## Pact Specification
+
+Before demonstrating the kill switch, the agent has an active pact. The owner approved this pact earlier, giving the agent scoped transfer access that the freeze command will block.
+
+```json
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "deny-over-daily-limit",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": {
+          "amount_usd_gt": "5"
+        }
+      }
+    }
+  ],
+  "duration_seconds": 604800
+}
+```
+
+## Full Flow
+
+### Step 1: Agent establishes active pact
+
+Before the emergency scenario, the agent requests and receives authorization via the pact flow.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+# Write the PactSpec to a file
+cat > agent-pact.json << 'EOF'
+{
+  "permissions": ["write:transfer", "read:wallet"],
+  "policies": [
+    {
+      "name": "deny-over-daily-limit",
+      "type": "transfer",
+      "rules": {
+        "effect": "deny",
+        "when": {},
+        "deny_if": { "amount_usd_gt": "5" }
+      }
+    }
+  ],
+  "duration_seconds": 604800
+}
+EOF
+
+# Agent submits pact and waits for owner approval
+caw pact submit \
+  --wallet-id "$WALLET_UUID" \
+  --intent "Operate agent with small transfer allowance: max \$5/tx, valid 7 days" \
+  --spec-file agent-pact.json \
+  --wait
+
+# Confirm active
+caw pact status <PACT_ID>
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Agent submits pact
+        result = await client.submit_pact(
+            wallet_id=wallet_id,
+            intent="Operate agent with small transfer allowance: max $5/tx, valid 7 days",
+            spec={
+                "permissions": ["write:transfer", "read:wallet"],
+                "policies": [
+                    {
+                        "name": "deny-over-daily-limit",
+                        "type": "transfer",
+                        "rules": {
+                            "effect": "deny",
+                            "when": {},
+                            "deny_if": {"amount_usd_gt": "5"},
+                        },
+                    },
+                ],
+                "duration_seconds": 604800,
+            },
+        )
+        pact_id = result["pact_id"]
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+
+        # Poll for activation
+        while True:
+            pact = await client.get_pact(pact_id)
+            if pact["status"] == "active":
+                break
+            await asyncio.sleep(10)
+
+        print(f"Pact active. Agent is now operating.")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({ apiKey: process.env.AGENT_WALLET_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Agent submits pact
+const result = await client.submitPact({
+  wallet_id: walletId,
+  intent: 'Operate agent with small transfer allowance: max $5/tx, valid 7 days',
+  spec: {
+    permissions: ['write:transfer', 'read:wallet'],
+    policies: [
+      {
+        name: 'deny-over-daily-limit',
+        type: 'transfer',
+        rules: {
+          effect: 'deny',
+          when: {},
+          deny_if: { amount_usd_gt: '5' },
+        },
+      },
+    ],
+    duration_seconds: 604800,
+  },
+});
+console.log(`Pact ${result.pact_id} submitted — awaiting owner approval`);
+
+// Poll for activation
+let pact;
+do {
+  await new Promise(r => setTimeout(r, 10000));
+  pact = await client.getPact(result.pact_id);
+} while (pact.status === 'pending_approval');
+
+console.log('Pact active. Agent is now operating.');
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+import os
+
+client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt="Submit a pact for authorization before operating. Respect all limits.",
+)
+
+result = agent.invoke({
+    "input": "Request authorization to operate: max $5/tx, 7 days."
+})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 2: Owner approves in Web Console
+
+The pact appears in the Web Console. The owner reviews and approves. The agent begins operating with its pact-scoped API key.
+
+### Step 3: Agent operates (baseline)
+
+The agent executes a successful transfer before the emergency occurs.
+
+<Tabs>
+
+<Tab title="CLI">
+
+```bash
+WALLET_UUID=<wallet_uuid>
+DST=0x1111111111111111111111111111111111111111
+
+# Baseline transfer — succeeds before freeze
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
+```
+
+</Tab>
+
+<Tab title="Python SDK">
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    async with WalletAPIClient(api_key=os.environ["PACT_API_KEY"]) as pact_client:
+        wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+
+        # Baseline transfer — succeeds before freeze
+        result = await pact_client.transfer_tokens(
+            wallet_id=wallet_id,
+            chain_id="SETH",
+            dst_addr="0x1111111111111111111111111111111111111111",
+            token_id="SETH_USDC",
+            amount="1",
+        )
+        print(f"Transfer succeeded: {result['tx_id']}")
+
+asyncio.run(main())
+```
+
+</Tab>
+
+<Tab title="TypeScript SDK">
+
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const pactClient = new WalletAPIClient({ apiKey: process.env.PACT_API_KEY! });
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+// Baseline transfer — succeeds before freeze
+const result = await pactClient.transferTokens({
+  wallet_id: walletId,
+  chain_id: 'SETH',
+  dst_addr: '0x1111111111111111111111111111111111111111',
+  token_id: 'SETH_USDC',
+  amount: '1',
+});
+console.log(`Transfer succeeded: ${result.tx_id}`);
+```
+
+</Tab>
+
+<Tab title="Frameworks">
+
+```python
+from cobo_agentic_wallet import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+import os
+
+pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
+toolkit = CoboAgentWalletToolkit(client=pact_client)
+agent = create_agent(
+    model=ChatOpenAI(model="gpt-4.1-mini"),
+    tools=toolkit.get_tools(),
+    system_prompt="Operate within approved pact limits.",
+)
+
+result = agent.invoke({"input": "Send $1 USDC to 0x1111... on SETH."})
+print(result["output"])
+```
+
+</Tab>
+
+</Tabs>
+
+### Step 4: Owner detects suspicious activity and freezes
+
+The owner notices unusual patterns and triggers the emergency kill switch. This works from the Web Console AI assistant or directly via CLI.
+
+**Web Console:** Open the AI assistant and say: "Freeze all my active delegations immediately — suspicious activity detected."
+
+**CLI:**
+
+```bash
+# Freeze all delegations for this owner — immediate effect
+caw delegation freeze --scope owner --yes
+```
+
+All active delegations, including those backed by approved pacts, are frozen immediately. Any subsequent agent transfer attempt is denied.
+
+```bash
+# Denied transfer — all delegations are frozen
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
+# => Error: DELEGATION_FROZEN
+```
+
+### Step 5: Owner unfreezes when safe
+
+After investigating and resolving the incident, the owner restores agent access.
+
+**Web Console:** "All clear — unfreeze everything."
+
+**CLI:**
+
+```bash
+# Unfreeze and restore agent access
+caw delegation unfreeze --scope owner --yes
+
+# Confirm agent can operate again
+caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
+```
+
+### Step 6: Audit
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+```
+
+The audit log shows the full timeline: successful transfer, freeze event, denied transfer, unfreeze event, and restored transfer.
+
+## Full Source Code
+
+<Accordion title="View full API Client recipe source">
+
+- [Open full source on GitHub](https://github.com/CoboGlobal/cobo-agentic-wallet/blob/main/cobo-agent-wallet/sdk/examples/recipes/emergency-kill-switch/main.py)
+- Local path: `cobo-agent-wallet/sdk/examples/recipes/emergency-kill-switch/main.py`
+
+</Accordion>

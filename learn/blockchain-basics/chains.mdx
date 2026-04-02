@@ -1,0 +1,73 @@
+---
+title: "Chains and chain IDs"
+description: "How blockchains are identified — EVM chain IDs, Cobo chain IDs, and which chains Cobo Agentic Wallet supports."
+---
+
+## What is a blockchain
+
+A blockchain is a network of computers that jointly maintain a ledger of transactions. Each network is independent — a token on Ethereum and a token on Polygon are not interchangeable unless explicitly bridged.
+
+When you send a transaction or call a contract, you always do so on a specific chain. Sending a transaction to the wrong chain means it either fails or is lost.
+
+## EVM chain IDs
+
+Ethereum and its compatible chains (Base, Polygon, Arbitrum, Optimism, etc.) each have a numeric **chain ID** defined in [EIP-155](https://eips.ethereum.org/EIPS/eip-155). Wallets and tools use this number to prevent replay attacks — a signed transaction on one chain cannot be replayed on another.
+
+| Chain | EVM chain ID |
+|---|---|
+| Ethereum mainnet | `1` |
+| Base mainnet | `8453` |
+| Polygon mainnet | `137` |
+| Ethereum Sepolia (testnet) | `11155111` |
+| Base Sepolia (testnet) | `84532` |
+
+You rarely use EVM chain IDs directly in Cobo tooling — use Cobo chain IDs instead.
+
+## Cobo chain IDs
+
+Cobo uses its own string identifiers for chains. These are the values you pass to `--chain` in the CLI, `chain_id` in the Python and TypeScript SDKs, and policy rules.
+
+| Cobo chain ID | Chain | Network |
+|---|---|---|
+| `ETH` | Ethereum | Mainnet |
+| `BASE_ETH` | Base | Mainnet |
+| `MATIC` | Polygon | Mainnet |
+| `SOL` | Solana | Mainnet |
+| `SETH` | Ethereum Sepolia | Testnet |
+| `TBASE_SETH` | Base Sepolia | Testnet |
+| `SOLDEV_SOL` | Solana Devnet | Testnet |
+
+<Info>
+New wallets created via onboarding default to Base Sepolia (`TBASE_SETH`). Adding a mainnet chain requires an explicit confirmation step in the Web Console or Human App.
+</Info>
+
+## Discovering chains at runtime
+
+```bash
+caw meta chains
+```
+
+Or via the API: [List chains](/api-reference/metadata/list-chains).
+
+## EVM vs. Solana
+
+Cobo supports both EVM-compatible chains and Solana. The differences that affect agent design most:
+
+| | EVM (Ethereum, Base, Polygon) | Solana |
+|---|---|---|
+| Address format | `0x`-prefixed hex, 42 characters | Base58, ~44 characters |
+| Token standard | ERC-20 | SPL |
+| Contract call encoding | Calldata (ABI-encoded bytes) | Instructions + account list |
+| Gas unit | Gwei | Lamports |
+| Cobo chain IDs | `ETH`, `BASE_ETH`, `MATIC`, `SETH`, `TBASE_SETH` | `SOL`, `SOLDEV_SOL` |
+
+For EVM contract calls, pass `--calldata`. For Solana, pass `--instructions`. See [ABIs and calldata](/learn/contracts/abi-calldata) for encoding details.
+
+## Layer 2 chains
+
+Base and Polygon are **Layer 2 (L2)** chains — they process transactions faster and cheaper than Ethereum mainnet by batching them and posting compressed proofs back to Ethereum. From an agent's perspective, L2 chains behave like regular EVM chains: same address format, same ABI encoding, same token standards.
+
+Key differences to be aware of:
+- Gas prices on L2 are typically 10–100× cheaper than Ethereum mainnet.
+- Bridge exits from L2 to L1 may take minutes (optimistic rollups) or be near-instant (ZK rollups).
+- Some protocols (notably Uniswap) deploy separate contract addresses on each L2.
