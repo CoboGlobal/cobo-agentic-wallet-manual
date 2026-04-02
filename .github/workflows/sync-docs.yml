@@ -1,5 +1,11 @@
 name: Sync Docs from cobo-agent-wallet
 
+# Requires a self-hosted runner on the same machine as the source repo.
+# To register one: https://github.com/rcsh1/cobo-agentic-wallet-manual/settings/actions/runners/new
+#
+# Required secret:
+#   GH_PAT — GitHub PAT with `repo` scope, for opening PRs in CoboGlobal/cobo-agentic-wallet-manual
+
 on:
   workflow_dispatch:
   schedule:
@@ -8,35 +14,21 @@ on:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout manual repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up SSH access to internal repo
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.INTERNAL_REPO_SSH_KEY }}
-
-      - name: Add internal server to known_hosts
-        run: |
-          ssh-keyscan code.1cobo.com >> ~/.ssh/known_hosts
-
-      - name: Clone mintlify source
-        run: |
-          git clone --depth=1 git@code.1cobo.com:cobo-agent-wallets.git /tmp/cobo-agent-wallet
-          echo "SOURCE_COMMIT=$(git -C /tmp/cobo-agent-wallet rev-parse --short HEAD)" >> "$GITHUB_ENV"
-
-      - name: Sync content
+      - name: Sync content from local mintlify source
         run: |
           rsync -av --delete \
             --exclude='.git' \
             --exclude='.DS_Store' \
             --exclude='scripts/' \
             --exclude='.github/' \
-            /tmp/cobo-agent-wallet/mintlify/ ./
+            "$HOME/Documents/github/cobo-agent-wallets/cobo-agent-wallet/mintlify/" ./
 
       - name: Create PR if changes exist
         env:
@@ -47,6 +39,7 @@ jobs:
             exit 0
           fi
 
+          SOURCE_COMMIT="$(git -C "$HOME/Documents/github/cobo-agent-wallets/cobo-agent-wallet" rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
           BRANCH="sync/docs-$(date +%Y%m%d-%H%M%S)"
 
           git config user.name "github-actions[bot]"
@@ -55,7 +48,7 @@ jobs:
           git add -A
           git commit -m "sync: update docs from cobo-agent-wallet mintlify
 
-Source: cobo-agent-wallets@${{ env.SOURCE_COMMIT }}"
+Source: cobo-agent-wallets@${SOURCE_COMMIT}"
 
           git push origin "$BRANCH"
 
@@ -65,7 +58,7 @@ Source: cobo-agent-wallets@${{ env.SOURCE_COMMIT }}"
             --body "$(cat <<EOF
 Automated sync from \`cobo-agent-wallet/mintlify\`.
 
-**Source commit:** \`${{ env.SOURCE_COMMIT }}\`
+**Source commit:** \`${SOURCE_COMMIT}\`
 
 ---
 _Created by GitHub Actions_
