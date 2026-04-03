@@ -296,9 +296,154 @@
           },
           {
             "group": "API Reference",
-            "openapi": "products/agentic-wallet/manual/openapi.json",
             "pages": [
-              "products/agentic-wallet/manual/api-reference/overview"
+              "products/agentic-wallet/manual/api-reference/overview",
+              {
+                "group": "Identity",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/identity/provision-agent",
+                  "products/agentic-wallet/manual/api-reference/identity/activate-agent",
+                  "products/agentic-wallet/manual/api-reference/identity/get-agent-status",
+                  "products/agentic-wallet/manual/api-reference/identity/list-my-agents",
+                  "products/agentic-wallet/manual/api-reference/identity/create-api-key",
+                  "products/agentic-wallet/manual/api-reference/identity/list-api-keys",
+                  "products/agentic-wallet/manual/api-reference/identity/revoke-api-key"
+                ]
+              },
+              {
+                "group": "Wallets",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/wallets/create-wallet",
+                  "products/agentic-wallet/manual/api-reference/wallets/list-wallets",
+                  "products/agentic-wallet/manual/api-reference/wallets/get-wallet",
+                  "products/agentic-wallet/manual/api-reference/wallets/update-wallet",
+                  "products/agentic-wallet/manual/api-reference/wallets/archive-wallet",
+                  "products/agentic-wallet/manual/api-reference/wallets/create-wallet-address",
+                  "products/agentic-wallet/manual/api-reference/wallets/list-wallet-addresses",
+                  "products/agentic-wallet/manual/api-reference/wallets/list-wallet-balances",
+                  "products/agentic-wallet/manual/api-reference/wallets/get-wallet-node-status",
+                  "products/agentic-wallet/manual/api-reference/wallets/initiate-wallet-claim",
+                  "products/agentic-wallet/manual/api-reference/wallets/confirm-wallet-claim",
+                  "products/agentic-wallet/manual/api-reference/wallets/get-claim-info-by-wallet",
+                  "products/agentic-wallet/manual/api-reference/wallets/get-claim-info-by-token"
+                ]
+              },
+              {
+                "group": "Delegations",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/delegations/create-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/list-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/get-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/update-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/revoke-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/freeze-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/unfreeze-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/list-received-delegations"
+                ]
+              },
+              {
+                "group": "Policies",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/policies/create-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/list-policies",
+                  "products/agentic-wallet/manual/api-reference/policies/get-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/update-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/deactivate-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/dry-run-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/evaluate-policy",
+                  "products/agentic-wallet/manual/api-reference/policies/list-pending-operations",
+                  "products/agentic-wallet/manual/api-reference/policies/get-pending-operation",
+                  "products/agentic-wallet/manual/api-reference/policies/approve-pending-operation",
+                  "products/agentic-wallet/manual/api-reference/policies/reject-pending-operation"
+                ]
+              },
+              {
+                "group": "Approvals",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/approvals/create-approval",
+                  "products/agentic-wallet/manual/api-reference/approvals/list-approvals",
+                  "products/agentic-wallet/manual/api-reference/approvals/get-approval",
+                  "products/agentic-wallet/manual/api-reference/approvals/resolve-approval"
+                ]
+              },
+              {
+                "group": "Transactions",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/transactions/transfer-tokens",
+                  "products/agentic-wallet/manual/api-reference/transactions/contract-call",
+                  "products/agentic-wallet/manual/api-reference/transactions/sign-message",
+                  "products/agentic-wallet/manual/api-reference/transactions/x402-payment",
+                  "products/agentic-wallet/manual/api-reference/transactions/list-transactions",
+                  "products/agentic-wallet/manual/api-reference/transactions/get-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/drop-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/speedup-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/estimate-transfer-fee",
+                  "products/agentic-wallet/manual/api-reference/transactions/estimate-contract-call-fee",
+                  "products/agentic-wallet/manual/api-reference/transactions/list-recent-addresses",
+                  "products/agentic-wallet/manual/api-reference/transactions/handle-waas-webhook"
+                ]
+              },
+              {
+                "group": "Transaction Records",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/transaction-records/list-transaction-records",
+                  "products/agentic-wallet/manual/api-reference/transaction-records/get-transaction-record"
+                ]
+              },
+              {
+                "group": "Balance",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/balance/list-balances"
+                ]
+              },
+              {
+                "group": "Metadata",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/metadata/list-chains",
+                  "products/agentic-wallet/manual/api-reference/metadata/get-chain-info-by-chain-id",
+                  "products/agentic-wallet/manual/api-reference/metadata/list-assets"
+                ]
+              },
+              {
+                "group": "Coin Price",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/coin-price/get-asset-coin-prices"
+                ]
+              },
+              {
+                "group": "Audit",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/audit/list-audit-logs"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/webhooks/register-webhook",
+                  "products/agentic-wallet/manual/api-reference/webhooks/list-webhook-dlq",
+                  "products/agentic-wallet/manual/api-reference/webhooks/delete-webhook"
+                ]
+              },
+              {
+                "group": "Events",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/events/stream-events"
+                ]
+              },
+              {
+                "group": "Faucet",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/faucet/list-tokens",
+                  "products/agentic-wallet/manual/api-reference/faucet/deposit"
+                ]
+              },
+              {
+                "group": "Health",
+                "pages": [
+                  "products/agentic-wallet/manual/api-reference/health/health-check",
+                  "products/agentic-wallet/manual/api-reference/meta/ping"
+                ]
+              }
             ]
           }
         ]
