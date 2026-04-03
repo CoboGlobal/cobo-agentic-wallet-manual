@@ -85,7 +85,7 @@ async def main() -> None:
         print(f"PACT SUBMITTED: {pact_id}")
 
         # Step 2: Poll until the owner approves the pact.
-        print("Waiting for owner approval in Web Console or Human App...")
+        print("Waiting for owner approval in Human App...")
         while True:
             pact = await client.get_pact(pact_id)
             status = pact.get("status", "")

@@ -1,9 +1,9 @@
 ---
 title: "MPC Model"
-description: "How MPC wallets distribute signing authority across key shares so the full private key never exists in any one place — and how hardware isolation protects each share."
+description: "MPC provides a mathematical guarantee, not a software promise — no single party holds your private key, and signing authority is split so none can act alone."
 ---
 
-In an MPC wallet, no single party — not you, not your agent, not Cobo — ever holds a complete private key. Signing authority is split into independent key shares held by separate parties. A threshold number must cooperate to sign a transaction; none can act unilaterally.
+MPC provides a mathematical guarantee, not a software promise. In an MPC wallet, no single party — not you, not your agent, not Cobo — ever holds a complete private key. Signing authority is split into independent key shares held by separate parties. A threshold number must cooperate to sign a transaction; none can act unilaterally.
 
 This is fundamentally different from both self-custody and fully custodial wallets:
 
@@ -35,7 +35,7 @@ Because Cobo holds only one key share, it has bounded authority over your wallet
 
 ## How key shares are distributed
 
-### Before claiming — one key group
+### Before pairing — one key group
 
 When your agent runs `caw onboard`, a single key group is created:
 
@@ -46,9 +46,9 @@ When your agent runs `caw onboard`, a single key group is created:
 
 Your agent uses this group for all everyday signing. Both parties must cooperate for every transaction.
 
-### After claiming — two independent key groups
+### After pairing — two independent key groups
 
-When you claim the wallet in the Human App, a second key group is created on your device:
+When you pair the wallet in the Human App, a second key group is created on your device:
 
 | Group | Party | Share | Scheme |
 |---|---|---|---|
@@ -73,7 +73,7 @@ flowchart LR
     end
 ```
 
-**Why two groups?** The agent group handles automatic signing within your policy — your phone does not need to be involved for routine operations. The mobile group handles over-limit operations (where you must approve) and key recovery. Keeping them separate means everyday transactions don't interrupt you.
+**Why two groups?** The agent group handles automatic signing for transactions within your pact — your phone does not need to be involved for routine operations. The mobile group handles over-limit operations that exceed your pact's boundaries (where you must approve) and key recovery. This is what makes MPC a mathematical guarantee: even if your agent is compromised, the attacker cannot bypass the threshold requirement. Your pact defines the rules; MPC makes them unbreakable.
 
 ## How key shares are protected: MPC + TEE
 

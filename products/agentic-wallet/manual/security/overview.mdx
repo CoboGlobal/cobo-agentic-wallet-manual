@@ -1,74 +1,79 @@
 ---
-title: "How your wallet protects your assets"
-description: "What safeguards are in place, what your agent can and cannot do, and how to stay in control — in plain language."
+title: "How your pact protects your assets"
+description: "Your agent has real power — and real boundaries. Here's how a pact makes that safe."
 ---
 
-## What your agent can and cannot do
+Your agent can hold crypto, execute trades, interact with DeFi protocols, and make payments — all autonomously. That's the point. But every operation passes through your pact before it reaches the blockchain. Here's how that works.
 
-| Your agent can | Your agent cannot |
-|---|---|
-| Transfer tokens within your spending limits | Raise or modify your spending limits |
-| Query your wallet balance and transaction history | Access wallets you have not connected it to |
-| Interact with protocols within your approved rules | Approve its own requests on your behalf |
-| Request your approval for larger operations | Execute transactions after you pause or revoke access |
-| | Hold or reconstruct your private keys |
+<Info>Built on 8 years protecting institutional crypto. $2B under custody. Zero breaches.</Info>
 
-Giving an AI agent access to your crypto is a meaningful decision. Cobo Agentic Wallet is built so that you define exactly what your agent is allowed to do, and those boundaries are enforced automatically at every step. The agent cannot work around them.
+## Your rules can't be broken
 
-## Your funds cannot be moved by any single party
+Your agent operates the wallet but cannot modify the rules that govern it — even if compromised. This isn't a best practice. It's architectural.
 
-Your wallet does not use a single private key stored in one place. Signing authority is split across multiple independent parties using Multi-Party Computation. No single party — not you, not your agent, not Cobo — can move funds alone. Every transaction requires cooperation, and that cooperation only happens when your rules allow it.
+The agent's operator credentials are structurally separated from governance credentials at the infrastructure level. The agent can submit transactions, but it cannot:
 
-This means:
+- Raise or modify spending limits
+- Change which addresses, chains, or contracts are allowed
+- Approve its own requests
+- Access wallets it hasn't been connected to
+- Escalate its own permissions
 
-- Cobo cannot move your funds without the other parties cooperating
-- Your agent cannot move your funds without Cobo co-signing
-- Every transaction must pass your rules before Cobo co-signs — rules are enforced at the protocol level, not just by policy
+The rules you set in your pact are enforced by a different layer than the one your agent talks to. There is no API call, prompt injection, or agent behavior that can change them.
 
-<Info>New wallets start on testnet by default. Moving to mainnet requires an explicit confirmation step to ensure your rules are in place before real funds are at risk.</Info>
+## Your limits can't be gamed
 
-## Your agent can only act within what you approved
+Every transaction is checked against your pact's budget rules before execution. The policy engine enforces:
 
-After you claim the wallet, before your agent can take on a new task beyond your Default Policy, it must describe what it plans to do and request specific permissions. You review this request and approve or reject it — no access is granted until you confirm.
+- **Per-transaction caps** — no single transfer can exceed your limit
+- **Rolling budgets** — cumulative limits over hourly, daily, weekly, and monthly windows using sliding-window counters with atomic reservation
+- **Chain and token restrictions** — your agent can only transact on chains and with tokens you've approved
+- **Contract and function allowlists** — limit which smart contracts and specific functions your agent can call
+- **Address allowlists** — restrict destinations to addresses you've explicitly approved
+- **Review thresholds** — operations above a defined value pause for your approval before execution
 
-Once you approve, your agent is bound to the operations you authorized, the spending limits you set, the addresses you allow, and the wallet you designated. Your agent cannot raise its own limits, add operation types you did not approve, change which addresses it can send to, or access your wallet after you pause or revoke it.
+The most restrictive rule always wins. Limits compose — a transaction must satisfy every applicable rule to execute. No race conditions. No workarounds.
 
-<Info>Before you claim the wallet, your agent is the owner and operates without restrictions. Claiming is the step that puts your rules in place.</Info>
+[Spending limits and rules →](/security/spend-limits) · [Address allowlists →](/security/address-allowlists)
 
-[How agent access works →](/wallet-owner/approve) · [How every operation is checked →](/wallet-owner/policies)
+## Your authority can't be bypassed
 
-## Set limits that match your comfort level
+Signing authority for your wallet is split across multiple independent parties using Multi-Party Computation (MPC). This is a mathematical guarantee, not a software promise.
 
-You control how much your agent can move and how often:
+After you pair the wallet with the Human App, two separate threshold groups control signing:
 
-- **Per-transaction cap** — no single transfer can exceed this amount
-- **Rolling limits** — cumulative caps over a day, week, or month
-- **Review threshold** — operations above a certain value pause and wait for your explicit approval before anything executes on-chain
-- **Address restrictions** — restrict your agent to a specific set of destination addresses or contracts
+- **Agent + Cobo** — handles everyday transactions that stay within your pact. Your phone is not involved for routine operations.
+- **You + Cobo** — required for high-value operations above your approval threshold, policy changes, and ownership actions. Enforced cryptographically.
 
-[Spending limits and rules →](/wallet-owner/policies)
+No single party — not your agent, not Cobo, not you alone — can move funds unilaterally. Every transaction requires cooperation, and that cooperation only happens when your pact allows it.
 
-## Every action is recorded
+[MPC key shares →](/security/mpc-key-shares)
 
-Every operation your agent attempts — allowed, paused for your review, or blocked — is logged with a timestamp and reason. Nothing happens silently.
+## Every decision is on record
 
-From the Human App, you can see your agent's full history at any time, review why an operation was blocked or held for approval, and approve or reject transactions waiting for your review.
+Every operation your agent attempts — allowed, paused, or blocked — is logged with a timestamp, the policy decision, and the full context. Nothing happens silently.
 
-[Activity and pending operations →](/wallet-owner/activity)
+From the Human App, you can:
+- See your agent's full transaction history at any time
+- Review why an operation was blocked or held for approval
+- Approve or reject transactions waiting for your review
+- Query audit logs for compliance or debugging
 
-## Pause or revoke access in one step
+[Activity and audit logs →](/wallet-owner/activity)
 
-- **Pause** — suspends your agent immediately. Your rules and access terms are preserved. Unpausing restores access with no re-approval needed.
-- **Revoke** — permanently terminates access. Your agent must submit a new request and go through the approval process before it can act again.
+## Pause or revoke in one step
+
+- **Pause** — suspends your agent immediately. Your pact terms are preserved. Unpausing restores access with no re-approval needed.
+- **Revoke** — permanently terminates the pact. Your agent must submit a new pact and go through approval before it can act again.
 
 Both take effect the moment you confirm. There is no delay or grace period.
 
-[Pause and revoke →](/wallet-owner/freeze)
+[Pause and revoke →](/security/freeze-revoke)
 
-## What's at risk if something goes wrong?
+## What's at risk if something goes wrong
 
-Your agent can only access the wallet you connected it to — not any other wallets you own, and not more than your current balance. Within that wallet, it can only act within the rules you set.
+Your agent can only access the one wallet you connected it to — not any other wallets, and not more than the balance in that wallet. Within that wallet, your agent can only act within the pact you set.
 
-If your agent is compromised or makes a mistake, the impact is bounded by what you authorized. Transactions above your approval threshold are blocked until you review them. Pausing your agent stops all new transaction attempts immediately.
+If your agent is compromised, the damage is bounded by your pact. Transactions above your approval threshold are blocked until you review them. Pausing your agent stops all new operations immediately.
 
-The one thing rules cannot undo is a transaction your agent already executed within its approved limits. Set your limits at a level you are comfortable losing in a worst case, and review your activity regularly.
+The one thing a pact cannot undo is a transaction your agent already executed within its approved limits. Set your limits at a level you're comfortable with, and review your activity regularly.

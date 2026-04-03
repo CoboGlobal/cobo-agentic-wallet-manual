@@ -28,7 +28,7 @@ caw --version
 
 ## Onboard your agent
 
-Ask your user to generate a pairing code from the Web Console or Human App (see [Guide your users](/developer/quickstart/guide-users) for instructions to share with them). Once you have the code, run:
+Ask your user to generate a pairing code from the Human App (see [Guide your users](/developer/quickstart/guide-users) for instructions to share with them). Once you have the code, run:
 
 ```bash
 caw onboard provision --token <PAIRING_CODE>
@@ -44,7 +44,7 @@ caw onboard self-test
 
 ## Submit a pact
 
-Before executing transfers, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Web Console or Human App.
+Before executing transfers, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Human App.
 
 ```bash
 # Submit a pact requesting transfer permissions for 24 hours
@@ -61,7 +61,7 @@ caw pact submit \
 caw pact status <PACT_ID>
 ```
 
-<Note>The `--wait` flag blocks until the wallet owner approves or rejects the pact. The owner is notified in the Web Console or Human App.</Note>
+<Note>The `--wait` flag blocks until the wallet owner approves or rejects the pact. The owner is notified in the Human App.</Note>
 
 ## Explore your wallet
 

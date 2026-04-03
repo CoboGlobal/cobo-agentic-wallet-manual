@@ -10,7 +10,7 @@ Every entity that interacts with Cobo Agentic Wallet is a **principal** — eith
 | `human` | Owner — creates wallets, sets policies, reviews logs | API Key (`X-API-Key`) |
 | `agent` | Operator — executes delegated actions within limits | API Key (`X-API-Key`) |
 
-A **human** becomes a principal by authenticating via the Human App or Web Console. An **agent** becomes a principal by calling the API to register itself. Both receive a principal ID and interact via that ID.
+A **human** becomes a principal by authenticating via the Human App. An **agent** becomes a principal by calling the API to register itself. Both receive a principal ID and interact via that ID.
 
 <Info>
   `human` and `agent` are labels — the system does not restrict which type can own a wallet or hold a delegation. A `type=agent` principal can own wallets just like a human.

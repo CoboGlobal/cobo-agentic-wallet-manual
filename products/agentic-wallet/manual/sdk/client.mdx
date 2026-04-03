@@ -735,10 +735,10 @@ Approve or reject a pending approval request. Only the wallet owner can resolve 
 
 Provision an agent by creating an API key and binding it to an owner.
 
-Supply `token` to use the pairing code from the Web Console or Human App. If `token` is omitted, provisioning runs in agent-first mode — the response contains a temporary `activation_secret` that the human uses to complete binding.
+Supply `token` to use the pairing code from the Human App. If `token` is omitted, provisioning runs in agent-first mode — the response contains a temporary `activation_secret` that the human uses to complete binding.
 
 <ParamField path="token" type="str | None" default="None">
-  The pairing code from the Web Console or Human App.
+  The pairing code from the Human App.
 </ParamField>
 <ParamField path="invitation_code" type="str | None" default="None">
   An alternative invitation code.

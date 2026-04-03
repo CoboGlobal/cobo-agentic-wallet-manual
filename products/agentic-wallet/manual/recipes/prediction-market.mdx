@@ -58,7 +58,7 @@ Owner (human)
 
 > **Owner → Agent:** "Monitor the presidential election event on Polymarket. Bet on the outcome if odds are above 60%, max $100 per position, for the next 7 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 The agent constructs a pact from the owner's instruction and submits it for approval.
 
@@ -111,7 +111,7 @@ async def submit_polymarket_pact():
             }
         )
         pact_id = result["pact_id"]
-        print(f"Pact submitted: {pact_id} — waiting for owner approval in Web Console")
+        print(f"Pact submitted: {pact_id} — waiting for owner approval in Human App")
 
         # Poll for activation
         while True:
@@ -202,9 +202,9 @@ print(result["output"])
   </Tab>
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The agent notifies the owner that an authorization request is pending in the Web Console. The owner reviews the intent, the allowed contract (`<POLYMARKET_CTF_EXCHANGE>` on Base), and the $100 per-bet spending cap, then approves. The agent receives a pact-scoped API key to begin operating.
+The agent notifies the owner that an pact is pending  in the Human App. The owner reviews the intent, the allowed contract (`<POLYMARKET_CTF_EXCHANGE>` on Base), and the $100 per-bet spending cap, then approves. The agent receives a pact-scoped API key to begin operating.
 
 <Note>
 The owner can revise the proposed permissions or spending limits before approving. The agent will operate under the owner's revised terms.

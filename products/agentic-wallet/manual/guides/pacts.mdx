@@ -15,7 +15,7 @@ The pact flow has three phases: **propose**, **approve**, **operate**.
    └── Specifies: permissions, spending limits, allowed contracts, duration
 
 2. You review and approve
-   └── Pact appears in the Web Console, Human App, or chat
+   └── Pact appears in the Human App
    └── You see the intent, execution plan, permissions, and spending rules
    └── You can revise the permissions and policies before approving
    └── Approve → agent gets scoped access. Reject → nothing happens.
@@ -109,7 +109,7 @@ COMPLETED  EXPIRED
 
 | State | What it means |
 |---|---|
-| `PENDING_APPROVAL` | Agent submitted the pact. Waiting for your approval in the Web Console, Human App, or chat. |
+| `PENDING_APPROVAL` | Agent submitted the pact. Waiting for your approval in the Human App. |
 | `ACTIVE` | You approved. The agent now has a scoped delegation and API key to operate within the pact's boundaries. |
 | `REJECTED` | You rejected the pact. No access was granted. |
 | `COMPLETED` | A completion condition was met (e.g., 12 transactions completed). Access revoked automatically. |
@@ -212,7 +212,7 @@ async with WalletAPIClient() as client:
 
 ## Approval experience
 
-When your agent submits a pact, you receive a notification in the Web Console, Human App, or chat. The approval screen shows:
+When your agent submits a pact, you receive a notification in the Human App. The approval screen shows:
 
 - **Intent** — what the agent wants to do, in plain language
 - **Execution plan** — the agent's detailed strategy and steps, so you understand the reasoning

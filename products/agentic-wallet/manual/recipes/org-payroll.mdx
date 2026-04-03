@@ -77,7 +77,7 @@ The owner gives the agent a natural-language instruction:
 
 > "Run payroll automation. Max $500 per payout, require my approval above $300, only approved payroll addresses, $5,000 monthly budget. Valid 90 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 The agent parses the instruction and submits a pact for owner approval.
 
@@ -192,7 +192,7 @@ async def main():
             },
         )
         pact_id = result["pact_id"]
-        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Human App")
 
         # Poll for activation
         while True:
@@ -304,9 +304,9 @@ print(result["output"])
 
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The pact appears in the Web Console with the intent, execution plan, recipient allowlist, per-payout cap, approval threshold ($300), and monthly budget. The owner reviews and approves. The agent receives a pact-scoped API key and can begin processing payroll.
+The pact appears in the Human App with the intent, execution plan, recipient allowlist, per-payout cap, approval threshold ($300), and monthly budget. The owner reviews and approves. The agent receives a pact-scoped API key and can begin processing payroll.
 
 ### Step 4: Agent operates
 

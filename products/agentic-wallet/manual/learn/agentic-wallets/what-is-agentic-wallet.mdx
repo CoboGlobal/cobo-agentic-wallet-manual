@@ -16,7 +16,7 @@ An **agentic wallet** is a wallet where an AI agent acts as a **delegated princi
 The key shift: the decision-maker is no longer a human reviewing a transaction. It is a language model that perceives context, reasons about it, and issues transaction requests. Your role as the owner is to:
 
 1. Define what the agent is allowed to do (policy rules, contract allowlists, amount caps).
-2. Approve or reject the agent's authorization request (Pact).
+2. Approve or reject the agent's pact — the structured delegation agreement defining its intent, execution plan, permissions, policies, and completion conditions.
 3. Monitor what the agent did after the fact.
 4. Intervene — adjust rules or freeze the agent — if behavior deviates from intent.
 
@@ -51,11 +51,12 @@ The key shift: the decision-maker is no longer a human reviewing a transaction. 
 
 ## A useful analogy
 
-Think of it like a corporate expense card:
+Think of it like a corporate expense card — but with a compliance department that cannot be fired, bribed, or overridden. Not even by the agent itself.
 
 - The employee (agent) can spend autonomously within the card's limit.
-- Finance (policy engine) blocks transactions that violate the policy — wrong merchant category, over-limit, outside approved dates.
+- The compliance department (pact + policy engine) blocks transactions that violate the rules — wrong merchant category, over-limit, outside approved dates. It cannot be bypassed.
 - The manager (owner) reviews the statement and can revoke the card at any time.
 - The employee never holds the company's bank account credentials — they only have the delegated card.
+- When the project is over, the card shreds itself. That compliance department? It's the pact.
 
 The agentic wallet extends this analogy to on-chain transactions, smart contracts, and DeFi operations.

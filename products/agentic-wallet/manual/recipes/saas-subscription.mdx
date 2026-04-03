@@ -59,7 +59,7 @@ Owner (human)
 
 > **Owner → Agent:** "Monitor our SaaS subscriptions (GitHub, Linear, Figma) and auto-renew them before they expire. Alert me if the wallet balance drops below $1,000. Max $500 per renewal, $2,000 per month, valid 1 year."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 <Tabs>
   <Tab title="CLI">
@@ -113,7 +113,7 @@ async def submit_subscription_pact():
             }
         )
         pact_id = result["pact_id"]
-        print(f"Pact submitted: {pact_id} — waiting for owner approval in Web Console")
+        print(f"Pact submitted: {pact_id} — waiting for owner approval in Human App")
 
         while True:
             pact = await client.get_pact(pact_id)
@@ -204,9 +204,9 @@ print(result["output"])
   </Tab>
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The agent notifies the owner that an authorization request is pending. The owner reviews the destination address allowlist, the $500 per-renewal cap, the $2,000 rolling 30-day budget, and the 1-year duration, then approves.
+The agent notifies the owner that an pact is pending. The owner reviews the destination address allowlist, the $500 per-renewal cap, the $2,000 rolling 30-day budget, and the 1-year duration, then approves.
 
 ### Step 4: Agent monitors and renews
 

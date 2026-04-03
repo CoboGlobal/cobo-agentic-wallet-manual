@@ -76,7 +76,7 @@ The operation passed all three stages. It proceeds to execution — the MPC sign
 
 ### Require approval (HTTP 202)
 
-The operation passed the permission check and the rule evaluation stage, but a `review_if` condition was triggered or an `always_review` flag is set on a matching policy. The operation is held as a **PendingOperation**. The agent receives an HTTP 202 response indicating the operation is awaiting owner approval. The user is notified via the configured interface (Web Console, Human App, or chat).
+The operation passed the permission check and the rule evaluation stage, but a `review_if` condition was triggered or an `always_review` flag is set on a matching policy. The operation is held as a **PendingOperation**. The agent receives an HTTP 202 response indicating the operation is awaiting owner approval. The user is notified via the configured interface (Human App).
 
 The agent can poll `GET /pending-operations/{id}` to check whether the operation has been approved or rejected. Once the user approves, execution proceeds automatically.
 

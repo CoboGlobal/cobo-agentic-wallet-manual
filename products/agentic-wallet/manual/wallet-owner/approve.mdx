@@ -1,38 +1,38 @@
 ---
-title: "Review and approve agent requests"
-description: "How to handle authorization requests from your agent — when it wants to perform a new task on your behalf."
+title: "Review and approve pacts"
+description: "How to handle pacts from your agent — when it wants to take on a new task on your behalf."
 ---
 
-## What is an authorization request?
+## What is a pact?
 
-When your agent wants to take on a new task — for example, running a trading strategy or managing a payroll schedule — it submits an authorization request explaining what it wants to do, for how long, and within what limits. It is a structured agreement, not just a permission: once you approve, your agent operates within those exact boundaries, and its access expires automatically when the window ends. You review and decide: approve, reject, or adjust the terms before approving.
+When your agent wants to take on a new task — for example, running a trading strategy or managing a payroll schedule — it submits a pact: a structured delegation agreement with intent, execution plan, permissions, policies, and completion conditions. Once you approve, your agent operates within those exact boundaries, and its access revokes automatically when the pact ends. You review and decide: approve, reject, or adjust the terms before approving.
 
-<Info>Authorization requests only require your approval after you have claimed the wallet. Before claiming, your agent is the owner and can operate without approval.</Info>
+<Info>Pacts only require your approval after you have paired the wallet with the Human App. Before pairing, your agent is the owner and can operate without approval.</Info>
 
 ## What to review
 
-An authorization request shows you:
+A pact shows you:
 
-- **What your agent wants to do** — a plain-language description of the task
-- **What it plans to do** — a detailed breakdown of its strategy and steps
-- **What permissions it's requesting** — for example, transfer tokens or interact with specific contracts
-- **Spending limits** — the per-transaction and daily budgets it's proposing
-- **Duration** — how long it wants this authorization to last; access expires automatically when that window closes, with no action needed from you
+- **Intent** — the job the agent is being authorized to carry out
+- **Execution plan** — a reviewable plan for how the agent intends to carry out that job
+- **Permissions** — predefined operation scopes the agent is requesting (e.g., wallet read, transaction execution, contract calls)
+- **Policies** — the budgets, approvals, allowlists, chain/token/contract constraints, and other guardrails it's proposing
+- **Completion conditions** — what triggers automatic completion and revocation (time elapsed, budget exhausted, transaction count reached, job done)
 
 ## Approve, reject, or adjust
 
 You have three options:
 
-- **Approve** — your agent gets access to proceed with the task within the limits shown
+- **Approve** — your agent gets access to proceed within the pact's boundaries
 - **Reject** — your agent gets no access; nothing changes
-- **Adjust before approving** — change the spending limits or duration before granting access; your agent operates under your revised terms, not its original proposal
+- **Adjust before approving** — change the policies, permissions, or completion conditions before granting access; your agent operates under your revised terms, not its original proposal
 
-Active authorizations also expire automatically when their duration ends or their spending budget is exhausted — no zombie permissions, no lingering access. You can also revoke an active authorization at any time from the same screen.
+Every pact has an endgame. Active pacts complete automatically when a completion condition is met — time elapsed, budget exhausted, or job done — no zombie permissions, no lingering access. You can also revoke an active pact at any time from the same screen.
 
-## Where to find pending requests
+## Where to find pending pacts
 
-Open the Human App and go to **Pending Approvals**. You'll see a list of authorization requests waiting for your decision, each with a timestamp and the agent's stated intent.
+Open the Human App and go to **Pending Approvals**. You'll see a list of pacts waiting for your decision, each with a timestamp and the agent's stated intent.
 
 You can also ask the AI assistant:
 
-> "Do I have any pending authorization requests?"
+> "Do I have any pending pacts?"

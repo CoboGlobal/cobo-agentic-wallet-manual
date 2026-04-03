@@ -22,7 +22,7 @@ In traditional EOA wallets (MetaMask, hardware wallets), the private key is a si
 
 Cobo Agentic Wallet uses **multi-party computation (MPC)** to eliminate the single point of failure. Instead of a single private key, the system generates multiple **key shares** distributed across separate parties:
 
-- Web Console path: the agent's signing node + Cobo's infrastructure (2-of-2)
+- Agent-managed path: the agent's signing node + Cobo's infrastructure (2-of-2)
 - Human App path: your phone's main key + your phone's backup key + Cobo (2-of-3)
 
 Signing a transaction requires at least 2 share holders to cooperate. A single key share is cryptographically useless on its own — it cannot be used to sign anything. Cobo never has enough shares alone to move your funds.
