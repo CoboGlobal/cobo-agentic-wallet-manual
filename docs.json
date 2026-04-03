@@ -296,10 +296,10 @@
           },
           {
             "group": "API Reference",
+            "openapi": "products/agentic-wallet/manual/openapi.json",
             "pages": [
               "products/agentic-wallet/manual/api-reference/overview"
-            ],
-            "openapi": "products/agentic-wallet/manual/openapi.json"
+            ]
           }
         ]
       }
