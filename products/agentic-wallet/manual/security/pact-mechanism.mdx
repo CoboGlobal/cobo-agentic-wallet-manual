@@ -1,41 +1,42 @@
 ---
 title: "How pacts work"
-description: "Pacts are the authorization layer between agents and wallets — scoped, time-bound, owner-approved access that leaves a complete audit trail."
+description: "A pact is a structured, enforceable delegation agreement between you and your agent — with intent, execution plan, permissions, policies, and completion conditions. Enforced by infrastructure, not trust."
 ---
 
-When an AI agent needs to interact with a wallet, it cannot simply be handed a raw API key with unrestricted access. That approach is unsafe, unauditable, and gives the user no meaningful control over what the agent actually does.
+A pact is not just authorization — it's an enforceable agreement. Before your agent touches a single token, it declares what it intends to do, and you review the terms: intent, execution plan, permissions, policies, and completion conditions. The infrastructure enforces those terms automatically. Your agent operates within the agreed boundaries — and those boundaries are enforced architecturally, not by trust.
 
-Pacts solve this problem. A pact is a structured authorization agreement: the agent declares exactly what it intends to do, the user reviews and approves the plan, and the system enforces it automatically. Once approved, the agent operates within the agreed boundaries — and those boundaries are enforced cryptographically, not just by trust.
+A pact isn't a leash. It's a license — here's what you can do, here's where you stop, and here's when access ends.
 
 ## Two modes: owner and delegate
 
 The pact mechanism behaves differently depending on whether your agent is the wallet owner or a delegate:
 
-| | Agent as owner (before claiming) | Agent as delegate (after claiming) |
+| | Agent as owner (before pairing) | Agent as delegate (after pairing) |
 |---|---|---|
 | **Who triggers pacts** | Agent | Agent |
 | **Approval required** | No — automatically processed | Yes — owner reviews and approves in the Human App |
-| **Spending limits** | None | Defined by your Default Policy and any scoped pact policies |
-| **Purpose** | Structured execution framework | Authorization gate for new tasks outside the Default Policy |
+| **Spending limits** | None | Enforced by the active pact and any owner-level guardrails |
+| **Purpose** | Structured execution framework | Structured delegation and enforcement for agent work after claim |
 
-When you claim the wallet, your agent transitions from owner to delegate. From that point on, all agent requests for tasks outside the Default Policy require your approval.
+When you pair the wallet with the Human App, your agent transitions from owner to delegate. From that point on, the owner uses pacts to define the terms the agent operates under: what it can do, under which policies, and when that authority ends.
 
-## Default Policy
+## Owner guardrails
 
-When you claim the wallet, a Default Policy is created for your agent. It defines the boundaries within which your agent can operate automatically — no pact approval required for routine actions that stay within these limits.
+When you pair the wallet with the Human App, the app gives you owner-level guardrails for routine control. These settings shape how the agent's active pacts execute in practice and when additional owner approval is required.
 
-You set the Default Policy in the Human App. Common limits:
+Common controls include:
 
 - Per-transaction cap
 - Daily or rolling budget
 - Allowed destination addresses
 - Allowed chains
+- Approval threshold
 
-Operations within the Default Policy execute automatically. Operations beyond it require your agent to submit a pact for your approval.
+These controls work alongside the pact itself. The pact defines the job, permissions, policies, and completion conditions; owner guardrails determine which operations can proceed automatically and which pause for your approval.
 
 ## The PactSpec: what the agent declares
 
-When your agent wants access beyond the Default Policy, it submits a **PactSpec** — a machine-readable declaration of the access it needs:
+When your agent needs a new scoped delegation, it submits a **PactSpec** — a machine-readable declaration of the access it needs:
 
 | Field | Type | Description |
 |---|---|---|
@@ -48,7 +49,7 @@ When your agent wants access beyond the Default Policy, it submits a **PactSpec*
 
 ## The approval gate
 
-Submitting a pact does not grant access. It creates a pending approval request.
+Submitting a pact does not grant access. It creates a pending approval request in the Human App.
 
 <Steps>
   <Step title="Agent submits the pact">

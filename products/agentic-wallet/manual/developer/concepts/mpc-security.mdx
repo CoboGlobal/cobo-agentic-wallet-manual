@@ -19,9 +19,9 @@ When your agent runs `caw onboard`, a single key group is created:
 |---|---|---|
 | `caw onboard` | 2/2 TSS | Agent's machine (TSS node) + Cobo |
 
-### After claiming — two independent key groups
+### After pairing — two independent key groups
 
-When the wallet owner claims the wallet in the Human App, a second key group is created on their device. The two groups are independent and both valid:
+When the wallet owner pairs the wallet in the Human App, a second key group is created on their device. The two groups are independent and both valid:
 
 | Group | MPC scheme | Key share holders |
 |---|---|---|
@@ -63,7 +63,7 @@ The agent uses the agent group for everyday signing (transactions within policy 
 - The TSS node runs as a background process on the agent's machine, started automatically by `caw onboard`
 - MPC key shares are stored locally under `~/.cobo-agentic-wallet/profiles/`
 - Key generation happens once during onboarding — subsequent transactions reuse the shares without regenerating them
-- The mobile key group is created during the claim flow and lives on the owner's device; it is separate from and does not affect the agent key group
+- The mobile key group is created during the pairing flow and lives on the owner's device; it is separate from and does not affect the agent key group
 - Loss of the TSS node files (agent-side shares) requires key recovery using the agent's profile credentials
 
 <Warning>

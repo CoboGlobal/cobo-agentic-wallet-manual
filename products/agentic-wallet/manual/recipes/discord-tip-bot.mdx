@@ -12,7 +12,7 @@ Your Discord bot needs to reward contributors quickly, but a compromised prompt 
 Core flow:
 
 - Agent submits a pact requesting transfer rights with tip-sized limits
-- Owner approves in the Web Console
+- Owner approves in the Human App
 - Bot submits one normal tip (allow)
 - Bot submits oversized tip (deny with suggestion)
 - Bot retries with compliant amount from the denial response and logs the outcome
@@ -66,7 +66,7 @@ The owner gives the bot a natural-language instruction:
 
 > "Run the Discord tip bot. Max $5 per tip, $50/day, $200/month. Valid 30 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 The agent parses the instruction and submits a pact for owner approval.
 
@@ -150,7 +150,7 @@ async def main():
             },
         )
         pact_id = result["pact_id"]
-        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Human App")
 
         # Poll for activation
         while True:
@@ -246,9 +246,9 @@ print(result["output"])
 
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The pact appears in the Web Console with the intent, execution plan, per-tip cap, daily limit, and monthly ceiling. The owner reviews and approves. The bot receives a pact-scoped API key and can begin sending tips.
+The pact appears in the Human App with the intent, execution plan, per-tip cap, daily limit, and monthly ceiling. The owner reviews and approves. The bot receives a pact-scoped API key and can begin sending tips.
 
 ### Step 4: Agent operates
 

@@ -48,6 +48,7 @@
             "group": "Overview",
             "pages": [
               "products/agentic-wallet/manual/introduction",
+              "products/agentic-wallet/manual/learn/agentic-wallets/what-is-a-pact",
               "products/agentic-wallet/manual/wallet-owner/features",
               "products/agentic-wallet/manual/wallet-owner/key-concepts",
               "products/agentic-wallet/manual/developer/overview/supported-chains"
@@ -56,7 +57,6 @@
           {
             "group": "Connect Your Agent",
             "pages": [
-              "products/agentic-wallet/manual/wallet-owner/connect-agent-web-console",
               "products/agentic-wallet/manual/wallet-owner/connect-agent-human-app"
             ]
           },
@@ -78,7 +78,6 @@
           {
             "group": "Human Interfaces",
             "pages": [
-              "products/agentic-wallet/manual/wallet-owner/web-console",
               "products/agentic-wallet/manual/wallet-owner/human-app"
             ]
           }
@@ -101,7 +100,7 @@
             ]
           },
           {
-            "group": "Authorization & Enforcement",
+            "group": "Pacts & Enforcement",
             "pages": [
               "products/agentic-wallet/manual/security/pact-mechanism",
               "products/agentic-wallet/manual/security/policy-engine",
@@ -136,6 +135,7 @@
           {
             "group": "Agentic Wallets",
             "pages": [
+              "products/agentic-wallet/manual/learn/agentic-wallets/what-is-a-pact",
               "products/agentic-wallet/manual/learn/agentic-wallets/what-is-agentic-wallet",
               "products/agentic-wallet/manual/learn/agentic-wallets/delegated-authority",
               "products/agentic-wallet/manual/learn/agentic-wallets/policy-first-design",
@@ -320,7 +320,7 @@
                   "products/agentic-wallet/manual/api-reference/wallets/archive-wallet",
                   "products/agentic-wallet/manual/api-reference/wallets/create-wallet-address",
                   "products/agentic-wallet/manual/api-reference/wallets/list-wallet-addresses",
-                  "products/agentic-wallet/manual/api-reference/wallets/list-wallet-balances",
+                  "products/agentic-wallet/manual/api-reference/balance/list-balances",
                   "products/agentic-wallet/manual/api-reference/wallets/get-wallet-node-status",
                   "products/agentic-wallet/manual/api-reference/wallets/initiate-wallet-claim",
                   "products/agentic-wallet/manual/api-reference/wallets/confirm-wallet-claim",
@@ -329,16 +329,20 @@
                 ]
               },
               {
-                "group": "Delegations",
+                "group": "Transactions",
                 "pages": [
-                  "products/agentic-wallet/manual/api-reference/delegations/create-delegation",
-                  "products/agentic-wallet/manual/api-reference/delegations/list-delegations",
-                  "products/agentic-wallet/manual/api-reference/delegations/get-delegation",
-                  "products/agentic-wallet/manual/api-reference/delegations/update-delegation",
-                  "products/agentic-wallet/manual/api-reference/delegations/revoke-delegation",
-                  "products/agentic-wallet/manual/api-reference/delegations/freeze-delegations",
-                  "products/agentic-wallet/manual/api-reference/delegations/unfreeze-delegations",
-                  "products/agentic-wallet/manual/api-reference/delegations/list-received-delegations"
+                  "products/agentic-wallet/manual/api-reference/transactions/transfer-tokens",
+                  "products/agentic-wallet/manual/api-reference/transactions/contract-call",
+                  "products/agentic-wallet/manual/api-reference/transactions/sign-message",
+                  "products/agentic-wallet/manual/api-reference/transactions/x402-payment",
+                  "products/agentic-wallet/manual/api-reference/transactions/list-transactions",
+                  "products/agentic-wallet/manual/api-reference/transactions/get-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/estimate-transfer-fee",
+                  "products/agentic-wallet/manual/api-reference/transactions/estimate-contract-call-fee",
+                  "products/agentic-wallet/manual/api-reference/transactions/list-recent-addresses",
+                  "products/agentic-wallet/manual/api-reference/transactions/speedup-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/drop-transaction",
+                  "products/agentic-wallet/manual/api-reference/transactions/handle-waas-webhook"
                 ]
               },
               {
@@ -350,7 +354,6 @@
                   "products/agentic-wallet/manual/api-reference/policies/update-policy",
                   "products/agentic-wallet/manual/api-reference/policies/deactivate-policy",
                   "products/agentic-wallet/manual/api-reference/policies/dry-run-policy",
-                  "products/agentic-wallet/manual/api-reference/policies/evaluate-policy",
                   "products/agentic-wallet/manual/api-reference/policies/list-pending-operations",
                   "products/agentic-wallet/manual/api-reference/policies/get-pending-operation",
                   "products/agentic-wallet/manual/api-reference/policies/approve-pending-operation",
@@ -367,33 +370,24 @@
                 ]
               },
               {
-                "group": "Transactions",
+                "group": "Delegations",
                 "pages": [
-                  "products/agentic-wallet/manual/api-reference/transactions/transfer-tokens",
-                  "products/agentic-wallet/manual/api-reference/transactions/contract-call",
-                  "products/agentic-wallet/manual/api-reference/transactions/sign-message",
-                  "products/agentic-wallet/manual/api-reference/transactions/x402-payment",
-                  "products/agentic-wallet/manual/api-reference/transactions/list-transactions",
-                  "products/agentic-wallet/manual/api-reference/transactions/get-transaction",
-                  "products/agentic-wallet/manual/api-reference/transactions/drop-transaction",
-                  "products/agentic-wallet/manual/api-reference/transactions/speedup-transaction",
-                  "products/agentic-wallet/manual/api-reference/transactions/estimate-transfer-fee",
-                  "products/agentic-wallet/manual/api-reference/transactions/estimate-contract-call-fee",
-                  "products/agentic-wallet/manual/api-reference/transactions/list-recent-addresses",
-                  "products/agentic-wallet/manual/api-reference/transactions/handle-waas-webhook"
+                  "products/agentic-wallet/manual/api-reference/delegations/create-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/list-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/list-received-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/get-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/update-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/revoke-delegation",
+                  "products/agentic-wallet/manual/api-reference/delegations/freeze-delegations",
+                  "products/agentic-wallet/manual/api-reference/delegations/unfreeze-delegations"
                 ]
               },
               {
-                "group": "Transaction Records",
+                "group": "Webhooks",
                 "pages": [
-                  "products/agentic-wallet/manual/api-reference/transaction-records/list-transaction-records",
-                  "products/agentic-wallet/manual/api-reference/transaction-records/get-transaction-record"
-                ]
-              },
-              {
-                "group": "Balance",
-                "pages": [
-                  "products/agentic-wallet/manual/api-reference/balance/list-balances"
+                  "products/agentic-wallet/manual/api-reference/webhooks/register-webhook",
+                  "products/agentic-wallet/manual/api-reference/webhooks/list-webhook-dlq",
+                  "products/agentic-wallet/manual/api-reference/webhooks/delete-webhook"
                 ]
               },
               {
@@ -414,20 +408,6 @@
                 "group": "Audit",
                 "pages": [
                   "products/agentic-wallet/manual/api-reference/audit/list-audit-logs"
-                ]
-              },
-              {
-                "group": "Webhooks",
-                "pages": [
-                  "products/agentic-wallet/manual/api-reference/webhooks/register-webhook",
-                  "products/agentic-wallet/manual/api-reference/webhooks/list-webhook-dlq",
-                  "products/agentic-wallet/manual/api-reference/webhooks/delete-webhook"
-                ]
-              },
-              {
-                "group": "Events",
-                "pages": [
-                  "products/agentic-wallet/manual/api-reference/events/stream-events"
                 ]
               },
               {

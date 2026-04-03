@@ -3,6 +3,8 @@ title: "Features"
 description: "What Cobo Agentic Wallet gives your agent — and what it enforces on your behalf."
 ---
 
+Don't build spend limits. Don't build approval workflows. Don't build audit logs. Put your agent on Cobo Agentic Wallet and ship with pacts built in — structured delegation agreements with intent, execution plan, permissions, policies, and completion conditions.
+
 ## Integration options
 
 All integrations give your agent the same wallet capabilities. They differ in how your agent is built and how much custom code you want to write.
@@ -48,11 +50,11 @@ Your agent does not need to implement these checks itself. The service enforces 
 
 ## Pact-based authorization
 
-Your agent requests scoped access by submitting a pact — specifying what it wants to do, for how long, and within what constraints. The owner approves once; the agent operates within those boundaries automatically.
+Every task your agent takes on starts with a pact — a structured, enforceable delegation agreement that defines intent, execution plan, permissions, policies, and completion conditions. The owner approves once; your agent operates within those boundaries automatically. The infrastructure enforces them, not trust.
 
-When the pact expires or the owner revokes it, access is removed immediately. Your agent cannot continue transacting past its authorized boundaries.
+When the pact expires, completes, or is revoked, all access is removed instantly — the API key is invalidated server-side with no grace period. No zombie permissions. No forgotten credentials.
 
-This model means you don't need to build custom approval workflows or access-control logic — pacts handle both.
+This model means you don't need to build custom approval workflows, spend limits, or access-control logic — pacts handle all of it.
 
 ## Gas
 

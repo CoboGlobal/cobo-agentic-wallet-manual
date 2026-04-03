@@ -4,16 +4,16 @@ sidebarTitle: "Human App"
 description: "Your primary interface for owning, managing, and controlling your wallet from your phone."
 ---
 
-The Human App is the primary interface for wallet owners. After you claim a wallet, your signing keys are generated and stored on your device — they never leave it. All owner actions — approving your agent's requests, adjusting spending rules, reviewing activity, and freezing your agent — happen here.
+The Human App is the primary interface for wallet owners. After you pair an agent with the app, your signing keys are generated and stored on your device — they never leave it. All owner actions — approving pacts, adjusting spending rules, reviewing activity, and freezing your agent — happen here.
 
 ## What you can do
 
 | Task | How |
 |---|---|
-| Claim your wallet | Enter a claim code from your agent to take ownership |
-| Approve authorization requests | Review and approve or reject requests your agent submits for new tasks |
+| Pair your agent | Enter a pairing code from your agent to complete pairing |
+| Approve pacts | Review and approve or reject pacts your agent submits for new tasks |
 | Approve over-limit transactions | Receive a push notification when your agent needs your sign-off; tap to approve or reject |
-| Manage your Default Policy | Set spending limits that control what your agent can do automatically |
+| Set owner guardrails | Configure spending limits and approval thresholds for ongoing oversight |
 | Chat with the AI assistant | Ask about your balance, activity, or policies — or modify your rules in plain language |
 | Freeze or revoke your agent | Pause or permanently remove your agent's access |
 | Review activity | See your full transaction history and agent actions |
@@ -21,26 +21,26 @@ The Human App is the primary interface for wallet owners. After you claim a wall
 
 ## How approval works
 
-When your agent submits a transaction that exceeds your Default Policy limit:
+When your agent submits a transaction that exceeds your approval threshold:
 
 1. You receive a push notification on your phone
 2. Open the Human App and review the transaction details — amount, destination, and the agent's stated reason
 3. Tap **Approve** or **Reject**
 4. Your device signs the transaction (or declines it) and the agent proceeds accordingly
 
-The same process applies to authorization requests: when your agent wants to take on a new task outside its current permissions, it submits a request you review and approve or reject here.
+The same process applies to pacts: when your agent wants to take on a new task outside its current permissions, it submits a pact you review and approve or reject here.
 
 ## How your keys are protected
 
-When you claim a wallet, the Human App generates a key share on your device. This share is part of a 2-of-2 MPC group: your device + Cobo. Neither party can move funds alone. Your agent has its own separate 2-of-2 group (agent machine + Cobo) for everyday signing — the two groups are independent, so your agent can transact within its policy without involving your phone.
+When you pair a wallet with the Human App, the app generates a key share on your device. This share is part of a 2-of-2 MPC group: your device + Cobo. Neither party can move funds alone. Your agent has its own separate 2-of-2 group (agent machine + Cobo) for everyday signing — the two groups are independent, so your agent can transact within its approved pact without involving your phone.
 
 Over-limit operations require your device to participate — this is enforced at the cryptographic level, not just by software rules.
 
 See [MPC Key Shares](/security/mpc-key-shares) for a full explanation.
 
 <CardGroup cols={2}>
-  <Card title="Claim your wallet" icon="plug" href="/wallet-owner/connect-agent-human-app">
-    Step-by-step: enter the claim code and take ownership of your wallet.
+  <Card title="Pair your agent" icon="plug" href="/wallet-owner/connect-agent-human-app">
+    Step-by-step: enter the pairing code and complete pairing in the Human App.
   </Card>
   <Card title="How your keys stay safe" icon="lock" href="/security/mpc-key-shares">
     Why no single party — including Cobo — can access your funds alone.

@@ -93,7 +93,7 @@ The owner gives the agent a natural-language instruction:
 
 > "Run my yield optimizer. Only Aave and Uniswap on BASE_ETH. Max slippage 50 bps. Valid 30 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 The agent parses the instruction and submits a pact for owner approval.
 
@@ -218,7 +218,7 @@ async def main():
             },
         )
         pact_id = result["pact_id"]
-        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Human App")
 
         # Poll for activation
         while True:
@@ -334,9 +334,9 @@ print(result["output"])
 
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The pact appears in the Web Console with the intent, execution plan, contract allowlist, allowed functions, and slippage constraint. The owner reviews and approves. The agent receives a pact-scoped API key and can begin operating.
+The pact appears in the Human App with the intent, execution plan, contract allowlist, allowed functions, and slippage constraint. The owner reviews and approves. The agent receives a pact-scoped API key and can begin operating.
 
 ### Step 4: Agent operates
 

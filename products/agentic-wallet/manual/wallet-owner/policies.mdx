@@ -3,9 +3,9 @@ title: "Set rules and limits"
 description: "Control what your agent can spend, where it can send funds, and when transactions need your approval."
 ---
 
-After you claim your wallet, your agent operates within your **Default Policy**. The Default Policy defines the boundaries of what your agent can do automatically — operations within the policy execute without interruption; operations above the limits pause and wait for your approval.
+After you pair your wallet with the Human App, you set owner-side guardrails in the app. These controls work alongside your approved pacts: routine operations within the approved boundaries execute automatically; operations above your limits pause and wait for your approval.
 
-<Info>Before you claim the wallet, your agent is the owner and has no spending limits. Claiming is the step that puts you in control.</Info>
+<Info>Before you pair the wallet with the Human App, your agent is the owner and has no spending limits. Pairing is the step that puts you in control.</Info>
 
 ## What you can control
 
@@ -33,7 +33,7 @@ The assistant confirms every change before applying it. To review your current r
 
 ## How rules work together
 
-When your agent attempts a transaction, all your rules are checked. If any rule would block it:
+When your agent attempts a transaction, all your rules are checked against the active pact. If any rule would block it:
 
 - If it exceeds a hard limit → the transaction is blocked automatically and your agent receives a clear explanation
 - If it exceeds your approval threshold → the transaction pauses and waits for your review in the Human App

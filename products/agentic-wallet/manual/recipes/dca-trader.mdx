@@ -12,7 +12,7 @@ Your DCA agent should buy continuously, but not on the wrong chain or outside ri
 Core flow:
 
 - Agent submits a pact requesting ETH-only transfer rights within spend limits
-- Owner approves in the Web Console
+- Owner approves in the Human App
 - Agent executes compliant ETH buys within the approved boundaries
 - Policy denies any attempt that exceeds limits; agent retries with a compliant amount
 
@@ -76,7 +76,7 @@ The owner gives the agent a natural-language instruction:
 
 > "Run my DCA strategy. ETH only, max $10 per buy, $25 daily, $200 monthly. Valid 90 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 The agent parses the instruction and submits a pact for owner approval.
 
@@ -176,7 +176,7 @@ async def main():
             },
         )
         pact_id = result["pact_id"]
-        print(f"Pact {pact_id} submitted — awaiting owner approval in Web Console")
+        print(f"Pact {pact_id} submitted — awaiting owner approval in Human App")
 
         # Poll for activation
         while True:
@@ -281,9 +281,9 @@ print(result["output"])
 
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The pact appears in the Web Console with the intent, execution plan, chain restriction, and cumulative spend limits. The owner reviews and approves. The agent receives a pact-scoped API key and can begin operating.
+The pact appears in the Human App with the intent, execution plan, chain restriction, and cumulative spend limits. The owner reviews and approves. The agent receives a pact-scoped API key and can begin operating.
 
 ### Step 4: Agent operates
 

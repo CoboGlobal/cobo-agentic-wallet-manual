@@ -58,7 +58,7 @@ This recipe targets Base Sepolia (`TBASE_SETH`) for testnet use. To run on Base 
 
 > **Owner → Agent:** "Set up streaming salaries for our team. Alice gets $5,000/month, Bob gets $3,000/month. Manage these streams — create, adjust, and stop them as needed — for the next 90 days."
 
-### Step 2: Agent submits authorization request
+### Step 2: Agent submits pact
 
 <Tabs>
   <Tab title="CLI">
@@ -108,7 +108,7 @@ async def submit_payroll_pact():
             }
         )
         pact_id = result["pact_id"]
-        print(f"Pact submitted: {pact_id} — waiting for owner approval in Web Console")
+        print(f"Pact submitted: {pact_id} — waiting for owner approval in Human App")
 
         while True:
             pact = await client.get_pact(pact_id)
@@ -195,9 +195,9 @@ print(result["output"])
   </Tab>
 </Tabs>
 
-### Step 3: Owner approves in Web Console
+### Step 3: Owner approves  in Human App
 
-The agent notifies the owner that an authorization request is pending. The owner reviews the allowed contract (Superfluid CFAv1 Forwarder on Base Sepolia) and the 90-day duration, then approves.
+The agent notifies the owner that an pact is pending. The owner reviews the allowed contract (Superfluid CFAv1 Forwarder on Base Sepolia) and the 90-day duration, then approves.
 
 ### Step 4: Agent creates streams
 

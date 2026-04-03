@@ -64,7 +64,7 @@ Onboard and verify your agent setup.
 
 ### `onboard` (provision)
 
-Provision the agent using a pairing code obtained from the Web Console or Human App. This creates an API key and binds it to your owner account.
+Provision the agent using a pairing code obtained from the Human App. This creates an API key and binds it to your owner account.
 
 ```bash
 caw onboard --token caw_xxxxxxxxxxxxxxxx
@@ -72,7 +72,7 @@ caw onboard --token caw_xxxxxxxxxxxxxxxx
 
 | Option | Required | Description |
 |---|---|---|
-| `--token` | Yes* | Pairing code from the Web Console or Human App (`caw_…`) |
+| `--token` | Yes* | Pairing code from the Human App (`caw_…`) |
 | `--invitation-code` | Yes* | Invitation code for autonomous provisioning (alternative to `--token`) |
 | `--env` | No | Cobo environment: `sandbox`, `dev`, or `prod` (default: `prod`) |
 

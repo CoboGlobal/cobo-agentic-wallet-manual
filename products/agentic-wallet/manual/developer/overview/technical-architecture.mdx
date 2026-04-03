@@ -14,11 +14,7 @@ flowchart TD
 
     subgraph Human["**Human (You)**"]
         im["Human App
-        Claim · Approve · Policies · Notifications"]
-    end
-
-    subgraph WC["**Web Console**"]
-        wc["Product Q&A · Onboarding guidance"]
+        Pair · Approve · Policies · Notifications"]
     end
 
     nl["**Human Interface Service**"]
@@ -28,7 +24,6 @@ flowchart TD
 
     AI -->|"REST API (X-API-Key)"| core
     Human -->|"mobile app"| nl
-    WC -->|"browser"| nl
     nl -->|"REST API"| core
 ```
 
@@ -36,9 +31,8 @@ flowchart TD
 
 | Platform | Primary role |
 |---|---|
-| **CLI (`caw`)** | Create wallets, execute transactions, generate claim codes, submit pacts — the agent-native interface |
-| **Human App** | Claim wallets, manage Default Policy, approve pacts and over-limit transactions, freeze/revoke, review activity, back up keys |
-| **Web Console** | Product exploration and onboarding Q&A via AI assistant — no wallet management |
+| **CLI (`caw`)** | Create wallets, execute transactions, generate pairing codes, submit pacts — the agent-native interface |
+| **Human App** | Pair agents, manage owner guardrails, approve pacts and over-limit transactions, freeze/revoke, review activity, back up keys |
 
 ## Cobo Agentic Wallet Service
 
@@ -83,8 +77,7 @@ A separate service that provides the owner-facing experience.
 | | |
 |---|---|
 | **Primary channel** | Human App — iOS / Android |
-| **Owner tools** | Claim wallet, manage Default Policy, approve/reject pacts, approve/reject over-limit transactions, freeze/unfreeze, review activity |
-| **Web Console role** | Product Q&A and onboarding guidance only — no wallet management |
+| **Owner tools** | Pair agent, manage owner guardrails, approve/reject pacts, approve/reject over-limit transactions, freeze/unfreeze, review activity |
 | **Push notifications** | Delivered to the Human App for pact approvals and over-limit transaction reviews |
 
 The Human Interface service holds an owner's API key and acts on behalf of the owner when calling the Cobo Agentic Wallet service.

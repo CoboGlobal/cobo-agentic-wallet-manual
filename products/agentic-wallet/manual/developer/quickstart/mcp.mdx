@@ -57,7 +57,7 @@ Example (`claude_desktop_config.json`):
 
 In your MCP client, execute this flow:
 
-1. `submit_pact` with your `wallet_id`, intent `"Transfer tokens for testing"`, permissions `write:transfer`, `max_tx` 100, and duration 86400. Wait for the activation notification before proceeding — the wallet owner approves in the Web Console or Human App.
+1. `submit_pact` with your `wallet_id`, intent `"Transfer tokens for testing"`, permissions `write:transfer`, `max_tx` 100, and duration 86400. Wait for the activation notification before proceeding — the wallet owner approves in the Human App.
 2. `list_wallets`
 3. `transfer_tokens` with compliant amount (success)
 4. `transfer_tokens` with too-large amount (policy denial)

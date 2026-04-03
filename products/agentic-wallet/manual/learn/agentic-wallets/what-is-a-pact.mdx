@@ -1,0 +1,82 @@
+---
+title: "What is a pact"
+description: "A pact is a structured delegation agreement between you and your agent — with intent, execution plan, permissions, policies, and completion conditions. Enforced by infrastructure, not trust."
+---
+
+## The core idea
+
+Before your agent touches a single token, you set the terms. That's a pact.
+
+In Cobo Agentic Wallet, a pact is a structured delegation agreement between you and your agent. It defines what the agent is authorized to do and enforces those boundaries automatically — at the infrastructure level, not by trusting the agent to follow rules.
+
+Your agent operates within the pact. It cannot go around it — not even if it's compromised.
+
+## Five elements of a pact
+
+Every pact consists of five elements:
+
+| Element | What it defines | Example |
+|---|---|---|
+| **Intent** | The job the agent is being authorized to carry out | "Execute a DCA strategy on Base" |
+| **Execution plan** | A reviewable plan for how the agent intends to carry out that job | "Swap USDC → ETH on Uniswap every Monday at 9am" |
+| **Permissions** | Predefined operation scopes the agent is allowed to use | `wallet:read`, `transaction:execute`, `contract_call:write` |
+| **Policies** | Budgets, approvals, allowlists, chain/token/contract constraints, and other guardrails | "Max $200 per transaction, only Uniswap on Base, only USDC and ETH" |
+| **Completion conditions** | What triggers automatic completion and revocation | "Complete after $3,000 total spent or 30 days elapsed" |
+
+When a completion condition is met, access revokes automatically. No zombie permissions. No forgotten API keys.
+
+## How a pact works
+
+<Steps>
+  <Step title="Your agent submits a pact">
+    The agent declares its intent, proposes an execution plan, requests the permissions it needs, and specifies completion conditions. You see a plain-language summary alongside the full details.
+  </Step>
+  <Step title="You review and approve">
+    You review the pact in the Human App. You can approve it as-is, adjust the policies or permissions, or reject it. No access is granted until you explicitly approve.
+  </Step>
+  <Step title="Your agent operates within boundaries">
+    Once approved, every transaction the agent submits is checked against the pact's permissions and policies before execution. The agent cannot exceed its authorized operations — enforcement is architectural, not best-practice.
+  </Step>
+  <Step title="The pact completes automatically">
+    When a completion condition is met — time elapsed, budget exhausted, or job done — the pact ends and all access revokes instantly. Your agent's next API call returns an authentication error. Clean exit, every time.
+  </Step>
+</Steps>
+
+## A pact isn't a leash — it's a license
+
+A pact doesn't restrict your agent. It empowers it.
+
+Without a pact, an agent either has unrestricted access (dangerous) or no access at all (useless). A pact gives your agent a clear operating mandate — "here's what you're authorized to do, here are the guardrails, here's when it ends" — and the infrastructure guarantees those boundaries hold.
+
+Think of it like a corporate expense card — but with a compliance department that cannot be fired, bribed, or overridden. Not even by the agent itself. When the project is over, the card shreds itself. That compliance department? It's the pact.
+
+## Enforced by infrastructure, not trust
+
+The critical difference between a pact and a conventional permission system: **enforcement is structural**.
+
+- The agent's credentials cannot modify pact policies — credential separation is architectural
+- Policy limits use atomic reservation with sliding-window counters — no race conditions, no workarounds
+- Signing authority is split across multiple parties using MPC — no single party can move funds alone
+- When a pact ends, the API key is invalidated server-side instantly — there is no grace period
+
+You don't need to trust your agent. You need to set a pact.
+
+## Pacts and owner guardrails
+
+When you pair your wallet with the Human App, the app gives you owner-level guardrails for spending and approvals. Those settings work with your active pacts, not instead of them.
+
+A pact defines the job itself: intent, execution plan, permissions, policies, and completion conditions. Owner guardrails define how much can happen automatically before your phone needs to step in.
+
+| | Pact | Owner guardrails |
+|---|---|---|
+| **Purpose** | Define the agent's scoped delegation for a task or operating mandate | Set owner-side spending and approval controls |
+| **Set by** | Agent proposes, you approve | You, in the Human App |
+| **Scope** | Specific job, authority, and lifecycle | Ongoing wallet-level oversight |
+| **Lifecycle** | Bound by completion conditions | Updated whenever you change your controls |
+
+## Further reading
+
+- [How pacts work](/security/pact-mechanism) — the full technical specification: PactSpec fields, state machine, pact-scoped API keys
+- [The policy engine](/security/policy-engine) — how every agent operation is evaluated before execution
+- [Spend limits](/security/spend-limits) — how per-transaction and rolling limits are configured and enforced
+- [Freeze and revoke](/security/freeze-revoke) — how to immediately terminate agent access

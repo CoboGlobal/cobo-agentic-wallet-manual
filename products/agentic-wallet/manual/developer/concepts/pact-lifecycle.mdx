@@ -11,15 +11,15 @@ A pact is the formalized agreement between an agent and its wallet owner. It cap
 
 The pact mechanism behaves differently depending on whether the agent is the wallet owner or a delegate.
 
-| | Agent as owner (before wallet is claimed) | Agent as delegate (after wallet is claimed) |
+| | Agent as owner (before wallet is paired) | Agent as delegate (after wallet is paired) |
 |---|---|---|
 | **Pact approval** | Automatic — no human approval required | Human (wallet owner) reviews and approves in the Human App |
-| **Default Policy** | Not applicable — owner has no spending limits | Applies — transactions within limits execute automatically; beyond limits require a pact |
+| **Owner guardrails** | Not applicable — owner has no spending limits | Approval thresholds and spending controls can pause high-risk operations |
 | **Pact approval timeout** | Not applicable | 1 hour — unanswered requests expire |
 
-When the wallet owner claims the wallet via the Human App, the agent transitions from owner to delegate. All pact submissions from that point require the owner's approval before access is granted.
+When the wallet owner pairs the wallet via the Human App, the agent transitions from owner to delegate. From that point on, pacts become the mechanism for defining the agent's authority.
 
-**Default Policy:** Once the wallet is claimed, a Default Policy is attached to the agent's delegation. It defines what the agent can do automatically. Operations within the Default Policy do not require a pact. Operations beyond it trigger the pact submission + approval flow described below.
+**Owner guardrails:** Once the wallet is paired, the owner can set spending and approval controls in the Human App. These guardrails work alongside the pact and can pause operations that require explicit owner approval.
 
 ## PactSpec structure
 

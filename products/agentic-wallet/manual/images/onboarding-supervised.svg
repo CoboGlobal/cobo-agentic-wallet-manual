@@ -26,7 +26,7 @@
   <rect x="16" y="76" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
   <circle cx="42" cy="103" r="13" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5"/>
   <text x="42" y="107" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#3B82F6">1</text>
-  <text x="66" y="97" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Sign in to Web Console</text>
+  <text x="66" y="97" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Open the Human App</text>
   <text x="66" y="114" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Click Connect Agent → get pairing code</text>
   <line x1="215" y1="130" x2="215" y2="148" stroke="#93C5FD" stroke-width="1.5" marker-end="url(#arr)"/>
 
@@ -50,7 +50,7 @@
   <rect x="16" y="304" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
   <circle cx="42" cy="331" r="13" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5"/>
   <text x="42" y="335" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#3B82F6">4</text>
-  <text x="66" y="325" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Set policies in Web Console</text>
+  <text x="66" y="325" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Set policies in Human App</text>
   <text x="66" y="342" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Can be done while agent is running steps 2–3</text>
 
   <!-- Convergence -->

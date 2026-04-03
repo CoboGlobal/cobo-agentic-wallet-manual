@@ -3,7 +3,7 @@ title: "Integration Modes"
 description: "Three ways to integrate Cobo Agentic Wallet — Agent Mode, Core Mode, and Owner Mode."
 ---
 
-Cobo Agentic Wallet supports three integration modes, each defining a different split between what you build and what Cobo provides.
+Cobo Agentic Wallet supports three integration modes, each defining a different split between what you build and what Cobo provides. All modes give your agent pact-based authorization — structured, enforceable delegation agreements with intent, execution plan, permissions, policies, and completion conditions.
 
 ## Modes overview
 
@@ -18,9 +18,9 @@ Cobo Agentic Wallet supports three integration modes, each defining a different 
 This is the currently available mode. In Agent Mode:
 
 - **You build**: your agent implementation — using the CLI (`caw`), Skills, SDK, Toolkit, MCP Server, or any framework integration
-- **Your users get**: the Human App for claiming wallets, reviewing authorization requests, setting spending rules, and approving transactions — no custom frontend required on your end
+- **Your users get**: the Human App for pairing agents, reviewing and approving pacts, setting spending rules, and approving transactions — no custom frontend required on your end
 
-Agent Mode is the fastest path to production. You ship the agent logic; Cobo ships the owner-side experience.
+Agent Mode is the fastest path to production. Your agent operates through pacts — you ship the agent logic; Cobo ships the owner-side experience.
 
 ## Who controls what
 
@@ -28,7 +28,7 @@ Agent Mode is the fastest path to production. You ship the agent logic; Cobo shi
 |---|---|---|
 | Submit pacts, request authorization | ✓ | |
 | Execute transfers and contract calls | ✓ | |
-| Approve pacts and manage policies | | ✓ (via Web Console / Human App) |
+| Approve pacts and manage policies | | ✓ (via Human App) |
 | Audit logging | | ✓ |
 | Policy enforcement | | ✓ |
 | MPC key management | | ✓ |

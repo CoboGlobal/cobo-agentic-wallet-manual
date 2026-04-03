@@ -13,7 +13,7 @@ Choose your setup mode based on who should hold the signing keys and how much ov
 |---|---|---|---|
 | **Key shares on** | Agent's machine | Your phone | Agent's machine |
 | **Transaction signing** | Automatic | Manual — you approve each transaction | Automatic |
-| **Wallet owned by** | You | You | Agent (can claim later) |
+| **Wallet owned by** | You | You | Agent (can be paired later) |
 | **Best for** | Automated operations with owner oversight | Large funds or high security | Fully autonomous agents, prototypes |
 
 Jump to your setup mode: [Supervised](#supervised) · [On-device](#on-device) · [Autonomous](#autonomous)
@@ -22,13 +22,13 @@ Jump to your setup mode: [Supervised](#supervised) · [On-device](#on-device) ·
 
 ## Supervised
 
-<img src="/images/onboarding-supervised.svg" alt="Supervised onboarding: sign in to Web Console, run setup instruction, agent completes 5 steps, set policies" />
+<img src="/images/onboarding-supervised.svg" alt="Supervised onboarding: use the Human App to generate a pairing code, run the setup instruction, and let the agent complete wallet setup." />
 
-The most common setup. You generate a pairing code in the Web Console and give it to your agent. The agent registers its identity, generates key shares, and creates the wallet — all in one command. You can configure policies in the Web Console while the agent sets up; they are applied automatically once the wallet is ready.
+The most common setup. You generate a pairing code in the Human App and give it to your agent. The agent registers its identity, generates key shares, and creates the wallet — all in one command. You can configure policies in the Human App while the agent sets up; they are applied automatically once the wallet is ready.
 
-### 1. Sign up and generate a pairing code
+### 1. Generate a pairing code in the Human App
 
-Go to the Web Console and sign in. Click **Connect Agent** to generate a pairing code and a ready-made setup instruction.
+Open the Human App, sign in, and tap **Connect Agent** to generate a pairing code and a ready-made setup instruction.
 
 ### 2. Run the setup instruction in your agent
 
@@ -50,7 +50,7 @@ The agent completes 5 steps (60–180 seconds total):
 
 ### 3. Set policies (can do while agent is setting up)
 
-You don't need to wait. In the Web Console, set your spending limits, allowed networks, and approval thresholds. They are applied to the wallet automatically once it's active.
+You don't need to wait. In the Human App, set your spending limits, allowed networks, and approval thresholds. They are applied to the wallet automatically once it's active.
 
 ### 4. Create an address and claim testnet funds
 
@@ -103,9 +103,9 @@ You can adjust policies at any time via the Human App chat assistant.
 
 ## Autonomous
 
-<img src="/images/onboarding-autonomous.svg" alt="Autonomous onboarding: run onboard command, agent completes 5 steps, optionally claim wallet" />
+<img src="/images/onboarding-autonomous.svg" alt="Autonomous onboarding: run onboard command, let the agent complete wallet setup, and optionally pair later with the Human App." />
 
-No human involvement required. The agent registers itself, generates key shares, and creates its own wallet — making the agent the wallet owner. Useful for fully autonomous agents and prototypes. You can claim the wallet later to transfer ownership to yourself.
+No human involvement required. The agent registers itself, generates key shares, and creates its own wallet — making the agent the wallet owner. Useful for fully autonomous agents and prototypes. You can pair the wallet with the Human App later to transfer control to yourself.
 
 ### 1. Run the onboard command
 
@@ -122,7 +122,7 @@ caw wallet address create --chain SETH
 caw faucet claim --coin SETH
 ```
 
-### 3. Claim the wallet (optional)
+### 3. Pair with the Human App (optional)
 
 To transfer wallet ownership to yourself at any time:
 
@@ -130,7 +130,7 @@ To transfer wallet ownership to yourself at any time:
 caw profile claim
 ```
 
-This generates a claim link. Open it in your browser, authenticate with your account, and ownership transfers to you. The agent's access is preserved — it continues operating the wallet under your ownership and policies.
+This generates a pairing link. Open it in your browser, authenticate with your account, and control transfers to you through the Human App pairing flow. The agent's access is preserved — it continues operating the wallet under your policies.
 
 ---
 
@@ -153,7 +153,7 @@ Once set up, your agent understands natural language wallet commands:
 <AccordionGroup>
 
 <Accordion title="My pairing code expired — what do I do?">
-Refresh it from wherever you created it (Web Console or Human App). The new code works exactly the same way. Nothing about your account or setup is affected.
+Refresh it from wherever you created it (Human App). The new code works exactly the same way. Nothing about your account or setup is affected.
 </Accordion>
 
 <Accordion title="How long does wallet setup take?">
@@ -168,7 +168,7 @@ caw profile archive
 caw onboard --token <PAIRING_CODE> --create-wallet
 ```
 
-If the pairing code has expired, refresh it from the Web Console or Human App first.
+If the pairing code has expired, refresh it from the Human App first.
 </Accordion>
 
 <Accordion title="What does my agent do with the pairing code?">
@@ -184,7 +184,7 @@ Yes. All wallet data, policies, and transaction history are shared under a singl
 </Accordion>
 
 <Accordion title="I already onboarded — can I run caw onboard again?">
-If your existing API key is still valid, `caw onboard` will refuse to run to prevent accidental overwrites. To provision a new agent, generate a new pairing code from the Web Console or Human App.
+If your existing API key is still valid, `caw onboard` will refuse to run to prevent accidental overwrites. To provision a new agent, generate a new pairing code from the Human App.
 </Accordion>
 
 <Accordion title="Can multiple agents operate the same wallet?">
@@ -196,7 +196,7 @@ No. An agent can only have one API key, and one API key can only operate one wal
 </Accordion>
 
 <Accordion title="Can I create multiple wallets?">
-Yes. Generate a new pairing code from the Web Console or Human App and go through the full onboarding process with a new agent.
+Yes. Generate a new pairing code from the Human App and go through the full onboarding process with a new agent.
 </Accordion>
 
 <Accordion title="Do I need to prepare gas tokens?">

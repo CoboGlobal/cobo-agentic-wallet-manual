@@ -11,13 +11,15 @@ The problem: an API key is binary. It either works or it doesn't. You cannot say
 
 API keys transfer access. They do not transfer scoped authority.
 
-## What a Pact is
+## What a pact is
 
-A **Pact** is a formalized, owner-approved authorization grant. It is not just credentials — it is an agreement between the owner and the agent that specifies what the agent can do, what parameters are acceptable, when your approval is required, and how long it lasts. Every Pact has an endgame: when the duration ends, the budget is exhausted, or the task is done, access is revoked automatically. No zombie permissions, no forgotten API keys.
+A **pact** is a structured, enforceable delegation agreement between you and your agent. It consists of five elements: **intent** (the job the agent is being authorized to carry out), **execution plan** (a reviewable plan for how the agent intends to carry out that job), **permissions** (predefined operation scopes the agent is allowed to use), **policies** (budgets, approvals, allowlists, chain/token/contract constraints, and other guardrails), and **completion conditions** (what triggers automatic completion and revocation).
+
+A pact is enforced by infrastructure — the agent physically cannot exceed its boundaries, even if compromised. Every pact has an endgame: when the duration ends, the budget is exhausted, or the task is done, access revokes automatically. No zombie permissions. No forgotten API keys.
 
 The owner does not just issue credentials. They review the agent's stated intent and execution plan, then decide whether to approve the scope the agent asked for — or modify it before approving.
 
-For a full breakdown of the Pact lifecycle, the PactSpec fields, and the state machine, see [How Pacts Work](/security/pact-mechanism).
+For a full breakdown of the pact lifecycle, the PactSpec fields, and the state machine, see [How pacts work](/security/pact-mechanism).
 
 ## The trust model
 
