@@ -1,0 +1,121 @@
+---
+title: "LangChain"
+description: "5-minute LangChain quickstart with pact submission and denial-aware retries."
+sidebarTitle: "LangChain"
+---
+
+## Before you start
+
+Ask your user to generate a pairing code from the Human App. See [Guide your users](/products/agentic-wallet/manual/developer/guide-users) for instructions to share with them. Then provision your agent:
+
+```bash
+caw onboard provision --token <PAIRING_CODE>
+```
+
+This saves your API key and wallet UUID to `~/.cobo-agentic-wallet/config`. You'll need both for the steps below.
+
+## 5-minute outcome
+
+1. Build LangChain tools from `CoboAgentWalletToolkit`
+2. Submit a pact and wait for owner approval
+3. Run an allowed transfer request
+4. Trigger policy denial from an oversized transfer
+5. Retry using denial guidance
+6. Query audit logs
+
+## Step 1: Install
+
+```bash
+pip install "cobo-agent-wallet[langchain]" langchain-openai
+```
+
+## Step 2: Configure environment
+
+```bash
+export AGENT_WALLET_API_URL=https://api.sandbox.agenticwallet.cobo.com
+export AGENT_WALLET_API_KEY=your-api-key
+export OPENAI_API_KEY=your-openai-api-key
+```
+
+## Step 3: Wire toolkit and agent
+
+```python title="langchain_quickstart.py"
+from __future__ import annotations
+
+import asyncio
+import os
+
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
+
+from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
+
+
+def main() -> None:
+    client = WalletAPIClient(
+        base_url=os.environ["AGENT_WALLET_API_URL"],
+        api_key=os.environ["AGENT_WALLET_API_KEY"],
+    )
+    toolkit = CoboAgentWalletToolkit(client=client)
+    tools = toolkit.get_tools()
+
+    agent = create_agent(
+        model=ChatOpenAI(model="gpt-4.1-mini", temperature=0),
+        tools=tools,
+        system_prompt=(
+            "Use Cobo wallet tools. Before executing transfers, always submit a pact using "
+            "submit_pact and wait until its status is active. If a transfer is denied, read "
+            "the denial suggestion, adjust the amount, and retry."
+        ),
+    )
+
+    wallet_uuid = "your-wallet-uuid"
+    destination = "0x1111111111111111111111111111111111111111"
+
+    prompt = (
+        f"Use wallet {wallet_uuid}. "
+        f"First, call submit_pact with intent 'Transfer tokens for testing', permissions "
+        f"write:transfer, max_tx 100, and duration 86400. Wait until the pact is active. "
+        f"Then transfer 50 USDC to {destination} on BASE. "
+        "Then attempt to transfer 200 USDC. If denied, follow the suggestion and retry with "
+        "a compliant amount. "
+        f"Finally call get_audit_logs for wallet {wallet_uuid} with action transfer.initiate."
+    )
+
+    result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
+    print(result)
+
+    asyncio.run(client.close())
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Step 4: Confirm denial loop happened
+
+Verify agent output includes:
+
+- a pact submission and activation confirmation
+- a successful transfer
+- a policy denial payload/text
+- a corrected retry
+- audit log summary
+
+## Go further
+
+`CoboAgentWalletToolkit` gives you the standard wallet tool set. You can extend it with your own tools and combine integration paths:
+
+- **Define custom LangChain tools** — write `@tool` functions that call `WalletAPIClient` directly for domain-specific logic (e.g. price-gated transfers, batched payouts, conditional pact submission). Register them alongside the toolkit tools.
+- **Add CLI tools** — call `caw` via subprocess for operations you want to handle as shell commands rather than Python calls.
+- **Use the Python SDK directly** — for pact lifecycle management, audit queries, or any operation where you need full control over the response, bypass the toolkit and call `WalletAPIClient` methods directly in your chain.
+
+<CardGroup cols={2}>
+  <Card title="LangChain Integration Details" icon="link" href="/products/agentic-wallet/manual/reference/langchain">
+    Error mapping and tool schema behavior.
+  </Card>
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Use WalletAPIClient directly for custom tool functions.
+  </Card>
+</CardGroup>

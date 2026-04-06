@@ -6,7 +6,7 @@ description: "Parse structured denials and implement self-correcting retry loops
 There are two distinct ways a policy can stop an operation:
 
 - **Denial** — the policy blocked it outright. The agent is not permitted to do this at all.
-- **Pending approval** — the operation is allowed in principle but exceeds a threshold that requires the owner to sign off first. See [Set Policies](/guides/set-policies) for how to configure approval thresholds.
+- **Pending approval** — the operation is allowed in principle but exceeds a threshold that requires the owner to sign off first. See [Set Policies](/products/agentic-wallet/manual/guides/set-policies) for how to configure approval thresholds.
 
 This guide covers the denial case. When a transfer or contract call violates a policy, the Cobo Agentic Wallet service returns a structured 403 response. The SDK raises a `PolicyDeniedError` carrying machine-readable guidance that enables agents to **self-correct and retry** without human intervention.
 

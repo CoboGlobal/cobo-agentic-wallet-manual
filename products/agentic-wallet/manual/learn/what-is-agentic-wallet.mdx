@@ -1,0 +1,62 @@
+---
+title: "What is an agentic wallet"
+description: "How agentic wallets differ from EOA wallets, multisigs, and smart contract wallets — and why AI-as-principal is a fundamentally new paradigm."
+---
+
+## The traditional wallet model
+
+In traditional crypto, a wallet is controlled by whoever holds the private key. You sign every transaction yourself — or you delegate signing to a hardware device you physically possess. The human is always the decision-maker and the signer.
+
+This works well for individual use. It breaks down when you want software to make financial decisions autonomously on your behalf.
+
+## What an agentic wallet is
+
+An **agentic wallet** is a wallet where an AI agent acts as a **delegated principal** — authorized to initiate transactions within a defined scope, without requiring your approval for each one.
+
+The key shift: the decision-maker is no longer a human reviewing a transaction. It is a language model that perceives context, reasons about it, and issues transaction requests. Your role as the owner is to:
+
+1. Define what the agent is allowed to do (policy rules, contract allowlists, amount caps).
+2. Approve or reject the agent's pact — the structured delegation agreement defining its intent, execution plan, permissions, policies, and completion conditions.
+3. Monitor what the agent did after the fact.
+4. Intervene — adjust rules or freeze the agent — if behavior deviates from intent.
+
+## Comparison with other wallet types
+
+| Wallet type | Who decides | Who signs | Can run autonomously | Owner enforces rules via |
+|---|---|---|---|---|
+| **EOA (MetaMask, hardware wallet)** | Human | Human (private key) | No | Their own judgment |
+| **Multisig (Safe, Gnosis)** | Multiple humans, M-of-N | Multiple humans | No | Signing threshold |
+| **Smart contract wallet (ERC-4337)** | Human (account abstraction) | Paymaster / bundler | Partially | On-chain contract logic |
+| **Agentic wallet (Cobo)** | AI agent | Cobo MPC (after policy check) | Yes | Off-chain policy engine + Pact scope |
+
+## Why existing models don't fit
+
+**Giving an agent your private key** is equivalent to giving a stranger full, irrevocable access to all your funds. There is no way to scope what the agent can do, no audit trail, and no kill switch.
+
+**Giving an agent a hot wallet** (a new EOA you fund for the agent) is slightly better — the blast radius is limited to what you put in that wallet. But there is still no policy enforcement: the agent can drain the wallet in one transaction, send to any address, or call any contract.
+
+**Multisig** requires human co-signers for every transaction. This defeats the purpose of autonomous operation — if a human has to approve every transaction, the agent cannot act without human latency.
+
+**ERC-4337 account abstraction** moves validation logic on-chain, which is powerful for programmable conditions. But it requires deploying and managing custom contracts, and its security model is complex to configure correctly.
+
+## What makes agentic wallets different
+
+**Scope-bounded delegation**: the agent is authorized for a specific task (e.g., "run a DCA strategy on Base") with explicit limits (e.g., "max $500/day, only Uniswap, only USDC→ETH"). Authorization lives in a [Pact](/products/agentic-wallet/manual/security/pact-mechanism) that the owner reviews and approves before the agent can act.
+
+**Policy enforcement at the signing layer**: every transaction the agent submits is validated against the owner's rules before it is signed and broadcast. The agent cannot bypass policy — it does not have direct access to signing keys.
+
+**Reversible at any time**: the owner can freeze the agent or revoke its authorization instantly. Active Pacts can be revoked; pending transactions are cancelled.
+
+**Full audit trail**: every action the agent attempted, whether it succeeded or was blocked, is logged and queryable.
+
+## A useful analogy
+
+Think of it like a corporate expense card — but with a compliance department that cannot be fired, bribed, or overridden. Not even by the agent itself.
+
+- The employee (agent) can spend autonomously within the card's limit.
+- The compliance department (pact + policy engine) blocks transactions that violate the rules — wrong merchant category, over-limit, outside approved dates. It cannot be bypassed.
+- The manager (owner) reviews the statement and can revoke the card at any time.
+- The employee never holds the company's bank account credentials — they only have the delegated card.
+- When the project is over, the card shreds itself. That compliance department? It's the pact.
+
+The agentic wallet extends this analogy to on-chain transactions, smart contracts, and DeFi operations.

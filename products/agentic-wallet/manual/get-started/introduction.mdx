@@ -1,0 +1,87 @@
+---
+title: "Introduction"
+description: "The most secure way for AI agents to manage crypto — because every agent operates through a pact."
+---
+
+## What is Cobo Agentic Wallet?
+
+Cobo Agentic Wallet gives your agent a pact, not unrestricted access. Before your agent touches a single token, you define a pact — a structured delegation agreement with five elements: intent, execution plan, permissions, policies, and completion conditions. The wallet's institutional-grade infrastructure enforces it. Not by trust. By architecture.
+
+A pact isn't a leash. It's a license. Your agent has real power — and real boundaries.
+
+## How it works
+
+1. **Install** the `caw` skill for your agent — one command, no account or sign-up needed.
+2. **Pair** your Human App once — download the app, enter the pairing code from your agent, and your signing keys are created on your device.
+3. **Set a pact** — define the intent, review the execution plan, grant permissions, set policies, and specify completion conditions. Your agent becomes a delegate bound by your pact.
+4. **Your agent operates** within the pact's boundaries. Routine transactions within those limits execute automatically; anything beyond pauses for your approval.
+
+<Info>Pairing is optional. If you are building or testing, your agent can operate without a human owner. Pair when you are ready to put real funds under your personal control.</Info>
+
+## Key features
+
+| Feature | What it means |
+|---|---|
+| **Pact-first authorization** | Before your agent acts, you set a pact — intent, execution plan, permissions, policies, and completion conditions. The infrastructure enforces it, not trust. |
+| **No-registration start** | Your agent creates the wallet with one command — no account or sign-up needed |
+| **Pair and control** | Pair your agent with the Human App; your agent becomes a delegate bound by your pacts |
+| **Deepest policy engine** | Per-transaction caps, rolling budgets, chain allowlists, contract whitelists, function-level control — the most restrictive rule always wins |
+| **MPC security** | No single party holds your private key. Signing authority is split using Multi-Party Computation — a mathematical guarantee, not a software promise |
+| **Structured denials** | When a pact blocks an operation, the agent gets a machine-readable reason so it can adjust and retry |
+| **Full audit trail** | Every action — allowed, denied, or approved — is logged with timestamps and details |
+
+> Built by Cobo — 8 years protecting institutional crypto, $2B under custody, zero breaches.
+
+## Tools
+
+Your agent and your management tools all connect through Cobo Agentic Wallet. Your agent handles execution — it calls the SDK or API to submit transactions, read balances, and respond to pact decisions. You use the Human App to set pacts, review approvals, and monitor activity.
+
+**Your agent** — the AI you've built or deployed. Connects to Cobo Agentic Wallet using the Python SDK, TypeScript SDK, CLI, or REST API. Transactions within your pact execute automatically; anything beyond pauses for your approval.
+
+**Human App** — your primary owner interface. Pair your agent, set pacts, approve transactions, review activity, and freeze your agent — all from your phone. Your signing keys are stored on the device, not on a server.
+
+## Common questions
+
+<AccordionGroup>
+  <Accordion title="Can the agent send money without my approval?">
+    Before you pair the agent with the Human App, yes — your agent is the owner and has no restrictions. After pairing, your agent operates within the pact you set. Each pact defines a budget, scope, and rules — transactions within those boundaries execute automatically. Anything beyond the pact pauses until you approve. You always decide where the line is.
+  </Accordion>
+  <Accordion title="Does the agent ever hold my private keys?">
+    No. Keys are never held by the agent or stored in any one place. Signing authority is split across multiple independent parties using Multi-Party Computation. No single party — including the agent or Cobo — can move your funds alone.
+  </Accordion>
+  <Accordion title="What's the worst that can happen?">
+    After pairing, your agent can only access the one wallet you connected it to, and only within the pact you set. Transactions outside the pact's scope or budget are blocked until you review them. You can pause your agent at any time — pausing takes effect immediately with no delay or grace period.
+  </Accordion>
+  <Accordion title="Who pays gas fees?">
+    You do not need to keep gas tokens in your agent wallet. Cobo Gasless handles on-chain transaction fees automatically.
+  </Accordion>
+  <Accordion title="How do I stop everything immediately if something looks wrong?">
+    From the Human App or the AI assistant (say "Freeze my agent"), you can pause your agent in one action. There is no delay — it takes effect the moment you confirm.
+  </Accordion>
+</AccordionGroup>
+
+## Where would you like to start?
+
+<CardGroup cols={3}>
+  <Card
+    title="What is a pact?"
+    icon="handshake"
+    href="/products/agentic-wallet/manual/learn/what-is-a-pact"
+  >
+    Understand the core concept behind Cobo Agentic Wallet.
+  </Card>
+  <Card
+    title="I own a wallet"
+    icon="wallet"
+    href="/products/agentic-wallet/manual/get-started/connect-agent-human-app"
+  >
+    Create your wallet with one command, then pair it with the Human App to take control.
+  </Card>
+  <Card
+    title="I'm building an agent"
+    icon="code"
+    href="/products/agentic-wallet/manual/developer/integration-modes"
+  >
+    Integrate wallet tools into your agent, handle pact enforcement, and manage the full transaction lifecycle.
+  </Card>
+</CardGroup>

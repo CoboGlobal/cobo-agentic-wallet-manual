@@ -1,0 +1,308 @@
+---
+title: "Transfer and Contract Calls"
+description: "Submit transfers and contract calls, estimate fees, and handle pending approval responses."
+---
+
+Transactions are initiated by agents (using their API key and an active delegation) or directly by owners (unrestricted). Every transaction passes through the Policy Engine before executing on-chain.
+
+## Transfer tokens
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx transfer <WALLET_UUID> \
+  --to 0xRecipient... \
+  --token-id SETH_USDC \
+  --amount 50 \
+  --chain SETH \
+  --request-id invoice-001
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet import WalletAPIClient
+
+agent_client = WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY)
+
+result = await agent_client.transfer_tokens(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="50",
+    request_id="invoice-001",   # optional, enables idempotency
+)
+print(result["status"])   # "submitted", or "pending_approval"
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.transferTokens({
+  wallet_id: walletUuid,
+  chain_id: 'SETH',
+  dst_addr: '0xRecipient...',
+  token_id: 'SETH_USDC',
+  amount: '50',
+  request_id: 'invoice-001',
+});
+console.log(result.status); // "submitted", or "pending_approval"
+```
+</Tab>
+</Tabs>
+
+**Response fields:**
+
+| Field | Description |
+|---|---|
+| `status` | `submitted`, `pending`, `pending_approval` |
+| `cobo_transaction_id` | Transaction ID (if executed) |
+| `transaction_hash` | On-chain hash (available after confirmation) |
+| `request_id` | Your idempotency key, echoed back |
+| `pending_operation_id` | Set only when `status == "pending_approval"` |
+
+### Idempotency
+
+Pass a `request_id` to make transfers idempotent. Re-submitting the same `request_id` returns the original transaction without creating a duplicate.
+
+
+## Handle pending approval (HTTP 202)
+
+When a transfer exceeds the approval threshold, the API returns **HTTP 202** with `status: "pending_approval"`. This is not an error — it is a hold waiting for owner action.
+
+<Tabs>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet.errors import PolicyDeniedError
+
+result = await agent_client.transfer_tokens(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="800",   # above approval_threshold_value of 500
+)
+
+if result.get("status") == "pending_approval":
+    pending_id = result["pending_operation_id"]
+    print(f"Waiting for owner approval: {pending_id}")
+    # Your agent should pause this task and resume after owner acts
+```
+
+The owner receives a push notification via the Human App and approves or rejects. You can poll for the outcome:
+
+```python
+import asyncio
+
+async def wait_for_approval(pending_id: str, max_wait_seconds: int = 3600) -> str:
+    for _ in range(max_wait_seconds // 10):
+        op = await owner_client.get_pending_operation(pending_id)
+        if op["status"] in ("executed", "rejected", "expired"):
+            return op["status"]
+        await asyncio.sleep(10)
+    return "timeout"
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.transferTokens({
+  wallet_id: walletUuid,
+  chain_id: 'SETH',
+  dst_addr: '0xRecipient...',
+  token_id: 'SETH_USDC',
+  amount: '800',   // above approval_threshold_value of 500
+});
+
+if (result.status === 'pending_approval') {
+  const pendingId = result.pending_operation_id;
+  console.log(`Waiting for owner approval: ${pendingId}`);
+  // Your agent should pause this task and resume after owner acts
+}
+```
+</Tab>
+</Tabs>
+
+
+## Call a smart contract
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx call <WALLET_UUID> \
+  --contract 0xContract... \
+  --calldata 0x... \
+  --chain BASE_ETH \
+  --request-id swap-001
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+result = await agent_client.contract_call(
+    wallet_uuid=WALLET_UUID,
+    chain_id="BASE_ETH",
+    contract_addr="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+    calldata="0x38ed1739...",
+    value="0",
+    request_id="swap-2026-001",
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.contractCall({
+  wallet_id: walletUuid,
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+  calldata: '0x38ed1739...',
+  value: '0',
+  request_id: 'swap-2026-001',
+});
+```
+</Tab>
+</Tabs>
+
+Contract calls follow the same Policy Engine gate as transfers.
+
+
+## Estimate fees
+
+Check fees before submitting to avoid failed transactions:
+
+<Tabs>
+<Tab title="CLI">
+```bash
+# Estimate transfer fee
+caw tx estimate-transfer-fee <WALLET_UUID> \
+  --to 0xRecipient... \
+  --token-id SETH_USDC \
+  --amount 50 \
+  --chain SETH
+
+# Estimate contract call fee
+caw tx estimate-call-fee <WALLET_UUID> \
+  --chain BASE_ETH \
+  --contract 0x7a250d... \
+  --calldata 0x38ed1739... \
+  --value 0
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+# Estimate transfer fee
+fee = await agent_client.estimate_transfer_fee(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="50",
+)
+print(fee["gas_limit"], fee["gas_price"])
+
+# Estimate contract call fee
+fee = await agent_client.estimate_contract_call_fee(
+    wallet_uuid=WALLET_UUID,
+    chain_id="BASE_ETH",
+    contract_addr="0x7a250d...",
+    calldata="0x38ed1739...",
+    value="0",
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+// Estimate transfer fee
+const fee = await client.estimateTransferFee({
+  wallet_id: walletUuid,
+  chain_id: 'SETH',
+  dst_addr: '0xRecipient...',
+  token_id: 'SETH_USDC',
+  amount: '50',
+});
+console.log(fee.gas_limit, fee.gas_price);
+
+// Estimate contract call fee
+const callFee = await client.estimateContractCallFee({
+  wallet_id: walletUuid,
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d...',
+  calldata: '0x38ed1739...',
+  value: '0',
+});
+```
+</Tab>
+</Tabs>
+
+
+## List and get transactions
+
+<Tabs>
+<Tab title="CLI">
+```bash
+# List transaction records for a wallet
+caw tx list <WALLET_UUID> --limit 20 --status submitted
+
+# Get a specific transaction record
+caw tx get <WALLET_UUID> <TX_ID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+# List transaction records for a wallet (agent or owner)
+txs = await agent_client.list_transaction_records(
+    wallet_uuid=WALLET_UUID,
+    limit=20,
+    offset=0,
+    status="submitted",   # optional filter
+)
+for tx in txs.get("items", []):
+    print(tx["cobo_transaction_id"], tx["status"], tx["record_type"])
+
+# Get a specific transaction record
+tx = await agent_client.get_transaction_record(
+    wallet_uuid=WALLET_UUID,
+    record_uuid=TX_UUID,
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+// List transaction records for a wallet
+const txs = await client.listTransactionRecords({
+  wallet_uuid: walletUuid,
+  limit: 20,
+  status: 'submitted',
+});
+for (const tx of txs.items ?? []) {
+  console.log(tx.cobo_transaction_id, tx.status, tx.record_type);
+}
+
+// Get a specific transaction record
+const tx = await client.getTransactionRecord({
+  wallet_uuid: walletUuid,
+  record_uuid: txUuid,
+});
+```
+</Tab>
+</Tabs>
+
+**Transaction status values:**
+
+| Status | Meaning |
+|---|---|
+| `pending` | Queued, not yet submitted |
+| `submitted` | Submitted to the Cobo Agentic Wallet service |
+| `broadcasting` | Broadcast to the network |
+| `confirming` | Waiting for confirmations |
+| `completed` | Confirmed on-chain |
+| `failed` | Execution failed |
+| `rejected` | Rejected by risk controls |
+
+
+## Policy outcomes
+
+| Outcome | HTTP status | What to do |
+|---|---|---|
+| Allowed | 200 | Continue; check `cobo_transaction_id` |
+| Pending approval | 202 | Store `pending_operation_id`, wait for owner action |
+| Policy denied | 403 | Parse `PolicyDeniedError`, read `suggestion`, retry with corrected params |
+
+See [Handle Policy Denial](/products/agentic-wallet/manual/developer/handle-policy-denial) for the full self-correction pattern.

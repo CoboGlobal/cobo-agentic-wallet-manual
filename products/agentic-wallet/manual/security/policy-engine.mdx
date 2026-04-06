@@ -63,7 +63,7 @@ Each window limit can track:
 If the operation would cause any tracked counter to exceed its configured limit, the engine applies the outcome defined for that policy: deny or escalate to pending approval.
 
 <Info>
-Counter windows are rolling, not calendar-based. A `rolling_24h` counter tracks the last 24 hours from the moment of the operation — not from midnight UTC. See [Spend Limits](/security/spend-limits) for a detailed explanation of how rolling windows work.
+Counter windows are rolling, not calendar-based. A `rolling_24h` counter tracks the last 24 hours from the moment of the operation — not from midnight UTC. See [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) for a detailed explanation of how rolling windows work.
 </Info>
 
 ## Policy evaluation outcomes
@@ -129,6 +129,6 @@ Agents can test whether an operation would pass the policy engine before actuall
 
 ## Further reading
 
-- [Spend Limits](/security/spend-limits) — detailed explanation of rolling window counters and per-transaction limits
-- [Address Allowlists](/security/address-allowlists) — how destination address and contract address restrictions work
-- [Pact Mechanism](/security/pact-mechanism) — how permissions and policies are declared in a PactSpec
+- [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) — detailed explanation of rolling window counters and per-transaction limits
+- [Address Allowlists](/products/agentic-wallet/manual/security/address-allowlists) — how destination address and contract address restrictions work
+- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how permissions and policies are declared in a PactSpec

@@ -1,0 +1,54 @@
+---
+title: "Delegated authority model"
+description: "What a Pact represents, how AI delegation differs from an API key, and how owners retain control through policy."
+---
+
+## The problem with API keys
+
+The simplest way to give an AI agent access to a wallet is an API key. Most custodial exchange APIs work this way: generate a key, paste it into your bot, and it can trade.
+
+The problem: an API key is binary. It either works or it doesn't. You cannot say "this key can only swap USDC for ETH, maximum $500 per day, only on Uniswap." You cannot say "this key expires in 48 hours." If the key is leaked or the agent misbehaves, your only option is to revoke the key — which stops everything, not just the bad behavior.
+
+API keys transfer access. They do not transfer scoped authority.
+
+## What a pact is
+
+A **pact** is a structured, enforceable delegation agreement between you and your agent. It consists of five elements: **intent** (the job the agent is being authorized to carry out), **execution plan** (a reviewable plan for how the agent intends to carry out that job), **permissions** (predefined operation scopes the agent is allowed to use), **policies** (budgets, approvals, allowlists, chain/token/contract constraints, and other guardrails), and **completion conditions** (what triggers automatic completion and revocation).
+
+A pact is enforced by infrastructure — the agent physically cannot exceed its boundaries, even if compromised. Every pact has an endgame: when the duration ends, the budget is exhausted, or the task is done, access revokes automatically. No zombie permissions. No forgotten API keys.
+
+The owner does not just issue credentials. They review the agent's stated intent and execution plan, then decide whether to approve the scope the agent asked for — or modify it before approving.
+
+For a full breakdown of the pact lifecycle, the PactSpec fields, and the state machine, see [How pacts work](/products/agentic-wallet/manual/security/pact-mechanism).
+
+## The trust model
+
+Traditional delegation transfers trust: "I trust this person, so I give them access."
+
+The agentic wallet model transfers **constrained authority**: "I don't need to fully trust this agent, because it cannot exceed these bounds regardless of what it decides to do."
+
+This is a meaningful shift. It means:
+
+- **You can deploy an agent you built yourself**, knowing that even if your own code has a bug, the policy engine limits the damage.
+- **You can deploy a third-party agent** (a trading bot, an AI assistant product) without giving it unconstrained wallet access.
+- **You can expand scope gradually** as you observe the agent's behavior and build confidence.
+
+## Delegation vs. ownership
+
+A fundamental property: **delegation does not transfer ownership**.
+
+The agent never owns the wallet. It holds a temporary, scoped operating license. The wallet's keys are held by the MPC infrastructure and the owner's device — the agent only has authority over what the Pact explicitly grants.
+
+This means:
+- The agent cannot modify its own Pact (cannot expand its own authority).
+- The agent cannot create new wallets or addresses beyond what the Pact allows.
+- When the Pact expires or is revoked, the agent's authority is gone — there is nothing the agent can do to maintain access.
+
+## Comparing delegation models
+
+| Model | Granularity | Revocability | Audit trail | Agent can self-expand? |
+|---|---|---|---|---|
+| Share private key | None — full access | Only by rekeying | No | Yes |
+| API key (exchange) | Usually coarse (trade/withdraw toggle) | Yes, revoke key | Partial | No |
+| Pact (Cobo) | Fine-grained (contract, function, parameter, amount, duration) | Yes, instant | Full | No |
+| On-chain policy (ERC-4337) | Programmable | Requires contract call | On-chain events | Depends on contract |

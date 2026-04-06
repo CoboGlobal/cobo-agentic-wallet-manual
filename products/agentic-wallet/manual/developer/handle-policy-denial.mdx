@@ -1,0 +1,218 @@
+---
+title: "Handle Policy Denial"
+description: "Parse structured denials and implement self-correcting retry loops."
+---
+
+There are two distinct ways a policy can stop an operation:
+
+- **Denial** — the policy blocked it outright. The agent is not permitted to do this at all.
+- **Pending approval** — the operation is allowed in principle but exceeds a threshold that requires the owner to sign off first. See [Policy Engine](/products/agentic-wallet/manual/security/policy-engine) for how to configure approval thresholds.
+
+This guide covers the denial case. When a transfer or contract call violates a policy, the Cobo Agentic Wallet service returns a structured 403 response. The SDK raises a `PolicyDeniedError` carrying machine-readable guidance that enables agents to **self-correct and retry** without human intervention.
+
+## Error hierarchy
+
+| Exception | HTTP | When |
+|---|---|---|
+| `APIError` | varies | Base class for all errors |
+| `AuthenticationError` | 401 | Missing or invalid API key |
+| `NotFoundError` | 404 | Resource not found |
+| `ServerError` | 5xx | Server-side error (auto-retried) |
+| `PolicyDeniedError` | 403 | Policy violation — contains structured `PolicyDenial` |
+
+## The PolicyDenial structure
+
+```python
+@dataclass(frozen=True)
+class PolicyDenial:
+    code: str                   # e.g. "TRANSFER_LIMIT_EXCEEDED"
+    reason: str                 # human-readable explanation
+    details: dict[str, Any]     # machine-readable constraint values
+    suggestion: str | None      # actionable fix for the agent
+    raw_response: dict[str, Any]
+```
+
+**Example denial response:**
+
+```json
+{
+  "code": "TRANSFER_LIMIT_EXCEEDED",
+  "reason": "Transfer amount exceeds per-transaction limit",
+  "details": { "limit_value": 100, "requested_amount": 500 },
+  "suggestion": "Retry with amount <= 100."
+}
+```
+
+## Denial codes
+
+| Code | Cause | Key `details` fields |
+|---|---|---|
+| `TRANSFER_LIMIT_EXCEEDED` | Per-tx amount cap | `limit_value`, `requested_amount` |
+| `CHAIN_RESTRICTED` | Chain not in allowed list | `allowed_chains`, `requested_chain` |
+| `CONTRACT_NOT_WHITELISTED` | Contract not whitelisted | `allowed_contracts`, `requested_contract` |
+| `PARAMETER_OUT_OF_BOUNDS` | Contract call parameter out of range | `param_name`, `op`, `limit_value` |
+| `BUSINESS_HOURS_VIOLATION` | Operation outside allowed hours | — |
+| `DELEGATION_EXPIRED` | Delegation TTL has passed | `expires_at` |
+| `WALLET_FROZEN` | Wallet or delegation is frozen | — |
+| `INSUFFICIENT_BALANCE` | Wallet balance too low | `balance`, `requested_amount` |
+| `INSUFFICIENT_PERMISSION` | Delegation lacks required permission | `required_permission` |
+| `POLICY_DENIED` | Generic rule block | — |
+
+## Basic self-correction
+
+<Tabs>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet.errors import PolicyDeniedError
+
+try:
+    await agent_client.transfer_tokens(
+        wallet_uuid=WALLET_UUID,
+        chain_id="SETH",
+        dst_addr="0xRecipient...",
+        token_id="SETH_USDC",
+        amount="500",
+    )
+except PolicyDeniedError as exc:
+    denial = exc.denial
+    print(f"Denied: {denial.code} — {denial.reason}")
+    print(f"Suggestion: {denial.suggestion}")
+
+    # Use structured details to derive the corrected amount
+    if "limit_value" in denial.details:
+        corrected_amount = str(denial.details["limit_value"])
+        await agent_client.transfer_tokens(
+            wallet_uuid=WALLET_UUID,
+            chain_id="SETH",
+            dst_addr="0xRecipient...",
+            token_id="SETH_USDC",
+            amount=corrected_amount,
+        )
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+import { PolicyDeniedError } from 'cobo-agentic-wallet';
+
+try {
+  await client.transferTokens({
+    wallet_id: walletUuid,
+    chain_id: 'SETH',
+    dst_addr: '0xRecipient...',
+    token_id: 'SETH_USDC',
+    amount: '500',
+  });
+} catch (err) {
+  if (err instanceof PolicyDeniedError) {
+    const limitValue = err.denial.details?.limit_value;
+    const correctedAmount = String(limitValue ?? '100');
+    await client.transferTokens({
+      wallet_id: walletUuid,
+      chain_id: 'SETH',
+      dst_addr: '0xRecipient...',
+      token_id: 'SETH_USDC',
+      amount: correctedAmount,
+    });
+  }
+}
+```
+</Tab>
+</Tabs>
+
+## Framework-specific handling
+
+Each framework returns denials as **tool output strings** (not exceptions), so the LLM's reasoning loop continues naturally:
+
+<Tabs>
+<Tab title="LangChain">
+```python
+# LangChain catches PolicyDeniedError inside the tool handler and
+# returns formatted text. The agent sees it as a normal tool result.
+toolkit = CoboAgentWalletToolkit(client=client)
+# No extra code needed — denial text arrives as tool output:
+# "Policy Denied [TRANSFER_LIMIT_EXCEEDED]: Amount exceeds per-tx limit
+#  limit_value: 100
+#  Suggestion: Retry with amount <= 100."
+```
+</Tab>
+<Tab title="OpenAI Agents">
+```python
+# OpenAI Agents SDK injects denial into the agent's system prompt
+# so the next turn has the constraint in context.
+context = create_cobo_agent_context()
+agent = create_cobo_agent(client, model="gpt-4.1-mini")
+# context.denial_messages is updated automatically on each denial
+```
+</Tab>
+<Tab title="MCP">
+```json
+// Denial returned as isError: false — not a protocol error
+{
+  "content": [{ "type": "text", "text": "Policy Denied [TRANSFER_LIMIT_EXCEEDED]..." }],
+  "isError": false
+}
+```
+</Tab>
+<Tab title="Agno / CrewAI">
+Both return formatted denial strings as tool output. The agent reads the string and adjusts its next call.
+</Tab>
+</Tabs>
+
+## Production patterns
+
+<Accordion title="Max-retry guard">
+Cap retry attempts to prevent infinite loops:
+
+```python
+MAX_RETRIES = 3
+amount = "500"
+
+for attempt in range(MAX_RETRIES + 1):
+    try:
+        await agent_client.transfer_tokens(
+            wallet_uuid=WALLET_UUID, chain_id="SETH",
+            dst_addr="0x...", token_id="SETH_USDC", amount=amount,
+        )
+        break
+    except PolicyDeniedError as exc:
+        if attempt == MAX_RETRIES:
+            raise
+        amount = str(exc.denial.details.get("limit_value", amount))
+```
+</Accordion>
+
+<Accordion title="Escalation — don't retry cumulative limits">
+Cumulative limits (daily, monthly) can't be fixed by adjusting parameters. Escalate to the owner instead:
+
+```python
+except PolicyDeniedError as exc:
+    if exc.denial.code in ("DAILY_CUMULATIVE_EXCEEDED", "MONTHLY_CUMULATIVE_EXCEEDED"):
+        await notify_owner(
+            f"Agent hit cumulative limit: {exc.denial.reason}\n"
+            f"Remaining: {exc.denial.details.get('remaining', '?')}"
+        )
+        return {"status": "escalated"}
+    # Per-tx limits — self-correct
+    amount = str(exc.denial.details.get("limit_value", amount))
+```
+</Accordion>
+
+<Accordion title="Suggestion regex fallback">
+If `details` fields are missing, parse the suggestion text:
+
+```python
+import re
+from decimal import Decimal
+
+def derive_retry_amount(denial, attempted: str) -> str | None:
+    for key in ("limit_value", "max_allowed_amount"):
+        if denial.details.get(key) is not None:
+            v = str(denial.details[key])
+            if Decimal(v) < Decimal(attempted):
+                return v
+    match = re.search(r"<=\s*([0-9]+(?:\.[0-9]+)?)", denial.suggestion or "")
+    if match:
+        return match.group(1)
+    return None
+```
+</Accordion>
