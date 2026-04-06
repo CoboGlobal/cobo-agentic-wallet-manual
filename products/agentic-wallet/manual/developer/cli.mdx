@@ -1,0 +1,125 @@
+---
+title: "CLI"
+description: "Set up and operate a wallet from the terminal using the caw CLI."
+sidebarTitle: "CLI"
+---
+
+Use this path when you want a no-code terminal workflow.
+
+## Install
+
+The `caw` CLI is a standalone binary. Download and install it using the bootstrap script:
+
+```bash
+curl -sL https://download.agenticwallet.cobo.com/bootstrap-env.sh | bash -s -- --env sandbox
+```
+
+This downloads the `caw` binary to `~/.cobo-agentic-wallet/bin/caw`. Add it to your PATH:
+
+```bash
+export PATH="$HOME/.cobo-agentic-wallet/bin:$PATH"
+```
+
+Verify the installation:
+
+```bash
+caw --version
+```
+
+## Onboard your agent
+
+Ask your user to generate a pairing code from the Human App (see [Guide your users](/products/agentic-wallet/manual/developer/guide-users) for instructions to share with them). Once you have the code, run:
+
+```bash
+caw onboard provision --token <PAIRING_CODE>
+```
+
+This creates an API key, binds it to the user's account, and saves config to `~/.cobo-agentic-wallet/config`.
+
+## Verify the setup
+
+```bash
+caw onboard self-test
+```
+
+## Submit a pact
+
+Before executing transfers, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Human App.
+
+```bash
+# Submit a pact requesting transfer permissions for 24 hours
+caw pact submit \
+  --wallet-id <WALLET_UUID> \
+  --intent "Transfer tokens for testing" \
+  --permissions write:transfer \
+  --max-tx 100 \
+  --duration 86400 \
+  --wait
+
+# --wait blocks until the owner approves or rejects.
+# Once active, get the pact ID and check its status:
+caw pact status <PACT_ID>
+```
+
+<Note>The `--wait` flag blocks until the wallet owner approves or rejects the pact. The owner is notified in the Human App.</Note>
+
+## Explore your wallet
+
+```bash
+# List accessible wallets
+caw wallet list --format table
+
+# Check balance
+caw wallet balance
+
+# Get wallet details
+caw wallet get
+```
+
+## Transfer tokens
+
+```bash
+WALLET_UUID=<wallet-uuid>
+DST=0x1111111111111111111111111111111111111111
+
+# Allowed transfer
+caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 2 --chain BASE
+
+# Oversized transfer — triggers policy denial
+caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 500 --chain BASE
+```
+
+On denial, output includes `code`, `reason`, `details`, and `suggestion`.
+
+## Check audit logs
+
+```bash
+caw audit logs --wallet "$WALLET_UUID" --result denied --format table
+```
+
+## Optional: run the demo
+
+```bash
+caw demo
+```
+
+## Go further
+
+The CLI is a complete interface on its own, and it also composes well with other integration paths:
+
+- **Wrap in shell functions** — build custom `caw`-based scripts for repeated workflows: nightly balance checks, batched transfers, or policy dry-runs before execution.
+- **Call from any language** — invoke `caw` via subprocess from Python, Node, Go, or any runtime. The structured JSON output (`--format json`) makes it easy to parse results programmatically.
+- **Add a skill** — install `SKILL.md` so your AI agent understands wallet commands without being explicitly prompted. The skill and CLI work together: the skill provides reasoning context, `caw` provides execution.
+- **Upgrade to the Python SDK** — for async workflows, pact lifecycle management, or custom error handling with `PolicyDeniedError`, use `WalletAPIClient` directly.
+
+<CardGroup cols={2}>
+  <Card title="CLI Reference" icon="terminal" href="/products/agentic-wallet/manual/reference/cli">
+    Full command surface, options, and error handling.
+  </Card>
+  <Card title="Custom Skill" href="/products/agentic-wallet/manual/developer/custom-skill">
+    Add wallet reasoning to any skill-compatible agent.
+  </Card>
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Programmatic control and custom error handling.
+  </Card>
+</CardGroup>

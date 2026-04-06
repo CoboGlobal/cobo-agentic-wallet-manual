@@ -1,0 +1,80 @@
+---
+title: "Integrate Wallet Into Your Agent"
+description: "Compare integration paths and choose the right one for your agent."
+sidebarTitle: "Overview"
+---
+
+Cobo Agentic Wallet supports several integration styles. All of them give your agent the same wallet capabilities — they differ in how your agent is built and how much custom code you want to write.
+
+## Comparison
+
+| Integration | Code required | Install | Best for | Denial handling |
+|---|---|---|---|---|
+| **Skill** | None | Drop a file | Agent owners using skill-compatible agents | Automatic via skill |
+| **CLI** | Shell scripts | Binary download | Terminal workflows, scripts, automation | Structured JSON output |
+| **MCP Server** | Config only | `pip install "cobo-agent-wallet[mcp]"` | Claude Desktop, Cursor, MCP-compatible clients | Tool error messages |
+| **LangChain** | Python | `pip install "cobo-agent-wallet[langchain]"` | LangChain agents with chains/tools | Formatted text in agent context |
+| **OpenAI Agents** | Python | `pip install "cobo-agent-wallet[openai]"` | OpenAI Agents SDK function calling | Injected into conversation |
+| **Agno** | Python | `pip install "cobo-agent-wallet[agno]"` | Agno multi-modal agents | Tool run response |
+| **CrewAI** | Python | `pip install "cobo-agent-wallet[crewai]"` | CrewAI multi-agent crews | Formatted text per agent |
+| **Python SDK** | Python | `pip install cobo-agent-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` exception |
+| **TypeScript SDK** | TypeScript | `npm install cobo-agentic-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` equivalent |
+
+## Skill
+
+Drop a single file into your agent's skill configuration. No code, no packages — your agent immediately understands wallet commands.
+
+<CardGroup cols={2}>
+  <Card title="Custom Skill" href="/products/agentic-wallet/manual/developer/custom-skill">
+    Works with any skill-compatible agent (OpenClaw, Cursor, Claude Desktop).
+  </Card>
+</CardGroup>
+
+## CLI
+
+Issue `caw` commands from any shell or subprocess — no SDK, no framework needed.
+
+<CardGroup cols={2}>
+  <Card title="CLI" href="/products/agentic-wallet/manual/developer/cli">
+    Direct agent-to-wallet interaction via shell commands.
+  </Card>
+</CardGroup>
+
+## MCP server
+
+Connect any MCP-compatible client to the wallet MCP server via a config entry. No code to write.
+
+<CardGroup cols={2}>
+  <Card title="MCP Server" href="/products/agentic-wallet/manual/developer/mcp">
+    Works with Cursor, Claude Desktop, and any MCP-compatible client.
+  </Card>
+</CardGroup>
+
+## Frameworks
+
+Use these if you're building an agent with a Python framework. Your agent gets wallet tools as native framework tools — no manual API calls.
+
+<CardGroup cols={2}>
+  <Card title="LangChain" href="/products/agentic-wallet/manual/developer/langchain">
+    Inject wallet tools into a LangChain agent.
+  </Card>
+  <Card title="OpenAI Agents" href="/products/agentic-wallet/manual/developer/openai">
+    Inject wallet tools into an OpenAI Agents SDK agent.
+  </Card>
+  <Card title="Agno" href="/products/agentic-wallet/manual/developer/agno">
+    Inject wallet tools into an Agno agent.
+  </Card>
+  <Card title="CrewAI" href="/products/agentic-wallet/manual/developer/crewai">
+    Inject wallet tools into a CrewAI crew.
+  </Card>
+</CardGroup>
+
+## API client
+
+Use when you need full programmatic control — custom logic, wallet management, policy configuration.
+
+<CardGroup cols={2}>
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Call the Cobo Agentic Wallet API directly via WalletAPIClient.
+  </Card>
+</CardGroup>

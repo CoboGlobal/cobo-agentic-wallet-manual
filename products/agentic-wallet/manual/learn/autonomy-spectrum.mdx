@@ -1,0 +1,106 @@
+---
+title: "The autonomy spectrum"
+description: "From fully manual to fully autonomous — how to choose the right level of agent independence for your use case."
+---
+
+## The core tension
+
+Every agentic wallet design sits somewhere between two extremes:
+
+**Full manual control**: the owner approves every transaction. The agent only suggests; humans decide. Maximum safety, but the human is the bottleneck — you cannot run high-frequency operations or react to market conditions in milliseconds.
+
+**Full autonomy**: the agent acts on everything within a broadly defined scope. Maximum throughput, but any agent error, model mistake, or adversarial input executes without a chance to intervene.
+
+The right position on this spectrum depends on the specific operation, the assets at stake, and the confidence you have in the agent's behavior.
+
+## Four levels of autonomy
+
+### Level 1: Fully supervised
+
+Every transaction requires explicit owner approval. The agent proposes actions; the owner reviews and approves each one via the Human App.
+
+**When to use**: high-value operations where errors are costly; novel or untested agents; compliance requirements that mandate human sign-off.
+
+**Configuration**: set all relevant operations to `require_approval`.
+
+**Trade-off**: latency — the agent cannot act until the owner responds. Time-sensitive operations (arbitrage, stop-loss execution) are not feasible at this level.
+
+### Level 2: Threshold-based autonomy
+
+The agent acts autonomously for small transactions; transactions above a threshold require approval.
+
+```json
+"rules": {
+  "effect": "allow",
+  "when": {"amount_lte": "500"},
+  "review_if": {"amount_gt": "500"},
+  "deny_if": {"amount_gt": "5000"}
+}
+```
+
+The agent handles routine operations (small DCA purchases, fee reimbursements, minor rebalances) without friction. Large operations — which carry more risk — still get human review.
+
+**When to use**: most production deployments. Allows operational efficiency while retaining human oversight on consequential actions.
+
+**Configuration**: set `review_if` thresholds to cover the tail of meaningful transactions; `deny_if` for hard limits.
+
+### Level 3: Time-windowed autonomy
+
+The agent operates fully autonomously during an active Pact window. The owner does not review individual transactions, only the Pact itself before activation.
+
+The control points are:
+- Reviewing and approving the [Pact](/products/agentic-wallet/manual/security/pact-mechanism) (what the agent is authorized to do, for how long).
+- Reviewing audit logs after operations.
+- Renewing, modifying, or revoking the Pact for the next period.
+
+**When to use**: well-understood, repetitive tasks (DCA strategies, yield harvesting, payroll) where the operation pattern is predictable and the risk per-transaction is bounded.
+
+**Configuration**: narrow contract/function/amount allowlists in the Pact; short Pact duration (7–30 days) to create regular review cadence.
+
+### Level 4: Fully autonomous
+
+The agent operates continuously with broad scope. Long-duration Pacts or auto-renewing authorization. Owner engagement is monitoring-only.
+
+**When to use**: operational infrastructure that has been running reliably for a long time, with well-understood failure modes and low per-transaction value (e.g., micro-payment streaming, automated fee collection).
+
+**Configuration**: still requires explicit contract/function allowlists — "fully autonomous" does not mean "no policy." The difference is that the amount caps are high and the Pact duration is long.
+
+<Warning>
+Level 4 is appropriate only after extensive testing at lower levels. Even then, always maintain a kill switch (freeze capability) and monitor audit logs automatically.
+</Warning>
+
+## Choosing your level
+
+Ask these questions for each operation type:
+
+| Question | Points toward |
+|---|---|
+| How often does this operation run? (hourly vs. daily) | More frequent → more autonomy needed |
+| How much value is at risk per transaction? | Higher value → more supervision |
+| How reversible is a mistake? (swap vs. bridge) | Less reversible → more supervision |
+| How well-tested is the agent's behavior? | Less tested → more supervision |
+| Is the operation time-sensitive? (arbitrage vs. DCA) | More time-sensitive → more autonomy needed |
+| Are you deploying your own agent or a third-party product? | Third-party → narrower scope |
+
+## Mixing levels across operation types
+
+A single agent can have different autonomy levels for different operations. For example, a DeFi agent might be:
+
+| Operation | Level | Reasoning |
+|---|---|---|
+| Small DCA buys (< $100) | Level 3 (fully within Pact scope) | Routine, low-value, frequent |
+| Large rebalances (> $1000) | Level 2 (requires approval) | High-value, infrequent |
+| Withdraw to external address | Level 1 (always supervised) | High-risk, irreversible |
+| Read balance / audit log | No restriction | Read-only, no risk |
+
+This is achieved by combining allow, `review_if`, and `deny_if` rules in the same Pact spec.
+
+## The review cadence
+
+For Level 2 and Level 3, define a regular review cadence:
+
+- **Daily**: check the audit log for anomalies — unexpected contract calls, unusual amounts, unfamiliar addresses.
+- **Weekly**: verify the agent's cumulative activity matches its stated purpose.
+- **Per Pact renewal**: review the full operation history before approving the next Pact. Did the agent stay within the spirit of the authorization? Were there edge cases?
+
+Audit logs are available via `caw audit logs` or the [List audit logs](/products/agentic-wallet/manual/reference/list-audit-logs) operation.

@@ -1,0 +1,177 @@
+---
+title: "Lending and borrowing"
+description: "How collateral-based lending works in DeFi, health factors, and liquidation risk."
+---
+
+## How DeFi lending works
+
+DeFi lending protocols (Aave, Compound) connect two roles:
+
+**Suppliers** deposit tokens into a pool and earn a variable interest rate. The protocol issues **interest-bearing receipt tokens** representing the deposited position — `aUSDC` in Aave, `cUSDC` in Compound. The receipt token's balance or exchange rate increases as interest accrues.
+
+**Borrowers** lock tokens as collateral and borrow a different token, paying a variable borrow rate. Borrowing is always **overcollateralized** — you must supply more value than you borrow. If the collateral's value falls relative to the borrowed amount, the position risks liquidation.
+
+## Health factor and liquidation
+
+The **health factor** measures how safely overcollateralized a borrow position is:
+
+```
+Health factor = (collateral value × liquidation threshold) / total borrow value
+```
+
+| Health factor | Meaning |
+|---|---|
+| > 1.0 | Safe — position is adequately collateralized |
+| = 1.0 | Liquidation threshold — can be liquidated at any moment |
+| < 1.0 | Undercollateralized — likely already being liquidated |
+
+When health factor drops below 1.0, **liquidation** occurs: a third party (anyone) calls the liquidation function, repays part of the debt on your behalf, and receives your collateral at a discount (the liquidation bonus, typically 5–15%).
+
+Liquidation is automatic and permissionless — no approval is needed. An agent managing a leveraged position must monitor health factor continuously and respond before it reaches 1.0.
+
+## Aave v3
+
+Aave v3 is the most widely used lending protocol. The central contract is the **Pool**:
+
+| Function | Signature | What it does |
+|---|---|---|
+| `supply` | `supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)` | Deposit tokens; receive aTokens |
+| `borrow` | `borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)` | Borrow against collateral |
+| `repay` | `repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf)` | Repay a borrow |
+| `withdraw` | `withdraw(address asset, uint256 amount, address to)` | Redeem aTokens and receive underlying |
+| `getUserAccountData` | `getUserAccountData(address user)` | Read health factor and account summary |
+
+`interestRateMode`: `1` = stable rate, `2` = variable rate. Most agents use variable (`2`).
+
+## Calling Aave from Cobo
+
+Every supply or repay call requires an ERC-20 approve step first (the Pool must be allowed to pull tokens from your wallet).
+
+**Supply USDC to Aave:**
+
+```python
+from web3 import Web3
+from eth_abi import encode
+
+AAVE_POOL = "0xAavePoolAddress..."
+USDC = "0xUSDCAddress..."
+AMOUNT = 1000 * 10**6  # 1000 USDC (6 decimals)
+
+async def supply_usdc(client, wallet_id, wallet_address):
+    # Step 1: approve Aave Pool to spend USDC
+    selector = Web3.keccak(text="approve(address,uint256)")[:4].hex()
+    approve_calldata = "0x" + selector + encode(
+        ["address", "uint256"], [AAVE_POOL, AMOUNT]
+    ).hex()
+    await client.call_contract(
+        wallet_id=wallet_id,
+        chain_id="BASE_ETH",
+        contract_addr=USDC,
+        calldata=approve_calldata,
+    )
+
+    # Step 2: supply USDC to Aave Pool
+    selector = Web3.keccak(
+        text="supply(address,uint256,address,uint16)"
+    )[:4].hex()
+    supply_calldata = "0x" + selector + encode(
+        ["address", "uint256", "address", "uint16"],
+        [USDC, AMOUNT, wallet_address, 0]
+    ).hex()
+    result = await client.call_contract(
+        wallet_id=wallet_id,
+        chain_id="BASE_ETH",
+        contract_addr=AAVE_POOL,
+        calldata=supply_calldata,
+    )
+    print(f"Supplied: {result['tx_id']}")
+```
+
+**Check health factor (read call — no gas, no Cobo submission):**
+
+```python
+from web3 import Web3
+
+w3 = Web3(Web3.HTTPProvider("https://rpc.base.org"))
+
+# Minimal ABI for getUserAccountData
+abi = [{
+    "name": "getUserAccountData",
+    "type": "function",
+    "inputs": [{"name": "user", "type": "address"}],
+    "outputs": [
+        {"name": "totalCollateralBase", "type": "uint256"},
+        {"name": "totalDebtBase", "type": "uint256"},
+        {"name": "availableBorrowsBase", "type": "uint256"},
+        {"name": "currentLiquidationThreshold", "type": "uint256"},
+        {"name": "ltv", "type": "uint256"},
+        {"name": "healthFactor", "type": "uint256"},
+    ],
+    "stateMutability": "view"
+}]
+
+pool = w3.eth.contract(address=AAVE_POOL, abi=abi)
+data = pool.functions.getUserAccountData(wallet_address).call()
+health_factor = data[5] / 10**18  # healthFactor is in 1e18 units
+print(f"Health factor: {health_factor:.4f}")
+```
+
+## Pact policy for a lending agent
+
+```json
+{
+  "permissions": ["write:contract_call", "read:wallet"],
+  "policies": [
+    {
+      "name": "allow-usdc-approve-for-aave",
+      "type": "contract_call",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "target_in": [{"chain_id": "BASE_ETH", "contract_addr": "0xUSDC..."}],
+          "function_in": ["approve(address,uint256)"]
+        }
+      }
+    },
+    {
+      "name": "allow-aave-supply-repay-withdraw",
+      "type": "contract_call",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "target_in": [{"chain_id": "BASE_ETH", "contract_addr": "0xAavePool..."}],
+          "function_in": [
+            "supply(address,uint256,address,uint16)",
+            "repay(address,uint256,uint256,address)",
+            "withdraw(address,uint256,address)"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+## Interest rate model
+
+Aave uses a **utilization-based interest rate model**:
+
+- When utilization (borrowed / total supplied) is low: rates are low to attract borrowers.
+- When utilization is high: rates spike sharply to attract more suppliers and discourage borrowing.
+- At 100% utilization: withdrawals become impossible until borrowers repay.
+
+Agents supplying to earn yield should monitor utilization rates — low utilization means low yield.
+
+## Compound v3
+
+Compound v3 (Comet) has a simplified model with a single base token per market (usually USDC). Key differences from Aave:
+
+- No separate borrow/supply function names — interactions are through the `Comet` contract.
+- Health is measured by `isBorrowCollateralized()` rather than a numeric health factor.
+- `supply(asset, amount)` — supply collateral or base token.
+- `withdraw(asset, amount)` — withdraw collateral or borrow base token.
+- `absorb(absorber, accounts)` — liquidate undercollateralized accounts.
+
+See the full recipe in [Lending Arbitrage](/products/agentic-wallet/manual/recipes/lending-arbitrage).
