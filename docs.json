@@ -49,6 +49,7 @@
             "pages": [
               "products/agentic-wallet/manual/get-started/introduction",
               "products/agentic-wallet/manual/learn/what-is-a-pact",
+              "products/agentic-wallet/manual/get-started/pact-flow",
               "products/agentic-wallet/manual/get-started/features",
               "products/agentic-wallet/manual/get-started/key-concepts",
               "products/agentic-wallet/manual/developer/supported-chains"

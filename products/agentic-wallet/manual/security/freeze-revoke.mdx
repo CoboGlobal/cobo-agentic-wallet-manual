@@ -20,7 +20,7 @@ Understanding the difference is important — they have different effects, diffe
 
 ## Freeze
 
-Freezing suspends a delegation without terminating it. The pact associated with the delegation remains in `ACTIVE` status — its terms, permissions, and policies are all preserved. But the agent's ability to use the pact-scoped API key is blocked immediately at the server level.
+Freezing suspends a delegation without terminating it. The pact associated with the delegation remains in `ACTIVE` status — its terms and policies are all preserved. But the agent's ability to use the pact-scoped API key is blocked immediately at the server level.
 
 ### What freeze does
 
@@ -32,7 +32,7 @@ Freezing suspends a delegation without terminating it. The pact associated with 
 ### What freeze does not do
 
 - It does not complete, expire, or revoke the pact. The pact lifecycle state is unchanged.
-- It does not modify the pact's permissions, policies, or completion conditions.
+- It does not modify the pact's policies or completion conditions.
 - It does not remove the delegation.
 
 ### Unfreeze

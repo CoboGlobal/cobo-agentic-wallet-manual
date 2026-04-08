@@ -15,8 +15,8 @@ The policy engine evaluates every operation in three sequential stages. A denial
 
 The first question is whether the operation type itself is within scope for the requesting party.
 
-- For agents operating under a pact, this checks whether the operation type (transfer, contract call, message signing) is listed in the pact's `permissions` field.
-- A transfer request under a pact that only includes `read:wallet` will be denied here, before any policy rules are consulted.
+- For agents operating under a pact, this checks whether the operation type is covered by the delegation scope derived from the pact's policy set.
+- A transfer request under a pact whose policies only cover contract calls will be denied here, before any policy rules are consulted.
 - A denial at this stage reflects a mismatch between the pact's declared scope and what the agent is attempting.
 
 ### Stage 2 — Policy rule evaluation
@@ -111,7 +111,7 @@ Example error codes include:
 | `CHAIN_RESTRICTED` | The requested chain is not in the allowlist |
 | `CONTRACT_NOT_WHITELISTED` | The requested contract address is not in the allowlist |
 | `PARAMETER_OUT_OF_BOUNDS` | A decoded calldata parameter failed a constraint check |
-| `INSUFFICIENT_PERMISSION` | The operation type is not in the pact's permissions |
+| `INSUFFICIENT_PERMISSION` | The operation type is not covered by the pact's derived delegation scope |
 | `WALLET_FROZEN` | The delegation is currently frozen |
 | `DELEGATION_EXPIRED` | The delegation or pact has expired |
 
@@ -131,4 +131,4 @@ Agents can test whether an operation would pass the policy engine before actuall
 
 - [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) — detailed explanation of rolling window counters and per-transaction limits
 - [Address Allowlists](/products/agentic-wallet/manual/security/address-allowlists) — how destination address and contract address restrictions work
-- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how permissions and policies are declared in a PactSpec
+- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how policies and completion conditions are declared in a PactSpec
