@@ -3,7 +3,7 @@ title: "Submit and Manage Pacts"
 description: "How to use pacts for task-level authorization — submit, poll, operate, and revoke."
 ---
 
-A pact is the agreement between you and your agent. It captures the agent's intent, the permissions you grant, the spending rules you enforce, and when the authority expires. When you approve a pact, Cobo Agentic Wallet creates a scoped delegation with enforced policies — the agent can operate, but only within the boundaries you defined.
+A pact is the agreement between you and your agent. It captures the agent's intent, the execution plan, the policy boundaries you enforce, and when the authority expires. When you approve a pact, Cobo Agentic Wallet creates a scoped delegation with enforced policies — the agent can operate, but only within the boundaries you defined.
 
 ## How pacts work
 
@@ -12,12 +12,12 @@ The pact flow has three phases: **propose**, **approve**, **operate**.
 ```
 1. Agent proposes a pact
    └── "I want to DCA $500/week into ETH on Base for 3 months"
-   └── Specifies: permissions, spending limits, allowed contracts, duration
+   └── Specifies: spending limits, allowed contracts, duration
 
 2. You review and approve
    └── Pact appears in the Human App
-   └── You see the intent, execution plan, permissions, and spending rules
-   └── You can revise the permissions and policies before approving
+   └── You see the intent, execution plan, and spending rules
+   └── You can revise the policies before approving
    └── Approve → agent gets scoped access. Reject → nothing happens.
 
 3. Agent operates within the pact
@@ -35,7 +35,6 @@ A pact specification (PactSpec) defines the agent's operating boundaries:
 |---|---|
 | **Intent** | A plain-language description of what the agent wants to do — e.g., "DCA $500/week into ETH on Base for 3 months" |
 | **Execution plan** | A detailed markdown plan explaining the agent's strategy, steps, and rationale — helps you understand *how* the agent intends to accomplish the intent |
-| **Permissions** | What the agent can do — read wallet info, transfer tokens, call contracts, sign messages |
 | **Policies** | Spending rules — per-transaction limits, daily/weekly budgets, allowed chains/tokens/contracts |
 | **Duration** | How long the pact stays active (e.g., 90 days). When it expires, access is revoked automatically |
 | **Completion conditions** | Optional conditions that end the pact early — e.g., after 12 transactions or $6,000 total spent |
@@ -46,7 +45,6 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
 
 ```json
 {
-  "permissions": ["write:contract_call", "read:wallet"],
   "policies": [
     {
       "name": "allow-uniswap-base",
@@ -126,7 +124,7 @@ When you approve a pact, Cobo Agentic Wallet creates the underlying infrastructu
 Pact (what you approve)
   │
   ├── Delegation (scoped access grant)
-  │     └── permissions, wallet, operator, expiry
+  │     └── derived scope, wallet, operator, expiry
   │
   ├── Inline policies (spending rules)
   │     └── transfer limits, contract allowlists, rolling budgets
@@ -170,7 +168,6 @@ async with WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY) as client:
         wallet_id="a1b2c3d4-...",
         intent="Transfer up to $100/day for testing",
         spec={
-            "permissions": ["write:transfer", "read:wallet"],
             "policies": [...],
             "duration_seconds": 86400
         }
@@ -199,7 +196,6 @@ const result = await client.submitPact({
   wallet_id: 'a1b2c3d4-...',
   intent: 'Transfer up to $100/day for testing',
   spec: {
-    permissions: ['write:transfer', 'read:wallet'],
     policies: [...],
     duration_seconds: 86400,
   },
@@ -287,12 +283,12 @@ When your agent submits a pact, you receive a notification in the Human App. The
 
 - **Intent** — what the agent wants to do, in plain language
 - **Execution plan** — the agent's detailed strategy and steps, so you understand the reasoning
-- **Permissions requested** — read wallet, transfer, contract calls, etc.
+- **Policy scope proposed** — what transactions and contract calls the pact would allow in practice
 - **Spending rules** — per-transaction limits, daily budgets, allowed chains and contracts
 - **Duration** — how long the pact lasts
 - **Completion conditions** — what triggers automatic completion
 
-You can **approve**, **reject**, or **revise before approving**. If the agent's proposed permissions or policies are too broad (or too narrow), you can adjust them directly before granting access — the agent will operate under your revised terms, not its original proposal. You can also revoke an active pact at any time.
+You can **approve**, **reject**, or **revise before approving**. If the agent's proposed policies are too broad (or too narrow), you can adjust them directly before granting access — the agent will operate under your revised terms, not its original proposal. You can also revoke an active pact at any time.
 
 ## When to use pacts vs. manual delegation
 

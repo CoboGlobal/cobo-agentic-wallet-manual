@@ -5,7 +5,7 @@ description: "How pacts move through states — from submission to expiry — an
 
 ## What is a pact?
 
-A pact is the formalized agreement between an agent and its wallet owner. It captures the agent's intent, the permissions requested, the spending rules to enforce, and when the authority expires. Approving a pact creates a scoped delegation and a pact-scoped API key automatically — no manual delegation or policy setup required.
+A pact is the formalized agreement between an agent and its wallet owner. It captures the agent's intent, the execution plan, the spending rules to enforce, and when the authority expires. Approving a pact creates a scoped delegation and a pact-scoped API key automatically — no manual delegation or policy setup required.
 
 ## Owner vs. delegate: how the pact flow differs
 
@@ -29,7 +29,6 @@ The PactSpec is the JSON payload your agent submits when requesting a pact. It d
 |---|---|---|
 | `intent` | string | Plain-language description of what the agent wants to do |
 | `execution_plan` | string (markdown) | Detailed strategy — helps the owner understand *how* the agent intends to work |
-| `permissions` | string[] | What the agent can do: `write:transfer`, `write:contract_call`, `read:wallet`, `operator` |
 | `policies` | InlinePolicy[] | Spending rules: transfer limits, allowlists, rolling budgets, approval thresholds |
 | `duration_seconds` | integer | How long the pact remains active after activation. Null = no time limit. |
 | `completion_conditions` | CompletionCondition[] | Optional early-completion triggers: `TX_COUNT` (total transactions), `AMOUNT_SPENT_USD` (total USD spent) |
@@ -40,7 +39,6 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
 
 ```json
 {
-  "permissions": ["write:contract_call", "read:wallet"],
   "policies": [
     {
       "name": "allow-uniswap-base",
@@ -113,7 +111,7 @@ When the owner approves a pact, Cobo Agentic Wallet creates the underlying infra
 Pact (what the owner approves)
   │
   ├── Delegation (scoped access grant)
-  │     └── permissions, wallet, operator, expiry
+  │     └── derived scope, wallet, operator, expiry
   │
   ├── Inline policies (spending rules)
   │     └── transfer limits, contract allowlists, rolling budgets
@@ -140,7 +138,6 @@ caw pact submit \
 caw pact submit \
   --wallet-id <WALLET_UUID> \
   --intent "Transfer small amounts for testing" \
-  --permissions write:transfer \
   --max-tx 100 \
   --duration 86400 \
   --wait
@@ -158,7 +155,6 @@ async with WalletAPIClient() as client:
         wallet_id="a1b2c3d4-...",
         intent="DCA $500/week into ETH on Base for 3 months",
         spec={
-            "permissions": ["write:contract_call", "read:wallet"],
             "policies": [
                 {
                     "name": "allow-uniswap-base",
@@ -194,7 +190,6 @@ const result = await client.submitPact({
   wallet_id: 'a1b2c3d4-...',
   intent: 'DCA $500/week into ETH on Base for 3 months',
   spec: {
-    permissions: ['write:contract_call', 'read:wallet'],
     policies: [...],
     duration_seconds: 7776000,
   },
