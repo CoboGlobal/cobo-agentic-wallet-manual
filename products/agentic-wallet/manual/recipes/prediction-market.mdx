@@ -67,10 +67,10 @@ The agent constructs a pact from the owner's instruction and submits it for appr
 ```bash
 # Save the pact spec as polymarket-pact.json first, then:
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Monitor Polymarket election event and bet when odds exceed 60%. Max \$100 per bet, 7 days." \
-  --spec-file polymarket-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('polymarket-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('polymarket-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 ```
   </Tab>
   <Tab title="Python SDK">
@@ -222,14 +222,14 @@ ODDS=$(curl -s "https://api.example.com/polymarket/events/<EVENT_ID>/odds" | jq 
 
 if (( $(echo "$ODDS > 0.60" | bc -l) )); then
   # Step 1: Approve USDC for the CTF Exchange
-  caw tx call "$WALLET_UUID" \
-    --chain BASE_ETH \
+  caw tx call "$PACT_ID" \
+    --chain-id BASE_ETH \
     --to "<USDC_ADDRESS>" \
     --calldata "$(cast calldata 'approve(address,uint256)' '<POLYMARKET_CTF_EXCHANGE>' 100000000)"
 
   # Step 2: Buy a position on the CTF Exchange
-  caw tx call "$WALLET_UUID" \
-    --chain BASE_ETH \
+  caw tx call "$PACT_ID" \
+    --chain-id BASE_ETH \
     --to "<POLYMARKET_CTF_EXCHANGE>" \
     --calldata "$(cast calldata 'buyConditionalTokens(bytes32,uint256,uint256)' '<CONDITION_ID>' 100000000 0)"
 fi
@@ -343,8 +343,8 @@ After the event resolves, the agent calls `redeemPositions` on the CTF Exchange 
 <Tabs>
   <Tab title="CLI">
 ```bash
-caw tx call "$WALLET_UUID" \
-  --chain BASE_ETH \
+caw tx call "$PACT_ID" \
+  --chain-id BASE_ETH \
   --to "<POLYMARKET_CTF_EXCHANGE>" \
   --calldata "$(cast calldata 'redeemPositions(address,bytes32,bytes32,uint256[])' '<USDC_ADDRESS>' '<PARENT_COLLECTION_ID>' '<CONDITION_ID>' '[1,2]')"
 ```
@@ -409,7 +409,7 @@ print(result["output"])
 ## Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 20 --format table
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 This returns a table of all contract call operations — each row shows the operation timestamp, contract address, calldata hash, USD value, and policy decision (allow/deny). Use this to verify the agent never exceeded the $100 per-bet cap.

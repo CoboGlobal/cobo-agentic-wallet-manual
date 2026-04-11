@@ -74,7 +74,8 @@ async def main() -> None:
                         "name": "max-tx-limit",
                         "type": "transfer",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
+                            "when": {},
                             "deny_if": {"amount_usd_gt": "100"},
                         },
                     }
@@ -104,7 +105,7 @@ async def main() -> None:
 
         try:
             # Step 4: Execute an allowed transfer (within the 100 USD limit).
-            allowed = await pact_client.transfer(
+            allowed = await pact_client.transfer_tokens(
                 wallet_id,
                 chain_id=CHAIN_ID,
                 dst_addr=DESTINATION,
@@ -115,7 +116,7 @@ async def main() -> None:
 
             # Step 5: Trigger a policy denial (amount exceeds 100 USD limit).
             try:
-                await pact_client.transfer(
+                await pact_client.transfer_tokens(
                     wallet_id,
                     chain_id=CHAIN_ID,
                     dst_addr=DESTINATION,
@@ -129,7 +130,7 @@ async def main() -> None:
                 print("SUGGESTION:", suggestion)
 
                 # Step 6: Self-correct using the denial guidance.
-                retried = await pact_client.transfer(
+                retried = await pact_client.transfer_tokens(
                     wallet_id,
                     chain_id=CHAIN_ID,
                     dst_addr=DESTINATION,

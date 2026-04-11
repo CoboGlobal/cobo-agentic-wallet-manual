@@ -11,16 +11,16 @@ When you need to send to multiple recipients, you can submit multiple transfers 
 <Tab title="CLI">
 ```bash
 # Submit multiple transfers in sequence (shell loop)
-WALLET_UUID=<wallet_uuid>
+PACT_ID=<pact-id>
 RECIPIENTS=("0xAddr1" "0xAddr2" "0xAddr3")
 AMOUNTS=("10" "15" "20")
 
 for i in "${!RECIPIENTS[@]}"; do
-  caw tx transfer "$WALLET_UUID" \
+  caw tx transfer "$PACT_ID" \
     --to "${RECIPIENTS[$i]}" \
     --token-id SETH_USDC \
     --amount "${AMOUNTS[$i]}" \
-    --chain SETH \
+    --chain-id SETH \
     --request-id "batch-$(date +%s)-$i"
 done
 ```
@@ -118,7 +118,7 @@ When a transaction is stuck (gas price too low), you can speed it up by resubmit
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx speedup <WALLET_UUID> <TRANSACTION_UUID> \
+caw tx speedup <TRANSACTION_UUID> \
   --fee '{"fee_type":"EVM_EIP_1559","max_fee_per_gas":"50000000000","max_priority_fee_per_gas":"2000000000"}'
 ```
 </Tab>
@@ -161,7 +161,7 @@ Cancel a pending transaction that has not yet confirmed on-chain. For EVM chains
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx drop <WALLET_UUID> <TRANSACTION_UUID>
+caw tx drop <TRANSACTION_UUID>
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -189,7 +189,7 @@ Poll for transaction completion or subscribe to the SSE event stream for push no
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx get <WALLET_UUID> <TX_ID>
+caw tx get --tx-id <TX_ID>
 ```
 </Tab>
 <Tab title="Python SDK">

@@ -52,7 +52,7 @@ The agent submits this PactSpec when requesting authorization. The owner reviews
       "name": "deny-over-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "10",
@@ -102,7 +102,7 @@ cat > dca-pact.json << 'EOF'
       "name": "deny-over-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "10",
@@ -120,10 +120,10 @@ EOF
 
 # Submit the pact and wait for owner approval
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Run DCA strategy: ETH only, max \$10/buy, \$25 daily, \$200 monthly, valid 90 days" \
-  --spec-file dca-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('dca-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('dca-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 
 # Confirm active
 caw pact status <PACT_ID>
@@ -160,7 +160,7 @@ async def main():
                         "name": "deny-over-limits",
                         "type": "transfer",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
                             "when": {},
                             "deny_if": {
                                 "amount_usd_gt": "10",
@@ -219,7 +219,7 @@ const result = await client.submitPact({
         name: 'deny-over-limits',
         type: 'transfer',
         rules: {
-          effect: 'deny',
+          effect: 'allow',
           when: {},
           deny_if: {
             amount_usd_gt: '10',
@@ -252,23 +252,25 @@ console.log(`Pact active. Scoped API key: ${pact.api_key}`);
 
 ```python
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 import os
 
 client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt=(
-        "You are a DCA trading agent. Submit a pact for owner authorization "
-        "before executing buys. Respect chain and spend limits."
-    ),
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a DCA trading agent. Submit a pact for owner authorization before executing buys. Respect chain and spend limits."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({
+result = executor.invoke({
     "input": (
         "Run my DCA strategy. ETH only, max $10 per buy, $25 daily, "
         "$200 monthly. Valid 90 days."
@@ -298,13 +300,13 @@ WALLET_UUID=<wallet_uuid>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed transfer — compliant chain and amount
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 8 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH --amount 8 --chain-id SETH
 
 # Oversized order — exceeds per-tx limit, triggers policy denial
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 100 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH --amount 100 --chain-id SETH
 
 # Retry with compliant amount
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH --amount 10 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH --amount 10 --chain-id SETH
 ```
 
 </Tab>
@@ -363,19 +365,24 @@ console.log(`DCA buy submitted: ${result.tx_id}`);
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import os
 
 # Use the pact-scoped API key to operate within approved limits
 pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=pact_client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt="Execute DCA buys within approved chain and spend limits.",
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Execute DCA buys within approved chain and spend limits."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({"input": "Buy $8 of ETH on the allowed chain."})
+result = executor.invoke({"input": "Buy $8 of ETH on the allowed chain."})
 print(result["output"])
 ```
 
@@ -386,7 +393,7 @@ print(result["output"])
 ### Step 5: Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 ## Full Source Code

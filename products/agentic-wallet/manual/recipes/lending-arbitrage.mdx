@@ -67,10 +67,10 @@ The USDC contract address is included in `target_in` because the agent must appr
   <Tab title="CLI">
 ```bash
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Monitor USDC lending rates on Aave v3 and Compound v3 on Base. Migrate position to the better-rate protocol when spread exceeds 1%. Max \$10,000 per operation, 30 days." \
-  --spec-file aave-compound-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('aave-compound-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('aave-compound-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 ```
   </Tab>
   <Tab title="Python SDK">
@@ -222,20 +222,20 @@ COMPOUND_RATE=$(cast call "<COMPOUND_V3_COMET>" "getSupplyRate(uint256)(uint64)"
 # If Compound rate is higher, migrate from Aave to Compound:
 
 # Step 1: Withdraw from Aave
-caw tx call "$WALLET_UUID" \
-  --chain BASE_ETH \
+caw tx call "$PACT_ID" \
+  --chain-id BASE_ETH \
   --to "<AAVE_V3_POOL>" \
   --calldata "$(cast calldata 'withdraw(address,uint256,address)' '<USDC_ADDRESS>' '<AMOUNT>' '<WALLET_ADDR>')"
 
 # Step 2: Approve USDC for Compound
-caw tx call "$WALLET_UUID" \
-  --chain BASE_ETH \
+caw tx call "$PACT_ID" \
+  --chain-id BASE_ETH \
   --to "<USDC_ADDRESS>" \
   --calldata "$(cast calldata 'approve(address,uint256)' '<COMPOUND_V3_COMET>' '<AMOUNT>')"
 
 # Step 3: Supply to Compound
-caw tx call "$WALLET_UUID" \
-  --chain BASE_ETH \
+caw tx call "$PACT_ID" \
+  --chain-id BASE_ETH \
   --to "<COMPOUND_V3_COMET>" \
   --calldata "$(cast calldata 'supply(address,uint256)' '<USDC_ADDRESS>' '<AMOUNT>')"
 ```
@@ -424,7 +424,7 @@ Gas costs on Base are low, but frequent migrations still erode yield. Consider a
 ## Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 50 --format table
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 Each migration produces three contract call entries (withdraw, approve, supply). The audit log shows the contract address, calldata hash, USD value, and policy outcome for each operation.

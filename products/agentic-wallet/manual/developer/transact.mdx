@@ -10,11 +10,11 @@ Transactions are initiated by agents (using their API key and an active delegati
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx transfer <WALLET_UUID> \
+caw tx transfer <PACT_ID> \
   --to 0xRecipient... \
   --token-id SETH_USDC \
   --amount 50 \
-  --chain SETH \
+  --chain-id SETH \
   --request-id invoice-001
 ```
 </Tab>
@@ -127,10 +127,10 @@ if (result.status === 'pending_approval') {
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx call <WALLET_UUID> \
+caw tx call <PACT_ID> \
   --contract 0xContract... \
   --calldata 0x... \
-  --chain BASE_ETH \
+  --chain-id BASE_ETH \
   --request-id swap-001
 ```
 </Tab>
@@ -175,11 +175,11 @@ caw tx estimate-transfer-fee <WALLET_UUID> \
   --to 0xRecipient... \
   --token-id SETH_USDC \
   --amount 50 \
-  --chain SETH
+  --chain-id SETH
 
 # Estimate contract call fee
 caw tx estimate-call-fee <WALLET_UUID> \
-  --chain BASE_ETH \
+  --chain-id BASE_ETH \
   --contract 0x7a250d... \
   --calldata 0x38ed1739... \
   --value 0
@@ -241,7 +241,7 @@ const callFee = await client.estimateContractCallFee({
 caw tx list <WALLET_UUID> --limit 20 --status submitted
 
 # Get a specific transaction record
-caw tx get <WALLET_UUID> <TX_ID>
+caw tx get --tx-id <TX_ID>
 ```
 </Tab>
 <Tab title="Python SDK">

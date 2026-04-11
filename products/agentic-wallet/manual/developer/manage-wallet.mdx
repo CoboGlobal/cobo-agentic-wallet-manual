@@ -10,7 +10,8 @@ Wallets are created and owned by a principal. The owner has unrestricted access;
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw wallet create --name "My Trading Wallet"
+# Wallets are created during onboarding — run caw onboard provision to create a wallet.
+caw onboard provision --token <PAIRING_CODE>
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -47,7 +48,7 @@ Each chain requires its own address entry before transfers can be made to or fro
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw address create <WALLET_UUID> --chain SETH
+caw address create <WALLET_UUID> --chain-id SETH
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -100,10 +101,10 @@ console.log(wallet.name, wallet.status);
 <Tab title="CLI">
 ```bash
 # List all wallets
-caw wallet list --format table
+caw wallet list
 
-# Include archived wallets
-caw wallet list --include-archived --format table
+# Show archived wallets
+caw wallet list --archived
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -160,7 +161,7 @@ for (const addr of addresses.items ?? []) {
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw wallet balances <WALLET_UUID>
+caw wallet balance <WALLET_UUID>
 ```
 </Tab>
 <Tab title="Python SDK">

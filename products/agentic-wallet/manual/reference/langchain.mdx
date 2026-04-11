@@ -70,14 +70,12 @@ The toolkit exposes `StructuredTool` instances, each with a Pydantic `args_schem
 
 | Tool | Description |
 |---|---|
-| `list_wallets` | List available wallets |
-| `get_balance` | Get wallet balance |
-| `transfer_tokens` | Transfer tokens between wallets |
-| `list_transactions` | List wallet transactions |
-| `get_audit_logs` | Query audit logs |
-| `create_delegation` | Create operator delegation |
-| `evaluate_policy` | Dry-run policy evaluation |
-| `submit_pact` | Submit a pact for owner authorization |
+| `list_wallets` | List wallets accessible to the caller. Use this tool to discover wallet UUIDs required by other tools such as get_balance and transfer_tokens |
+| `get_balance` | Get wallet balances for a specific wallet |
+| `transfer_tokens` | Transfer tokens from a Cobo wallet to a destination address. Organisation spending policies are enforced; the transfer may require approval before it is executed |
+| `list_transactions` | List transactions associated with a wallet, optionally filtered by status. Returns both incoming and outgoing transactions in reverse-chronological order |
+| `get_audit_logs` | Query the organisation audit log, returning records of actions performed by operators on wallets. Supports filtering by wallet, principal, action type, result, and time range using cursor-based pagination |
+| `create_delegation` |  |
 
 ## Denial Behavior
 

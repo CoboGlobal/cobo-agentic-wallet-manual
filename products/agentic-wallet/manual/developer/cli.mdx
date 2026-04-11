@@ -47,27 +47,24 @@ caw onboard self-test
 Before executing transfers, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Human App.
 
 ```bash
-# Submit a pact requesting transfer permissions for 24 hours
+# Submit a pact requesting transfer permissions
 caw pact submit \
-  --wallet-id <WALLET_UUID> \
   --intent "Transfer tokens for testing" \
-  --permissions write:transfer \
-  --max-tx 100 \
-  --duration 86400 \
-  --wait
+  --execution-plan "Transfer small token amounts for testing purposes." \
+  --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{}}}]' \
+  --completion-conditions '[{"type":"tx_count","threshold":"100"}]'
 
-# --wait blocks until the owner approves or rejects.
 # Once active, get the pact ID and check its status:
 caw pact status <PACT_ID>
 ```
 
-<Note>The `--wait` flag blocks until the wallet owner approves or rejects the pact. The owner is notified in the Human App.</Note>
+<Note>The wallet UUID is resolved from the active wallet profile set during `caw onboard provision`. Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`.</Note>
 
 ## Explore your wallet
 
 ```bash
 # List accessible wallets
-caw wallet list --format table
+caw wallet list
 
 # Check balance
 caw wallet balance
@@ -79,22 +76,34 @@ caw wallet get
 ## Transfer tokens
 
 ```bash
-WALLET_UUID=<wallet-uuid>
+PACT_ID=<pact-id>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed transfer
-caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 2 --chain BASE
+caw tx transfer "$PACT_ID" --to "$DST" --token-id USDC --amount 2 --chain-id BASE_ETH
 
 # Oversized transfer — triggers policy denial
-caw tx transfer "$WALLET_UUID" --to "$DST" --token USDC --amount 500 --chain BASE
+caw tx transfer "$PACT_ID" --to "$DST" --token-id USDC --amount 500 --chain-id BASE_ETH
 ```
 
 On denial, output includes `code`, `reason`, `details`, and `suggestion`.
 
 ## Check audit logs
 
-```bash
-caw audit logs --wallet "$WALLET_UUID" --result denied --format table
+Audit logs are accessible via the Python SDK. See [Audit and Activity Logs](/products/agentic-wallet/manual/developer/audit) for the full query interface.
+
+```python
+from cobo_agentic_wallet import WalletAPIClient
+import asyncio
+
+async def main():
+    client = WalletAPIClient(base_url=API_URL, api_key=API_KEY)
+    logs = await client.list_audit_logs(wallet_id=WALLET_UUID, result="denied")
+    for entry in logs.get("items", []):
+        print(entry["action"], entry["result"])
+    await client.close()
+
+asyncio.run(main())
 ```
 
 ## Optional: run the demo
@@ -108,7 +117,7 @@ caw demo
 The CLI is a complete interface on its own, and it also composes well with other integration paths:
 
 - **Wrap in shell functions** — build custom `caw`-based scripts for repeated workflows: nightly balance checks, batched transfers, or policy dry-runs before execution.
-- **Call from any language** — invoke `caw` via subprocess from Python, Node, Go, or any runtime. The structured JSON output (`--format json`) makes it easy to parse results programmatically.
+- **Call from any language** — invoke `caw` via subprocess from Python, Node, Go, or any runtime. The structured JSON output makes it easy to parse results programmatically.
 - **Add a skill** — install `SKILL.md` so your AI agent understands wallet commands without being explicitly prompted. The skill and CLI work together: the skill provides reasoning context, `caw` provides execution.
 - **Upgrade to the Python SDK** — for async workflows, pact lifecycle management, or custom error handling with `PolicyDeniedError`, use `WalletAPIClient` directly.
 

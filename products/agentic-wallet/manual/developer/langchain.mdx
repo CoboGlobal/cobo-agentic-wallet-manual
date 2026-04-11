@@ -45,7 +45,8 @@ from __future__ import annotations
 import asyncio
 import os
 
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
 from cobo_agentic_wallet.client import WalletAPIClient
@@ -60,20 +61,25 @@ def main() -> None:
     toolkit = CoboAgentWalletToolkit(client=client)
     tools = toolkit.get_tools()
 
-    agent = create_agent(
-        model=ChatOpenAI(model="gpt-4.1-mini", temperature=0),
-        tools=tools,
-        system_prompt=(
+    llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0)
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
             "Use Cobo wallet tools. Before executing transfers, always submit a pact using "
             "submit_pact and wait until its status is active. If a transfer is denied, read "
-            "the denial suggestion, adjust the amount, and retry."
+            "the denial suggestion, adjust the amount, and retry.",
         ),
-    )
+        ("human", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ])
+
+    agent = create_tool_calling_agent(llm, tools, prompt)
+    executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     wallet_uuid = "your-wallet-uuid"
     destination = "0x1111111111111111111111111111111111111111"
 
-    prompt = (
+    prompt_text = (
         f"Use wallet {wallet_uuid}. "
         f"First, call submit_pact with intent 'Transfer tokens for testing', permissions "
         f"write:transfer, max_tx 100, and duration 86400. Wait until the pact is active. "
@@ -83,7 +89,7 @@ def main() -> None:
         f"Finally call get_audit_logs for wallet {wallet_uuid} with action transfer.initiate."
     )
 
-    result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
+    result = executor.invoke({"input": prompt_text})
     print(result)
 
     asyncio.run(client.close())
