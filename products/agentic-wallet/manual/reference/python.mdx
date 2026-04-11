@@ -183,6 +183,69 @@ Get the online status of the TSS node associated with a specific wallet.
   The wallet UUID. Retrieve it by calling `list_wallets()`.
 </ParamField>
 
+### `initiate_wallet_pair()`
+
+Initiate wallet ownership pairing and obtain a one-time pairing token for the user to enter in the Cobo Human App.
+
+<ParamField path="wallet_pair_initiate" type="Any" required>
+  The wallet pair initiation payload. Must include the wallet UUID.
+</ParamField>
+
+### `confirm_wallet_pair()`
+
+Confirm wallet ownership pairing after the user has entered the pairing token.
+
+<ParamField path="wallet_pair_confirm" type="Any" required>
+  The wallet pair confirmation payload.
+</ParamField>
+
+### `get_pair_info()`
+
+Get pairing info by a one-time pairing token.
+
+<ParamField path="token" type="str" required>
+  The one-time pairing token.
+</ParamField>
+
+### `get_pair_info_by_wallet()`
+
+Get pairing info by wallet UUID.
+
+<ParamField path="wallet_uuid" type="str" required>
+  The wallet UUID.
+</ParamField>
+
+### `wallet_reshare()`
+
+Initiate a TSS key reshare for the specified wallet.
+
+<ParamField path="wallet_uuid" type="str" required>
+  The wallet UUID.
+</ParamField>
+<ParamField path="node_id" type="str" required>
+  The new TSS node ID to reshare to.
+</ParamField>
+
+### `wallet_tss_callback()`
+
+Report a TSS request callback result to the platform.
+
+<ParamField path="wallet_uuid" type="str" required>
+  The wallet UUID.
+</ParamField>
+<ParamField path="tss_request_id" type="str" required>
+  The TSS request ID.
+</ParamField>
+<ParamField path="status" type="int" required>
+  The TSS request status code.
+</ParamField>
+<ParamField path="results" type="list | None" default="None">
+  TSS result items.
+</ParamField>
+<ParamField path="failed_reasons" type="list[str] | None" default="None">
+  Failure reason strings, if any.
+</ParamField>
+
 ## Balance methods
 
 ### `list_balances()`
@@ -379,21 +442,27 @@ Sign a message or EIP-712 typed data using the wallet's key.
   A client-supplied idempotency key.
 </ParamField>
 
-### `x402_payment()`
+### `payment()`
 
-Process an x402 payment request by parsing the `PAYMENT-REQUIRED` header and submitting a signing request. The first matching accept item with sufficient balance is selected automatically.
+Create a payment request. Supports the x402 and MPP protocols.
 
 <ParamField path="wallet_uuid" type="str" required>
   The wallet UUID.
 </ParamField>
-<ParamField path="payment_required" type="str" required>
-  The raw `PAYMENT-REQUIRED` header value from the x402 server response.
-</ParamField>
-<ParamField path="sync" type="bool | None" default="True">
-  When `True`, waits for the signing result. When `False`, returns immediately.
+<ParamField path="protocol" type="Any | None" default="None">
+  The payment protocol identifier.
 </ParamField>
 <ParamField path="request_id" type="str | None" default="None">
   A client-supplied idempotency key.
+</ParamField>
+<ParamField path="x402_payment_required" type="str | None" default="None">
+  The raw `PAYMENT-REQUIRED` header value from an x402 server response.
+</ParamField>
+<ParamField path="mpp_www_authenticate" type="str | None" default="None">
+  The `WWW-Authenticate` header value from an MPP server response.
+</ParamField>
+<ParamField path="mpp_session" type="Any | None" default="None">
+  An existing MPP session object to resume.
 </ParamField>
 
 ### `list_recent_addresses()`
@@ -405,6 +474,20 @@ List recently used destination addresses for a wallet.
 </ParamField>
 <ParamField path="limit" type="int | None" default="None">
   The maximum number of addresses to return.
+</ParamField>
+
+### `handle_waas_webhook()`
+
+Handle an incoming WaaS webhook event.
+
+<ParamField path="body" type="dict[str, Any]" required>
+  The webhook request body as a parsed dict.
+</ParamField>
+<ParamField path="biz_timestamp" type="str | None" default="None">
+  The business timestamp from the webhook header.
+</ParamField>
+<ParamField path="biz_resp_signature" type="str | None" default="None">
+  The business response signature from the webhook header.
 </ParamField>
 
 ## Transaction record methods
@@ -447,6 +530,17 @@ Get a specific on-chain transaction record by its ID.
 </ParamField>
 <ParamField path="record_uuid" type="str" required>
   The transaction record UUID. Retrieve it by calling `list_transaction_records()`.
+</ParamField>
+
+### `get_transaction_record_by_request_id()`
+
+Get a specific on-chain transaction record by client request ID.
+
+<ParamField path="wallet_uuid" type="str" required>
+  The wallet UUID.
+</ParamField>
+<ParamField path="request_id" type="str" required>
+  The client-supplied request ID used when submitting the transaction.
 </ParamField>
 
 ## Delegation methods
@@ -679,20 +773,6 @@ Reject a pending operation.
 
 ## Approval methods
 
-### `create_approval()`
-
-Create a new approval request and send a push notification to the Human App.
-
-<ParamField path="wallet_id" type="str" required>
-  The wallet ID associated with this approval request.
-</ParamField>
-<ParamField path="approval_type" type="str" required>
-  The approval type.
-</ParamField>
-<ParamField path="payload" type="str" required>
-  An opaque JSON string stored and returned as-is by the backend.
-</ParamField>
-
 ### `get_approval()`
 
 Get the current status and details of an approval request. Poll this to check for `status=approved` and retrieve the `approval_result`.
@@ -716,16 +796,13 @@ List approval requests for the authenticated human principal.
 Approve or reject a pending approval request. Only the wallet owner can resolve approvals.
 
 <ParamField path="approval_id" type="str" required>
-  The approval ID. Retrieve it by calling `create_approval()` or `list_approvals()`.
+  The approval ID. Retrieve it by calling `list_approvals()`.
 </ParamField>
-<ParamField path="action" type="str" required>
+<ParamField path="action" type="Any" required>
   The resolution action. Possible values: `approve`, `reject`.
 </ParamField>
-<ParamField path="approval_result" type="str | None" default="None">
-  An opaque result string (for example, a VP signature). Stored as-is.
-</ParamField>
-<ParamField path="rejection_reason" type="str | None" default="None">
-  A human-readable reason for rejection. Supply when `action=reject`.
+<ParamField path="response" type="Any | None" default="None">
+  Optional response payload. May include a `reason` string (for rejections) and/or a `revised_pact` PactSpec object (for approvals that revise the pact before activation).
 </ParamField>
 
 ## Pact methods
@@ -816,6 +893,36 @@ Revoke an active pact. Only the wallet owner can revoke. This revokes the underl
 
 Returns the updated pact dict with `status=revoked`.
 
+### `withdraw_pact()`
+
+Withdraw a pending pact that has not yet been approved.
+
+<ParamField path="pact_id" type="str" required>
+  The pact ID. Retrieve it by calling `list_pacts()`.
+</ParamField>
+
+### `update_policies()`
+
+Update the policies attached to an active pact.
+
+<ParamField path="pact_id" type="str" required>
+  The pact ID.
+</ParamField>
+<ParamField path="policies" type="list | None" required>
+  The new list of policy objects to apply.
+</ParamField>
+
+### `update_completion_conditions()`
+
+Update the completion conditions for an active pact.
+
+<ParamField path="pact_id" type="str" required>
+  The pact ID.
+</ParamField>
+<ParamField path="completion_conditions" type="list | None" required>
+  The new list of completion condition objects.
+</ParamField>
+
 ## Identity methods
 
 ### `provision_agent()`
@@ -830,22 +937,8 @@ Supply `token` to use the pairing code from the Human App. If `token` is omitted
 <ParamField path="invitation_code" type="str | None" default="None">
   An alternative invitation code.
 </ParamField>
-
-### `activate_agent()`
-
-Complete agent-first provisioning by binding the agent to an owner.
-
-<ParamField path="agent_id" type="str" required>
-  The agent ID returned as `agent_id` in the Provision agent response.
-</ParamField>
-<ParamField path="owner_id" type="str" required>
-  The owner principal ID to bind the agent to.
-</ParamField>
-<ParamField path="onboarding_session_id" type="str | None" default="None">
-  The onboarding session ID, if applicable.
-</ParamField>
-<ParamField path="activation_secret" type="str | None" default="None">
-  The activation secret returned during provisioning. Required when the caller is the agent itself.
+<ParamField path="name" type="str | None" default="None">
+  A display name for the agent.
 </ParamField>
 
 ### `get_agent_status()`
@@ -879,6 +972,17 @@ List all principals. Requires service credential authentication.
 
 <ParamField path="principal_type" type="Any | None" default="None">
   Filter by type. Possible values: `human`, `agent`.
+</ParamField>
+
+### `update_principal()`
+
+Update a principal's metadata or display name.
+
+<ParamField path="principal_id" type="str" required>
+  The principal ID to update.
+</ParamField>
+<ParamField path="principal_update" type="Any" required>
+  Update payload containing the fields to change.
 </ParamField>
 
 ### `create_api_key()`
@@ -996,6 +1100,14 @@ Get detailed information about a specific chain by its Cobo chain ID.
   The Cobo chain ID (for example, `SETH`, `BASE_ETH`, `SOL`).
 </ParamField>
 
+### `search_tokens()`
+
+Search for token candidates matching a symbol across supported chains.
+
+<ParamField path="symbol" type="str" required>
+  The token symbol to search for (for example, `USDC`, `ETH`).
+</ParamField>
+
 ## Faucet methods
 
 ### `deposit()`
@@ -1025,3 +1137,10 @@ Get current prices for one or more tokens.
 <ParamField path="currency" type="str | None" default="None">
   The fiat currency for prices (for example, `USD`). Defaults to USD if omitted.
 </ParamField>
+
+## AP2 methods
+
+### `get_merchants()`
+
+List AP2 merchants available to the authenticated principal.
+

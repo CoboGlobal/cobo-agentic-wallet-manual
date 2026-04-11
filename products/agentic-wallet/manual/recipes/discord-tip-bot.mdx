@@ -42,7 +42,7 @@ The agent submits this PactSpec when requesting authorization. The owner reviews
       "name": "deny-over-tip-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "5",
@@ -84,7 +84,7 @@ cat > tip-bot-pact.json << 'EOF'
       "name": "deny-over-tip-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "5",
@@ -102,10 +102,10 @@ EOF
 
 # Submit the pact and wait for owner approval
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Run Discord tip bot: max \$5/tip, \$50 daily, \$200 monthly, valid 30 days" \
-  --spec-file tip-bot-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('tip-bot-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('tip-bot-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 
 # Confirm active
 caw pact status <PACT_ID>
@@ -134,7 +134,7 @@ async def main():
                         "name": "deny-over-tip-limits",
                         "type": "transfer",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
                             "when": {},
                             "deny_if": {
                                 "amount_usd_gt": "5",
@@ -185,7 +185,7 @@ const result = await client.submitPact({
         name: 'deny-over-tip-limits',
         type: 'transfer',
         rules: {
-          effect: 'deny',
+          effect: 'allow',
           when: {},
           deny_if: {
             amount_usd_gt: '5',
@@ -218,23 +218,25 @@ console.log(`Pact active. Scoped API key: ${pact.api_key}`);
 
 ```python
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 import os
 
 client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt=(
-        "You are a Discord tip bot. Submit a pact for owner authorization "
-        "before sending tips. Respect per-tip, daily, and monthly limits."
-    ),
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a Discord tip bot. Submit a pact for owner authorization before sending tips. Respect per-tip, daily, and monthly limits."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({
+result = executor.invoke({
     "input": (
         "Run the Discord tip bot. Max $5 per tip, $50/day, $200/month. Valid 30 days."
     )
@@ -263,13 +265,13 @@ WALLET_UUID=<wallet_uuid>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed tip — within per-tip limit
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 3 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 3 --chain-id SETH
 
 # Oversized tip — exceeds $5 per-tx cap, triggers policy denial with suggestion
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 50 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 50 --chain-id SETH
 
 # Self-corrected retry using the suggested compliant amount
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 5 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 5 --chain-id SETH
 ```
 
 </Tab>
@@ -372,22 +374,24 @@ try {
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import os
 
 # Use the pact-scoped API key to operate within approved limits
 pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=pact_client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt=(
-        "Send Discord tips within approved limits. "
-        "If a tip is denied, use the suggested amount from the denial to self-correct."
-    ),
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Send Discord tips within approved limits. If a tip is denied, use the suggested amount from the denial to self-correct."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({
+result = executor.invoke({
     "input": "Tip user 0x1111... with $3 USDC on SETH for their great contribution."
 })
 print(result["output"])
@@ -400,7 +404,7 @@ print(result["output"])
 ### Step 5: Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 ## Full Source Code

@@ -1684,7 +1684,7 @@
           "Wallets"
         ],
         "summary": "Create wallet address",
-        "description": "This operation derives a new on-chain address for the specified wallet and chain. The wallet ID can be retrieved by calling the List all wallets operation. Use `chain_identifier` to specify the target chain (for example, `ETH`, `BASE`, `SOL`).",
+        "description": "This operation derives a new on-chain address for the specified wallet and chain. The wallet ID can be retrieved by calling the List all wallets operation. Provide `chain_id` (Cobo metadata id, e.g. `SETH`) and/or `chain_identifier` (WaaS id such as `ETH`/`SOL`, or a resolvable Cobo id). If only `chain_id` is set, the server resolves the WaaS chain identifier. If only `chain_identifier` is set, behavior matches the previous API. If both are set, `chain_id` is used.",
         "operationId": "create_wallet_address",
         "parameters": [
           {
@@ -1961,7 +1961,7 @@
           "Wallets"
         ],
         "summary": "Initiate wallet pairing",
-        "description": "This operation generates an 8-digit pairing code that allows a human principal to pair ownership of an agent's wallet. The agent must own the wallet. The response includes a `pair_link` pointing to the Web Console pair page.\n\n<Note>The pairing code expires after 30 minutes. Only one pending pairing exists per wallet and agent; each new initiate rotates the code and invalidates the previous one.</Note>",
+        "description": "This operation generates an 8-digit pairing code that allows a human principal to pair ownership of an agent's wallet. The agent must own the wallet.\n\n<Note>The pairing code expires after 30 minutes. Only one pending pairing exists per wallet and agent; each new initiate rotates the code and invalidates the previous one.</Note>",
         "operationId": "initiate_wallet_pair",
         "parameters": [
           {
@@ -4313,300 +4313,6 @@
         }
       }
     },
-    "/api/v1/approvals": {
-      "post": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "Create approval request",
-        "description": "This operation creates a new approval request and sends a push notification to the Human App. The caller receives an `approval_id` to poll for the result. `payload` is an opaque JSON string — the backend stores and returns it as-is without parsing.",
-        "operationId": "create_approval",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateApprovalRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_CreateApprovalResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_CreateApprovalResponse_"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "List approvals",
-        "description": "This operation retrieves approval requests for the authenticated human principal. Use `status` to filter by approval status. Use cursor-based pagination with `after`/`before`.",
-        "operationId": "list_approvals",
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter by approval status. Possible values: `pending`, `approved`, `rejected`, `expired`. If omitted, all statuses are returned.",
-              "title": "Status",
-              "$ref": "#/components/schemas/ApprovalStatus",
-              "nullable": true
-            },
-            "description": "Filter by approval status. Possible values: `pending`, `approved`, `rejected`, `expired`. If omitted, all statuses are returned."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.",
-              "title": "After",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.",
-              "title": "Before",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Deprecated. Use `after`/`before` cursors instead.",
-              "deprecated": true,
-              "title": "Offset",
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "nullable": true
-            },
-            "description": "Deprecated. Use `after`/`before` cursors instead.",
-            "deprecated": true
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 200].",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 200]."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApprovalListResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/approvals/{approval_id}": {
-      "get": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "Get approval details",
-        "description": "This operation retrieves the current status and full details of an approval request. Use this to poll for `status=approved` and retrieve the `approval_result`. Both `payload` and `approval_result` are opaque strings stored and returned as-is.",
-        "operationId": "get_approval",
-        "parameters": [
-          {
-            "name": "approval_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier (UUID) of the approval request to retrieve. Obtained from `approval_id` in the `POST /approvals` response.",
-              "title": "Approval Id"
-            },
-            "description": "The unique identifier (UUID) of the approval request to retrieve. Obtained from `approval_id` in the `POST /approvals` response."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApprovalRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/approvals/{approval_id}/resolve": {
-      "post": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "Resolve approval request",
-        "description": "This operation approves or rejects a pending approval request. Only the wallet owner can resolve approvals. Set `action` to `approve` or `reject`. `approval_result` is an opaque string stored as-is (for example, a VP signature for approve). Supply `rejection_reason` when rejecting.",
-        "operationId": "resolve_approval",
-        "parameters": [
-          {
-            "name": "approval_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier (UUID) of the approval request to resolve. Obtained from `approval_id` in the `POST /approvals` response.",
-              "title": "Approval Id"
-            },
-            "description": "The unique identifier (UUID) of the approval request to resolve. Obtained from `approval_id` in the `POST /approvals` response."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveApprovalRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ResolveApprovalResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/approvals-v2": {
       "get": {
         "tags": [
@@ -4614,7 +4320,7 @@
         ],
         "summary": "List approvals",
         "description": "List approval requests visible to the authenticated principal.",
-        "operationId": "list_approvals_2",
+        "operationId": "list_approvals",
         "parameters": [
           {
             "name": "subject_type",
@@ -4736,7 +4442,7 @@
         ],
         "summary": "Get approval details",
         "description": "Retrieve the full details of an approval request.",
-        "operationId": "get_approval_2",
+        "operationId": "get_approval",
         "parameters": [
           {
             "name": "approval_id",
@@ -4790,7 +4496,7 @@
         ],
         "summary": "Resolve approval request",
         "description": "Approve or reject a pending approval. Only the owner can resolve.",
-        "operationId": "resolve_approval_2",
+        "operationId": "resolve_approval",
         "parameters": [
           {
             "name": "approval_id",
@@ -6565,7 +6271,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TelemetryRecord"
+                "$ref": "#/components/schemas/LangfuseRecord"
               }
             }
           }
@@ -6699,6 +6405,122 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recipes/search": {
+      "post": {
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "Search recipes",
+        "operationId": "search_recipes",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRecipesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_RecipeSearchResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recipes/{document_id}": {
+      "get": {
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "Get full recipe document by ID",
+        "operationId": "get_recipe_document",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecipeSearchSource",
+              "description": "Document source: 'graph' or 'knowledge'",
+              "default": "graph"
+            },
+            "description": "Document source: 'graph' or 'knowledge'"
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_RecipeDocument_"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -7156,146 +6978,6 @@
         "title": "ApprovalAction",
         "description": "Actions that can be taken to resolve an approval."
       },
-      "ApprovalListResponse": {
-        "properties": {
-          "approvals": {
-            "items": {
-              "$ref": "#/components/schemas/ApprovalSummaryDTO"
-            },
-            "type": "array",
-            "title": "Approvals"
-          }
-        },
-        "type": "object",
-        "required": [
-          "approvals"
-        ],
-        "title": "ApprovalListResponse"
-      },
-      "ApprovalRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "The approval request ID."
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id",
-            "description": "The ID of the principal that owns this approval request."
-          },
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "The wallet ID associated with this approval request."
-          },
-          "approval_type": {
-            "type": "string",
-            "title": "Approval Type",
-            "description": "The approval type identifier."
-          },
-          "payload": {
-            "type": "string",
-            "title": "Payload",
-            "description": "The opaque JSON string provided when the approval was created."
-          },
-          "status": {
-            "$ref": "#/components/schemas/ApprovalStatus",
-            "description": "The approval status. Possible values: `pending`, `approved`, `rejected`, `expired`."
-          },
-          "approval_result": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Approval Result",
-            "description": "The opaque result string from the approver (for example, a signed payload). Only set when `status=approved`."
-          },
-          "rejection_reason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rejection Reason",
-            "description": "The rejection reason, if set. Only present when `status=rejected`."
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expires At",
-            "description": "The timestamp when this approval request expires, in ISO 8601 format."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The timestamp when this approval request was created, in ISO 8601 format."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "The timestamp when this approval request was last updated, in ISO 8601 format."
-          },
-          "signature_needed": {
-            "type": "boolean",
-            "title": "Signature Needed",
-            "description": "Whether this approval type requires a signature from the approver.",
-            "default": false
-          },
-          "agent_name": {
-            "title": "Agent Name",
-            "description": "The display name of the agent principal that created this approval request.",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "owner_id",
-          "wallet_id",
-          "approval_type",
-          "payload",
-          "status",
-          "approval_result",
-          "rejection_reason",
-          "expires_at",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ApprovalRead",
-        "description": "Full detail for an approval — returned to CLI and CAW App."
-      },
-      "ApprovalStatus": {
-        "type": "string",
-        "enum": [
-          "pending",
-          "approved",
-          "rejected",
-          "expired"
-        ],
-        "title": "ApprovalStatus",
-        "description": "Lifecycle states for an Approval record."
-      },
       "ApprovalSubjectType": {
         "type": "string",
         "enum": [
@@ -7304,59 +6986,6 @@
         ],
         "title": "ApprovalSubjectType",
         "description": "Subject types that can require approval."
-      },
-      "ApprovalSummaryDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "The approval request ID."
-          },
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "The wallet ID associated with this approval request."
-          },
-          "approval_type": {
-            "type": "string",
-            "title": "Approval Type",
-            "description": "The approval type identifier."
-          },
-          "status": {
-            "$ref": "#/components/schemas/ApprovalStatus",
-            "description": "The approval status. Possible values: `pending`, `approved`, `rejected`, `expired`."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The timestamp when this approval request was created, in ISO 8601 format."
-          },
-          "signature_needed": {
-            "type": "boolean",
-            "title": "Signature Needed",
-            "description": "Whether this approval type requires a signature from the approver.",
-            "default": false
-          },
-          "intent": {
-            "title": "Intent",
-            "description": "Natural language intent extracted from payload (for pact approvals).",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "wallet_id",
-          "approval_type",
-          "status",
-          "created_at"
-        ],
-        "title": "ApprovalSummaryDTO",
-        "description": "Lightweight item for the CAW App list page."
       },
       "ApprovalV2ListResponse": {
         "properties": {
@@ -7462,7 +7091,8 @@
           "created_at",
           "updated_at"
         ],
-        "title": "ApprovalV2Read"
+        "title": "ApprovalV2Read",
+        "description": "Approval V2 read schema."
       },
       "ApprovalV2Status": {
         "type": "string",
@@ -7740,6 +7370,12 @@
             "type": "string",
             "nullable": true
           },
+          "chain_type": {
+            "title": "Chain Type",
+            "description": "Alias of chain_identifier.",
+            "type": "string",
+            "nullable": true
+          },
           "token_id": {
             "type": "string",
             "title": "Token Id",
@@ -7822,6 +7458,12 @@
           "chain_identifier": {
             "type": "string",
             "title": "Chain Identifier"
+          },
+          "chain_type": {
+            "type": "string",
+            "title": "Chain Type",
+            "description": "Alias of chain_identifier.",
+            "default": ""
           },
           "explorer_tx_url": {
             "title": "Explorer Tx Url",
@@ -7920,6 +7562,12 @@
             "type": "string",
             "title": "Chain Identifier",
             "description": "The native chain identifier used by the network (e.g. EVM chain ID as a string). May be empty for chains that do not use a numeric chain ID.",
+            "default": ""
+          },
+          "chain_type": {
+            "type": "string",
+            "title": "Chain Type",
+            "description": "Alias of chain_identifier.",
             "default": ""
           },
           "symbol": {
@@ -8160,49 +7808,6 @@
         ],
         "title": "ContractCallSubmitResult",
         "description": "Contract call submission response payload."
-      },
-      "CreateApprovalRequest": {
-        "properties": {
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "The wallet ID associated with this approval request."
-          },
-          "approval_type": {
-            "type": "string",
-            "title": "Approval Type",
-            "description": "The approval type identifier (for example, `payment_mandate`, `x402_payment`)."
-          },
-          "payload": {
-            "type": "string",
-            "title": "Payload",
-            "description": "Opaque JSON string stored and returned as-is (for example, a serialized payment mandate)."
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_id",
-          "approval_type",
-          "payload"
-        ],
-        "title": "CreateApprovalRequest",
-        "description": "Request body for creating an approval request.\n\n``payload`` is an opaque JSON string provided by the caller.\nThe backend stores and returns it as-is without parsing."
-      },
-      "CreateApprovalResponse": {
-        "properties": {
-          "approval_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Approval Id",
-            "description": "The approval request ID. Poll the Get approval details operation with this ID to check approval status."
-          }
-        },
-        "type": "object",
-        "required": [
-          "approval_id"
-        ],
-        "title": "CreateApprovalResponse"
       },
       "CreateExportResponse": {
         "properties": {
@@ -9964,13 +9569,6 @@
             "title": "Completion Conditions",
             "description": "Conditions that trigger automatic pact completion (any-of semantics)."
           },
-          "resource_scope": {
-            "title": "Resource Scope",
-            "description": "Resource scope, e.g. {\"wallet_id\": \"...\"}.",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
           "execution_plan": {
             "title": "Execution Plan",
             "description": "Free-form execution plan derived from the intent, in markdown format. Presented to the owner during approval review so they can understand exactly what the operator will do. Suggested sections: # Summary, # Contract Operations, # Risk Controls, # Schedule.",
@@ -10007,13 +9605,6 @@
             "title": "Completion Conditions",
             "description": "Conditions that trigger automatic pact completion (any-of semantics)."
           },
-          "resource_scope": {
-            "title": "Resource Scope",
-            "description": "Resource scope, e.g. {\"wallet_id\": \"...\"}.",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
           "execution_plan": {
             "title": "Execution Plan",
             "description": "Free-form execution plan derived from the intent, in markdown format. Presented to the owner during approval review so they can understand exactly what the operator will do. Suggested sections: # Summary, # Contract Operations, # Risk Controls, # Schedule.",
@@ -10037,7 +9628,7 @@
           "withdrawn"
         ],
         "title": "PactStatus",
-        "description": "Lifecycle states for a Pact."
+        "description": "Pact lifecycle states."
       },
       "PactSubmitRequest": {
         "properties": {
@@ -11216,7 +10807,7 @@
           "agent"
         ],
         "title": "PrincipalType",
-        "description": "Supported principal types."
+        "description": "Principal types."
       },
       "PrincipalUpdate": {
         "properties": {
@@ -11332,6 +10923,67 @@
         "title": "RecentAddressRead",
         "description": "Recent recipient address from transfer history."
       },
+      "RecipeDocument": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RecipeSearchSource"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "content",
+          "source"
+        ],
+        "title": "RecipeDocument",
+        "description": "Unified document response."
+      },
+      "RecipeSearchResponse": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/RecipeSearchSource"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "Source-specific search payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "data"
+        ],
+        "title": "RecipeSearchResponse",
+        "description": "Unified search response envelope."
+      },
+      "RecipeSearchSource": {
+        "type": "string",
+        "enum": [
+          "graph",
+          "knowledge"
+        ],
+        "title": "RecipeSearchSource"
+      },
       "RejectPendingOperationRequest": {
         "properties": {
           "reason": {
@@ -11345,54 +10997,6 @@
         "type": "object",
         "title": "RejectPendingOperationRequest",
         "description": "Reject payload for pending operation."
-      },
-      "ResolveApprovalRequest": {
-        "properties": {
-          "action": {
-            "type": "string",
-            "enum": [
-              "approve",
-              "reject"
-            ],
-            "title": "Action",
-            "description": "The resolution action to take. Use `approve` to approve the request or `reject` to reject it."
-          },
-          "approval_result": {
-            "title": "Approval Result",
-            "description": "Opaque JSON string from the approver (for example, a signed verifiable presentation). Required when `action=approve`.",
-            "type": "string",
-            "nullable": true
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "description": "The rejection reason. Only used when `action=reject`.",
-            "type": "string",
-            "nullable": true
-          },
-          "revised_pact": {
-            "description": "Optional revised pact spec. When provided on approve, the pact's spec is replaced before activation.",
-            "$ref": "#/components/schemas/PactSpec-Input",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "title": "ResolveApprovalRequest"
-      },
-      "ResolveApprovalResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/ApprovalStatus",
-            "description": "The updated approval status after resolving. Possible values: `approved`, `rejected`."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "ResolveApprovalResponse"
       },
       "ResolveApprovalV2Request": {
         "properties": {
@@ -11499,6 +11103,66 @@
         ],
         "title": "SOLFeeRequest",
         "description": "Optional Solana fee parameters for transfers."
+      },
+      "SearchRecipesRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RecipeSearchSource",
+            "description": "Search source: 'graph' for graph-based search, 'knowledge' for knowledge base",
+            "default": "graph"
+          },
+          "mode": {
+            "title": "Mode",
+            "description": "Search mode: local, global, or mix",
+            "type": "string",
+            "nullable": true
+          },
+          "top_k": {
+            "title": "Top K",
+            "description": "Entities (local/mix) or relationships (global/mix) count",
+            "type": "integer",
+            "nullable": true
+          },
+          "chunk_top_k": {
+            "title": "Chunk Top K",
+            "description": "Text chunks from vector search",
+            "type": "integer",
+            "nullable": true
+          },
+          "max_entity_tokens": {
+            "title": "Max Entity Tokens",
+            "description": "Token budget for entity context",
+            "type": "integer",
+            "nullable": true
+          },
+          "max_relation_tokens": {
+            "title": "Max Relation Tokens",
+            "description": "Token budget for relation context",
+            "type": "integer",
+            "nullable": true
+          },
+          "max_total_tokens": {
+            "title": "Max Total Tokens",
+            "description": "Overall token ceiling; chunks get whatever remains after KG context",
+            "type": "integer",
+            "nullable": true
+          },
+          "limit": {
+            "title": "Limit",
+            "description": "Max results for knowledge search",
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "SearchRecipesRequest"
       },
       "SessionRecord": {
         "properties": {
@@ -11786,58 +11450,6 @@
         ],
         "title": "StandardResponse[ApiKeyCreateResult]"
       },
-      "StandardResponse_ApprovalListResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ApprovalListResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ApprovalListResponse]"
-      },
-      "StandardResponse_ApprovalRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ApprovalRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ApprovalRead]"
-      },
       "StandardResponse_ApprovalV2ListResponse_": {
         "properties": {
           "success": {
@@ -11993,32 +11605,6 @@
           "result"
         ],
         "title": "StandardResponse[ContractCallSubmitResult]"
-      },
-      "StandardResponse_CreateApprovalResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/CreateApprovalResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[CreateApprovalResponse]"
       },
       "StandardResponse_CreateExportResponse_": {
         "properties": {
@@ -12592,7 +12178,7 @@
         ],
         "title": "StandardResponse[ProvisionResponse]"
       },
-      "StandardResponse_ResolveApprovalResponse_": {
+      "StandardResponse_RecipeDocument_": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -12600,7 +12186,7 @@
             "default": true
           },
           "result": {
-            "$ref": "#/components/schemas/ResolveApprovalResponse"
+            "$ref": "#/components/schemas/RecipeDocument"
           },
           "suggestion": {
             "type": "string",
@@ -12616,7 +12202,33 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[ResolveApprovalResponse]"
+        "title": "StandardResponse[RecipeDocument]"
+      },
+      "StandardResponse_RecipeSearchResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "result": {
+            "$ref": "#/components/schemas/RecipeSearchResponse"
+          },
+          "suggestion": {
+            "type": "string",
+            "title": "Suggestion",
+            "default": ""
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "StandardResponse[RecipeSearchResponse]"
       },
       "StandardResponse_ResolveApprovalV2Response_": {
         "properties": {
@@ -13790,76 +13402,6 @@
         "title": "TelemetryConfigResponse",
         "description": "CLI telemetry feature-flag configuration."
       },
-      "TelemetryRecord": {
-        "properties": {
-          "trace_id": {
-            "title": "Trace Id",
-            "type": "string",
-            "nullable": true
-          },
-          "span_id": {
-            "title": "Span Id",
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "title": "Name",
-            "type": "string",
-            "nullable": true
-          },
-          "trace_name": {
-            "title": "Trace Name",
-            "type": "string",
-            "nullable": true
-          },
-          "start_time_unix_nano": {
-            "title": "Start Time Unix Nano",
-            "type": "integer",
-            "nullable": true
-          },
-          "end_time_unix_nano": {
-            "title": "End Time Unix Nano",
-            "type": "integer",
-            "nullable": true
-          },
-          "duration_ms": {
-            "title": "Duration Ms",
-            "type": "number",
-            "nullable": true
-          },
-          "status_code": {
-            "title": "Status Code",
-            "type": "string",
-            "nullable": true
-          },
-          "status_message": {
-            "title": "Status Message",
-            "type": "string",
-            "nullable": true
-          },
-          "output": {
-            "title": "Output",
-            "type": "string",
-            "nullable": true
-          },
-          "resource": {
-            "title": "Resource",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
-          "attributes": {
-            "title": "Attributes",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          }
-        },
-        "additionalProperties": true,
-        "type": "object",
-        "title": "TelemetryRecord",
-        "description": "A single CLI telemetry span record uploaded by the caw CLI."
-      },
       "TierEvaluationRead": {
         "properties": {
           "tier": {
@@ -14603,18 +14145,24 @@
       },
       "WalletAddressCreate": {
         "properties": {
-          "chain_identifier": {
+          "chain_id": {
+            "title": "Chain Id",
+            "description": "Cobo ``chain_id`` from chain metadata (for example, ``SETH``, ``BASE_ETH``). When both ``chain_id`` and ``chain_identifier`` are set, ``chain_id`` is used.",
             "type": "string",
             "maxLength": 100,
             "minLength": 1,
+            "nullable": true
+          },
+          "chain_identifier": {
             "title": "Chain Identifier",
-            "description": "The Cobo chain ID for the address to derive (for example, `SETH`, `BASE_ETH`, `SOL`). Use the List supported chains operation to retrieve all supported chain IDs."
+            "description": "WaaS ``chain_identifier`` (for example, ``ETH``, ``SOL``) or a Cobo ``chain_id`` that resolves to one (for example, ``SETH``). Ignored when ``chain_id`` is set.",
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "nullable": true
           }
         },
         "type": "object",
-        "required": [
-          "chain_identifier"
-        ],
         "title": "WalletAddressCreate",
         "description": "Request payload for creating wallet address."
       },
@@ -14675,6 +14223,12 @@
             "type": "string",
             "title": "Chain Identifier",
             "description": "The Cobo chain ID for this address (for example, `SETH`, `BASE_ETH`, `SOL`)."
+          },
+          "chain_type": {
+            "type": "string",
+            "title": "Chain Type",
+            "description": "Alias of chain_identifier.",
+            "default": ""
           },
           "address": {
             "type": "string",

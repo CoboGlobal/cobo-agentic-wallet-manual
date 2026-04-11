@@ -36,7 +36,7 @@ Before demonstrating the kill switch, the agent has an active pact. The owner ap
       "name": "deny-over-daily-limit",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "5"
@@ -68,7 +68,7 @@ cat > agent-pact.json << 'EOF'
       "name": "deny-over-daily-limit",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": { "amount_usd_gt": "5" }
       }
@@ -80,10 +80,10 @@ EOF
 
 # Agent submits pact and waits for owner approval
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Operate agent with small transfer allowance: max \$5/tx, valid 7 days" \
-  --spec-file agent-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('agent-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('agent-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 
 # Confirm active
 caw pact status <PACT_ID>
@@ -112,7 +112,7 @@ async def main():
                         "name": "deny-over-daily-limit",
                         "type": "transfer",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
                             "when": {},
                             "deny_if": {"amount_usd_gt": "5"},
                         },
@@ -157,7 +157,7 @@ const result = await client.submitPact({
         name: 'deny-over-daily-limit',
         type: 'transfer',
         rules: {
-          effect: 'deny',
+          effect: 'allow',
           when: {},
           deny_if: { amount_usd_gt: '5' },
         },
@@ -184,20 +184,25 @@ console.log('Pact active. Agent is now operating.');
 
 ```python
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 import os
 
 client = WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt="Submit a pact for authorization before operating. Respect all limits.",
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Submit a pact for authorization before operating. Respect all limits."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({
+result = executor.invoke({
     "input": "Request authorization to operate: max $5/tx, 7 days."
 })
 print(result["output"])
@@ -224,7 +229,7 @@ WALLET_UUID=<wallet_uuid>
 DST=0x1111111111111111111111111111111111111111
 
 # Baseline transfer — succeeds before freeze
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 1 --chain-id SETH
 ```
 
 </Tab>
@@ -281,18 +286,23 @@ console.log(`Transfer succeeded: ${result.tx_id}`);
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import os
 
 pact_client = WalletAPIClient(api_key=os.environ["PACT_API_KEY"])
 toolkit = CoboAgentWalletToolkit(client=pact_client)
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4.1-mini"),
-    tools=toolkit.get_tools(),
-    system_prompt="Operate within approved pact limits.",
-)
+tools = toolkit.get_tools()
+llm = ChatOpenAI(model="gpt-4.1-mini")
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Operate within approved pact limits."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+agent = create_tool_calling_agent(llm, tools, prompt)
+executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-result = agent.invoke({"input": "Send $1 USDC to 0x1111... on SETH."})
+result = executor.invoke({"input": "Send $1 USDC to 0x1111... on SETH."})
 print(result["output"])
 ```
 
@@ -302,41 +312,52 @@ print(result["output"])
 
 ### Step 4: Owner detects suspicious activity and freezes
 
-The owner notices unusual patterns and triggers the emergency kill switch. This works from the Human App or directly via CLI.
+The owner notices unusual patterns and triggers the emergency kill switch.
 
-**CLI:**
+<Note>
+  Freeze and unfreeze operations are only available via the Python SDK. There are no `caw delegation freeze` or `caw delegation unfreeze` CLI commands.
+</Note>
 
-```bash
-# Freeze all delegations for this owner — immediate effect
-caw delegation freeze --scope owner --yes
+**Python SDK:**
+
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
+
+async def main():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        # Freeze all delegations for this owner — immediate effect
+        await client.freeze_delegations(scope="owner")
+        print("All delegations frozen. Agent transfers are now denied.")
+
+asyncio.run(main())
 ```
 
 All active delegations, including those backed by approved pacts, are frozen immediately. Any subsequent agent transfer attempt is denied.
-
-```bash
-# Denied transfer — all delegations are frozen
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
-# => Error: DELEGATION_FROZEN
-```
 
 ### Step 5: Owner unfreezes when safe
 
 After investigating and resolving the incident, the owner restores agent access.
 
-**CLI:**
+**Python SDK:**
 
-```bash
-# Unfreeze and restore agent access
-caw delegation unfreeze --scope owner --yes
+```python
+import asyncio, os
+from cobo_agentic_wallet import WalletAPIClient
 
-# Confirm agent can operate again
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 1 --chain SETH
+async def main():
+    async with WalletAPIClient(api_key=os.environ["AGENT_WALLET_API_KEY"]) as client:
+        # Unfreeze and restore agent access
+        await client.unfreeze_delegations(scope="owner")
+        print("Delegations unfrozen. Agent can operate again.")
+
+asyncio.run(main())
 ```
 
 ### Step 6: Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 The audit log shows the full timeline: successful transfer, freeze event, denied transfer, unfreeze event, and restored transfer.

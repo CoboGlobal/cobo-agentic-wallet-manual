@@ -334,6 +334,7 @@
                 "group": "Transaction Records",
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-transaction-records",
+                  "products/agentic-wallet/manual/reference/get-transaction-record-by-request-id",
                   "products/agentic-wallet/manual/reference/get-transaction-record"
                 ]
               },
@@ -350,9 +351,10 @@
                   "products/agentic-wallet/manual/reference/create-wallet-address",
                   "products/agentic-wallet/manual/reference/list-wallet-addresses",
                   "products/agentic-wallet/manual/reference/get-wallet-node-status",
-                  "products/agentic-wallet/manual/reference/get-claim-info-by-wallet",
-                  "products/agentic-wallet/manual/reference/initiate-wallet-claim",
-                  "products/agentic-wallet/manual/reference/confirm-wallet-claim"
+                  "products/agentic-wallet/manual/reference/get-pair-info-by-wallet",
+                  "products/agentic-wallet/manual/reference/get-pair-info",
+                  "products/agentic-wallet/manual/reference/initiate-wallet-pair",
+                  "products/agentic-wallet/manual/reference/confirm-wallet-pair"
                 ]
               },
               {
@@ -362,6 +364,7 @@
                   "products/agentic-wallet/manual/reference/estimate-transfer-fee",
                   "products/agentic-wallet/manual/reference/contract-call",
                   "products/agentic-wallet/manual/reference/estimate-contract-call-fee",
+                  "products/agentic-wallet/manual/reference/message-sign",
                   "products/agentic-wallet/manual/reference/list-recent-addresses",
                   "products/agentic-wallet/manual/reference/drop-transaction",
                   "products/agentic-wallet/manual/reference/speedup-transaction",
@@ -404,9 +407,8 @@
                 ]
               },
               {
-                "group": "Approvals",
+                "group": "Approvals V2",
                 "pages": [
-                  "products/agentic-wallet/manual/reference/create-approval",
                   "products/agentic-wallet/manual/reference/list-approvals",
                   "products/agentic-wallet/manual/reference/get-approval",
                   "products/agentic-wallet/manual/reference/resolve-approval"
@@ -444,6 +446,7 @@
                 "group": "Webhooks",
                 "pages": [
                   "products/agentic-wallet/manual/reference/register-webhook",
+                  "products/agentic-wallet/manual/reference/delete-webhook-registration",
                   "products/agentic-wallet/manual/reference/list-webhook-dlq"
                 ]
               },
@@ -472,6 +475,13 @@
                   "products/agentic-wallet/manual/reference/get-telemetry-config",
                   "products/agentic-wallet/manual/reference/record-langfuse-raw",
                   "products/agentic-wallet/manual/reference/ingest-session-telemetry"
+                ]
+              },
+              {
+                "group": "Recipes",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/search-recipes",
+                  "products/agentic-wallet/manual/reference/get-recipe-document"
                 ]
               },
               {

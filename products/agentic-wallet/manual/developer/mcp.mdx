@@ -57,7 +57,7 @@ Example (`claude_desktop_config.json`):
 
 In your MCP client, execute this flow:
 
-1. `submit_pact` with your `wallet_id`, intent `"Transfer tokens for testing"`, permissions `write:transfer`, `max_tx` 100, and duration 86400. Wait for the activation notification before proceeding — the wallet owner approves in the Human App.
+1. Submit a pact for approval: use `transfer_tokens` tool description to explain to the agent what pact is needed, or submit the pact via the Python SDK (`client.submit_pact(...)`) before starting the MCP session. Wait for the owner to approve in the Human App before proceeding.
 2. `list_wallets`
 3. `transfer_tokens` with compliant amount (success)
 4. `transfer_tokens` with too-large amount (policy denial)
@@ -68,14 +68,12 @@ Policy denials are intentionally returned as normal tool content (not protocol-l
 
 ## Quick reference tool set
 
-- `submit_pact`
 - `list_wallets`
 - `get_balance`
 - `transfer_tokens`
 - `list_transactions`
 - `get_audit_logs`
 - `create_delegation`
-- `evaluate_policy`
 
 ## Go further
 

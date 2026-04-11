@@ -54,7 +54,7 @@ The agent submits this PactSpec when requesting payroll authorization. The singl
       "name": "deny-over-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "500",
@@ -110,7 +110,7 @@ cat > payroll-pact.json << 'EOF'
       "name": "deny-over-limits",
       "type": "transfer",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {},
         "deny_if": {
           "amount_usd_gt": "500",
@@ -127,10 +127,10 @@ EOF
 
 # Submit the pact and wait for owner approval
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Run payroll automation: max \$500/payout, owner approval above \$300, approved recipients only, \$5,000 monthly, valid 90 days" \
-  --spec-file payroll-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('payroll-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('payroll-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 
 # Confirm active
 caw pact status <PACT_ID>
@@ -177,7 +177,7 @@ async def main():
                         "name": "deny-over-limits",
                         "type": "transfer",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
                             "when": {},
                             "deny_if": {
                                 "amount_usd_gt": "500",
@@ -321,16 +321,16 @@ WALLET_UUID=<wallet_uuid>
 DST=0xPayrollRecipient1...
 
 # Routine payout — within per-tx limit, auto-approved
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 200 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 200 --chain-id SETH
 
 # Mid-tier payout — triggers owner review above $300 threshold
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 400 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 400 --chain-id SETH
 
 # Oversized payout — exceeds $500 per-tx cap, denied
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 600 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 600 --chain-id SETH
 
 # Retry with compliant amount
-caw tx transfer "$WALLET_UUID" --to "$DST" --token SETH_USDC --amount 500 --chain SETH
+caw tx transfer "$PACT_ID" --to "$DST" --token-id SETH_USDC --amount 500 --chain-id SETH
 ```
 
 </Tab>
@@ -417,7 +417,7 @@ print(result["output"])
 ### Step 5: Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 ## Full Source Code

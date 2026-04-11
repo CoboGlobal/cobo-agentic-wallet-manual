@@ -25,14 +25,12 @@ Returns `ToolDefinition` objects:
 
 | Tool | Required Parameters | Description |
 |---|---|---|
-| `list_wallets` | — | List wallets accessible to the caller |
-| `get_balance` | `wallet_uuid` | Get wallet balances |
-| `transfer_tokens` | `wallet_uuid`, `dst_addr`, `token_id`, `amount` | Transfer tokens with policy enforcement |
-| `list_transactions` | `wallet_uuid` | List transactions with optional status filter |
-| `get_audit_logs` | — | Query audit logs with filters |
-| `create_delegation` | `operator_id`, `wallet_id`, `permissions` | Create operator delegation |
-| `evaluate_policy` | `wallet_uuid`, `action`, `params` | Dry-run policy evaluation |
-| `submit_pact` | `wallet_id`, `intent` | Submit a pact for owner authorization |
+| `list_wallets` | — | List wallets accessible to the caller. Use this tool to discover wallet UUIDs required by other tools such as get_balance and transfer_tokens. |
+| `get_balance` | `wallet_uuid` | Get wallet balances for a specific wallet. |
+| `transfer_tokens` | `wallet_uuid`, `chain_id`, `dst_addr`, `token_id`, `amount` | Transfer tokens from a Cobo wallet to a destination address. Organisation spending policies are enforced; the transfer may require approval before it is executed. |
+| `list_transactions` | `wallet_uuid` | List transactions associated with a wallet, optionally filtered by status. Returns both incoming and outgoing transactions in reverse-chronological order. |
+| `get_audit_logs` | — | Query the organisation audit log, returning records of actions performed by operators on wallets. Supports filtering by wallet, principal, action type, result, and time range using cursor-based pagination. |
+| `create_delegation` | `operator_id`, `wallet_id`, `permissions` | Create a delegation that grants an operator scoped permissions on a wallet. Use this tool to authorise another party to perform limited actions (e.g. transfer up to a spending limit) without giving full wallet access. |
 
 ## ToolDefinition
 
@@ -58,6 +56,7 @@ transfer_tool = next(t for t in tools if t.name == "transfer_tokens")
 # Call the handler directly
 result = await transfer_tool.handler(
     wallet_uuid="...",
+    chain_id="ETH",
     dst_addr="0x...",
     token_id="USDT",
     amount="10",

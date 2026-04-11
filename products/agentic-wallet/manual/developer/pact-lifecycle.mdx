@@ -31,7 +31,7 @@ The PactSpec is the JSON payload your agent submits when requesting a pact. It d
 | `execution_plan` | string (markdown) | Detailed strategy — helps the owner understand *how* the agent intends to work |
 | `policies` | InlinePolicy[] | Spending rules: transfer limits, allowlists, rolling budgets, approval thresholds |
 | `duration_seconds` | integer | How long the pact remains active after activation. Null = no time limit. |
-| `completion_conditions` | CompletionCondition[] | Optional early-completion triggers: `TX_COUNT` (total transactions), `AMOUNT_SPENT_USD` (total USD spent) |
+| `completion_conditions` | CompletionCondition[] | Optional early-completion triggers: `TX_COUNT` (total transactions), `AMOUNT_SPENT_USD` (total USD spent), `TIME_ELAPSED` (seconds since activation) |
 
 ### Example PactSpec
 
@@ -61,7 +61,7 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
       "name": "deny-excessive-spending",
       "type": "contract_call",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {
           "chain_in": ["BASE_ETH"]
         },
@@ -127,23 +127,16 @@ You never need to call `caw delegation create` or `caw policy create` when using
 <Tabs>
   <Tab title="CLI">
 ```bash
-# Submit with a PactSpec JSON file
+# Submit a pact with inline policies and completion conditions
 caw pact submit \
-  --wallet-id <WALLET_UUID> \
   --intent "DCA $500/week into ETH on Base for 3 months" \
-  --spec-file pact-spec.json \
-  --wait
+  --execution-plan "Weekly automated ETH purchases via Uniswap on Base for 3 months." \
+  --policies '[{"name":"allow-uniswap-base","type":"contract_call","rules":{"effect":"allow","when":{"chain_in":["BASE_ETH"],"target_in":[{"chain_id":"BASE_ETH","contract_addr":"0x2626664c2603336E57B271c5C0b26F421741e481"}]}}}]' \
+  --completion-conditions '[{"type":"tx_count","threshold":"12"}]'
 
-# Submit with inline options (simplified)
-caw pact submit \
-  --wallet-id <WALLET_UUID> \
-  --intent "Transfer small amounts for testing" \
-  --max-tx 100 \
-  --duration 86400 \
-  --wait
-
-# The --wait flag blocks until the owner approves or rejects.
-# Without --wait, the command returns the pact ID immediately.
+# Required flags: --intent, --execution-plan, --policies, --completion-conditions
+# The wallet UUID is resolved from the active wallet profile (set during caw onboard provision).
+# Poll caw pact status <PACT_ID> until the owner approves.
 ```
   </Tab>
   <Tab title="Python SDK">
@@ -210,10 +203,10 @@ After submitting, poll until the pact becomes `active`. When active, the respons
 caw pact status <PACT_ID>
 
 # List all pacts
-caw pact list --format table
+caw pact list
 
 # List active pacts only
-caw pact list --status active --format table
+caw pact list --status active
 
 # Show full detail
 caw pact show <PACT_ID>
@@ -279,7 +272,7 @@ Every pact records lifecycle events you can query for auditing or debugging.
 <Tabs>
   <Tab title="CLI">
 ```bash
-caw pact events <PACT_ID> --format table
+caw pact events <PACT_ID>
 ```
   </Tab>
   <Tab title="Python SDK">

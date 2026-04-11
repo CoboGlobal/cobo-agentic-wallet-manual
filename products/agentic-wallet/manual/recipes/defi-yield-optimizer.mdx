@@ -71,7 +71,7 @@ The agent submits this PactSpec when requesting authorization. The owner reviews
       "name": "deny-excessive-slippage",
       "type": "contract_call",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {
           "chain_in": ["BASE_ETH"]
         },
@@ -136,7 +136,7 @@ cat > yield-pact.json << 'EOF'
       "name": "deny-excessive-slippage",
       "type": "contract_call",
       "rules": {
-        "effect": "deny",
+        "effect": "allow",
         "when": {"chain_in": ["BASE_ETH"]},
         "deny_if": {"param_gt": {"slippage_bps": "50"}}
       }
@@ -148,10 +148,10 @@ EOF
 
 # Submit the pact and wait for owner approval
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Run yield optimizer: Aave and Uniswap on BASE_ETH, max slippage 50 bps, valid 30 days" \
-  --spec-file yield-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('yield-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('yield-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 
 # Confirm active
 caw pact status <PACT_ID>
@@ -208,7 +208,7 @@ async def main():
                         "name": "deny-excessive-slippage",
                         "type": "contract_call",
                         "rules": {
-                            "effect": "deny",
+                            "effect": "allow",
                             "when": {"chain_in": ["BASE_ETH"]},
                             "deny_if": {"param_gt": {"slippage_bps": "50"}},
                         },
@@ -353,28 +353,28 @@ UNISWAP_ROUTER=<uniswap_router_contract>
 USDC=<usdc_contract_address>
 
 # Step 1: Approve Aave Pool to spend USDC (ERC-20 approve)
-caw tx call "$WALLET_UUID" \
+caw tx call "$PACT_ID" \
   --contract "$USDC" \
   --calldata <approve_aave_calldata> \
-  --chain BASE_ETH
+  --chain-id BASE_ETH
 
 # Step 2: Deposit USDC into Aave — allowed contract, compliant slippage
-caw tx call "$WALLET_UUID" \
+caw tx call "$PACT_ID" \
   --contract "$AAVE_POOL" \
   --calldata <deposit_calldata_slippage_30bps> \
-  --chain BASE_ETH
+  --chain-id BASE_ETH
 
 # Blocked call — slippage exceeds 50 bps policy limit
-caw tx call "$WALLET_UUID" \
+caw tx call "$PACT_ID" \
   --contract "$AAVE_POOL" \
   --calldata <deposit_calldata_slippage_100bps> \
-  --chain BASE_ETH
+  --chain-id BASE_ETH
 
 # Retry with compliant slippage
-caw tx call "$WALLET_UUID" \
+caw tx call "$PACT_ID" \
   --contract "$AAVE_POOL" \
   --calldata <deposit_calldata_slippage_30bps> \
-  --chain BASE_ETH
+  --chain-id BASE_ETH
 ```
 
 </Tab>
@@ -481,7 +481,7 @@ print(result["output"])
 ### Step 5: Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action contract_call --limit 20
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 ## Full Source Code

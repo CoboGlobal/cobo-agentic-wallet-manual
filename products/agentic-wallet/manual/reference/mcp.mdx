@@ -7,7 +7,7 @@ sidebarTitle: "MCP"
 
 ## Overview
 
-The MCP server exposes all 7 wallet tools via the Model Context Protocol (MCP) stdio transport, powered by FastMCP. It can be used with Claude Desktop, Claude Code, and other MCP-compatible clients.
+The MCP server exposes all 6 wallet tools via the Model Context Protocol (MCP) stdio transport, powered by FastMCP. It can be used with Claude Desktop, Claude Code, and other MCP-compatible clients.
 
 ## Running the Server
 
@@ -26,17 +26,16 @@ server.run()  # starts stdio transport
 
 ## Tools
 
-The MCP server exposes 7 tools:
+The MCP server exposes 6 tools:
 
 | Tool | Description |
 |---|---|
-| `list_wallets` | List wallets accessible to the caller |
-| `get_balance` | Get wallet balance by wallet UUID |
-| `transfer_tokens` | Transfer tokens with policy enforcement |
-| `list_transactions` | List transactions with optional filters |
-| `get_audit_logs` | Query audit trail with filters and cursor pagination |
-| `create_delegation` | Delegate scoped permissions to an operator |
-| `evaluate_policy` | Dry-run a policy decision before execution |
+| `list_wallets` | List wallets accessible to the caller. Use this tool to discover wallet UUIDs required by other tools such as get_balance and transfer_tokens |
+| `get_balance` | Get wallet balances for a specific wallet |
+| `transfer_tokens` | Transfer tokens from a Cobo wallet to a destination address. Organisation spending policies are enforced; the transfer may require approval before it is executed |
+| `list_transactions` | List transactions associated with a wallet, optionally filtered by status. Returns both incoming and outgoing transactions in reverse-chronological order |
+| `get_audit_logs` | Query the organisation audit log, returning records of actions performed by operators on wallets. Supports filtering by wallet, principal, action type, result, and time range using cursor-based pagination |
+| `create_delegation` |  |
 
 ## Claude Desktop Configuration
 
@@ -80,17 +79,15 @@ Add this to your Claude Desktop `claude_desktop_config.json`:
 
 | Variable | Default | Description |
 |---|---|---|
-| `AGENT_WALLET_API_URL` | `http://localhost:8000` | API base URL |
+| `AGENT_WALLET_API_URL` | `'http://localhost:8000'` | API base URL |
 | `AGENT_WALLET_API_KEY` | — | API key (required) |
 | `AGENT_WALLET_TIMEOUT` | `30.0` | Request timeout in seconds |
-| `AGENT_WALLET_MAX_RETRIES` | `3` | Retry count on 5xx errors |
-| `AGENT_WALLET_RETRY_BACKOFF` | `1.0` | Backoff multiplier |
 
 ## Error Contract
 
 The MCP server handles errors with the following semantics:
 
-- **Policy denials** — Returned as successful tool results with denial payload (not an MCP error). This allows the LLM to read the denial and self-correct.
+- **Policy denials** — Raised as `RuntimeError` with a JSON payload containing `error`, `status_code`, `message`, `code`, `reason`, `details`, and `suggestion`. These become MCP protocol errors (`isError: true`).
 - **API errors** — Raised as `RuntimeError` with JSON payload containing `status_code`, `message`, and `response`. These become MCP protocol errors (`isError: true`).
 - **Missing API key** — Raises `RuntimeError` at tool invocation time with a descriptive message.
 
@@ -113,8 +110,6 @@ config = MCPServerConfig(
     api_url="http://localhost:8000",
     api_key="your-api-key",
     timeout=30.0,
-    max_retries=3,
-    retry_backoff=1.0,
 )
 
 server = create_server(config=config)

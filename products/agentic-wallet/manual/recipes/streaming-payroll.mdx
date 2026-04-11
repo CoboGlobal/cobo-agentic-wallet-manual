@@ -64,10 +64,10 @@ This recipe targets Base Sepolia (`TBASE_SETH`) for testnet use. To run on Base 
   <Tab title="CLI">
 ```bash
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Manage Superfluid salary streams for team members on Base Sepolia. Create, update, and delete streams for employees. Valid 90 days." \
-  --spec-file superfluid-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('superfluid-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('superfluid-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 ```
   </Tab>
   <Tab title="Python SDK">
@@ -210,8 +210,8 @@ Superfluid streams are defined by a flow rate in tokens per second (in the token
 # $5,000/month = 5000 * 10^6 / (30 * 24 * 3600) = 1929 wei/s (approx)
 ALICE_FLOW_RATE=1929012345  # tokens per second in micro-USDC
 
-caw tx call "$WALLET_UUID" \
-  --chain TBASE_SETH \
+caw tx call "$PACT_ID" \
+  --chain-id TBASE_SETH \
   --to "<SUPERFLUID_CFAV1_FORWARDER>" \
   --calldata "$(cast calldata 'createFlow(address,address,address,int96,bytes)' '<SETH_USDC_ADDRESS>' '<WALLET_ADDR>' '<ALICE_ADDRESS>' $ALICE_FLOW_RATE '0x')"
 ```
@@ -322,14 +322,14 @@ When compensation changes or an employee leaves, the agent updates or deletes th
 # Adjust Alice's salary to $6,000/month
 NEW_FLOW_RATE=2314814814  # 6000 * 10^6 / (30 * 24 * 3600)
 
-caw tx call "$WALLET_UUID" \
-  --chain TBASE_SETH \
+caw tx call "$PACT_ID" \
+  --chain-id TBASE_SETH \
   --to "<SUPERFLUID_CFAV1_FORWARDER>" \
   --calldata "$(cast calldata 'updateFlow(address,address,address,int96,bytes)' '<SETH_USDC_ADDRESS>' '<WALLET_ADDR>' '<ALICE_ADDRESS>' $NEW_FLOW_RATE '0x')"
 
 # Terminate Bob's stream
-caw tx call "$WALLET_UUID" \
-  --chain TBASE_SETH \
+caw tx call "$PACT_ID" \
+  --chain-id TBASE_SETH \
   --to "<SUPERFLUID_CFAV1_FORWARDER>" \
   --calldata "$(cast calldata 'deleteFlow(address,address,address,bytes)' '<SETH_USDC_ADDRESS>' '<WALLET_ADDR>' '<BOB_ADDRESS>' '0x')"
 ```
@@ -412,7 +412,7 @@ Superfluid streams require the sender's wallet to maintain a sufficient token bu
 ## Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action contract_call --format table
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 Each stream operation (create, update, delete) appears as a separate contract call entry. The audit log lets you verify which streams were opened, when rates were adjusted, and when streams were terminated.

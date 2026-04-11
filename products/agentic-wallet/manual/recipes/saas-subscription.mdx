@@ -65,10 +65,10 @@ Owner (human)
   <Tab title="CLI">
 ```bash
 caw pact submit \
-  --wallet-id "$WALLET_UUID" \
   --intent "Auto-renew SaaS subscriptions (GitHub, Linear, Figma). Alert owner on low balance. Max \$500 per renewal, \$2,000/month. Valid 1 year." \
-  --spec-file saas-subscriptions-pact.json \
-  --wait
+  --execution-plan "See the pact spec JSON above." \
+  --policies "$(python3 -c \"import json,sys; d=json.load(open('saas-subscriptions-pact.json')); print(json.dumps(d['policies']))\")" \
+  --completion-conditions "$(python3 -c \"import json,sys; d=json.load(open('saas-subscriptions-pact.json')); print(json.dumps(d.get('completion_conditions', [])))\")"
 ```
   </Tab>
   <Tab title="Python SDK">
@@ -216,25 +216,25 @@ The agent runs a daily check. It verifies the wallet balance, checks each subscr
   <Tab title="CLI">
 ```bash
 # Check wallet balance
-BALANCE=$(caw wallet balance "$WALLET_UUID" --token SETH_USDC --format json | jq -r '.amount')
+BALANCE=$(caw wallet balance "$WALLET_UUID" --token-id SETH_USDC | jq -r '.result.items[0].balance')
 if (( $(echo "$BALANCE < 1000" | bc -l) )); then
   echo "ALERT: Low balance — ${BALANCE} USDC remaining"
 fi
 
 # Renew GitHub subscription (due in 3 days, $84/month)
-caw tx transfer "$WALLET_UUID" \
+caw tx transfer "$PACT_ID" \
   --to "<GITHUB_PAYMENT_ADDRESS>" \
-  --token SETH_USDC \
+  --token-id SETH_USDC \
   --amount 84 \
-  --chain SETH \
+  --chain-id SETH \
   --request-id "renewal-github-$(date +%Y%m)"
 
 # Renew Linear subscription ($20/month)
-caw tx transfer "$WALLET_UUID" \
+caw tx transfer "$PACT_ID" \
   --to "<LINEAR_PAYMENT_ADDRESS>" \
-  --token SETH_USDC \
+  --token-id SETH_USDC \
   --amount 20 \
-  --chain SETH \
+  --chain-id SETH \
   --request-id "renewal-linear-$(date +%Y%m)"
 ```
   </Tab>
@@ -384,7 +384,7 @@ The `request_id` field ensures idempotency — if the renewal is retried (e.g., 
 ## Audit
 
 ```bash
-caw audit logs --wallet "$WALLET_UUID" --action transfer --limit 20 --format table
+# Note: audit logs are not available as a standalone caw CLI command. Use the Python SDK (client.list_audit_logs) or see the Audit guide.
 ```
 
 Each renewal appears as a transfer entry with the destination address, token amount, and policy outcome. Use this to confirm that no transfer exceeded $500, and the monthly total stayed within the $2,000 rolling budget.
