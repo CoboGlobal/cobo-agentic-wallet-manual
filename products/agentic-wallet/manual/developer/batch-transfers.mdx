@@ -1,0 +1,84 @@
+---
+title: "Batch Transfers"
+description: "Run multiple transfers safely with parallel submission and stable request IDs."
+---
+
+When you need to send to multiple recipients, submit independent transfers with independent `request_id` values. CAW evaluates each transfer separately through the policy engine, so one denial does not invalidate the others.
+
+## Parallel batch transfer
+
+<Tabs>
+<Tab title="CLI">
+```bash
+PACT_ID=<pact-id>
+RECIPIENTS=("0xAddr1" "0xAddr2" "0xAddr3")
+AMOUNTS=("10" "15" "20")
+
+for i in "${!RECIPIENTS[@]}"; do
+  caw tx transfer "$PACT_ID" \
+    --to "${RECIPIENTS[$i]}" \
+    --token-id SETH_USDC \
+    --amount "${AMOUNTS[$i]}" \
+    --chain-id SETH \
+    --request-id "batch-$(date +%s)-$i"
+done
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+import asyncio
+
+transfers = [
+    {"dst_addr": "0xAddr1...", "amount": "10", "request_id": "batch-001"},
+    {"dst_addr": "0xAddr2...", "amount": "15", "request_id": "batch-002"},
+    {"dst_addr": "0xAddr3...", "amount": "20", "request_id": "batch-003"},
+]
+
+results = await asyncio.gather(
+    *[
+        client.transfer_tokens(
+            wallet_uuid=wallet_id,
+            chain_id="SETH",
+            dst_addr=item["dst_addr"],
+            token_id="SETH_USDC",
+            amount=item["amount"],
+            request_id=item["request_id"],
+        )
+        for item in transfers
+    ],
+    return_exceptions=True,
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const transfers = [
+  { dst_addr: '0xAddr1...', amount: '10', request_id: 'batch-001' },
+  { dst_addr: '0xAddr2...', amount: '15', request_id: 'batch-002' },
+  { dst_addr: '0xAddr3...', amount: '20', request_id: 'batch-003' },
+];
+
+const results = await Promise.allSettled(
+  transfers.map((item) =>
+    client.transferTokens({
+      wallet_id: walletId,
+      chain_id: 'SETH',
+      dst_addr: item.dst_addr,
+      token_id: 'SETH_USDC',
+      amount: item.amount,
+      request_id: item.request_id,
+    })
+  )
+);
+```
+</Tab>
+</Tabs>
+
+## Recommended pattern
+
+- Use one business-stable `request_id` per recipient or payout unit.
+- Track each result by `request_id`, not by array position.
+- Expect mixed outcomes in the same batch: allowed, pending approval, denied.
+
+For durable tracking after submission, use [Transaction Tracking](/products/agentic-wallet/manual/developer/transaction-tracking).
+

@@ -1,6 +1,6 @@
 ---
 title: "TypeScript SDK"
-description: "WalletAPIClient reference — the TypeScript/JavaScript client for Cobo Agentic Wallet."
+description: "TypeScript/JavaScript client reference for Cobo Agentic Wallet."
 sidebarTitle: "TypeScript SDK"
 ---
 
@@ -25,7 +25,7 @@ import { Configuration, WalletsApi, TransactionsApi } from '@cobo/agentic-wallet
 
 const config = new Configuration({
   apiKey: 'your-api-key',
-  basePath: 'https://api-core.agenticwallet.cobo.com',
+  basePath: 'https://api.agenticwallet.cobo.com',
 });
 
 const walletsApi = new WalletsApi(config);
@@ -42,7 +42,7 @@ import { Configuration } from '@cobo/agentic-wallet';
 
 const config = new Configuration({
   apiKey: 'your-api-key',
-  basePath: 'https://api-core.agenticwallet.cobo.com',
+  basePath: 'https://api.agenticwallet.cobo.com',
 });
 ```
 
@@ -105,7 +105,7 @@ await walletsApi.archiveWallet(walletUuid);
 
 // Create a new on-chain address
 const address = await walletsApi.createWalletAddress(walletUuid, {
-  chain_identifier: 'BASE_ETH',
+  chain_type: 'BASE_ETH',
 });
 
 // List addresses for a wallet
@@ -183,9 +183,10 @@ const sig = await txApi.messageSign(walletUuid, {
 });
 
 // Process an x402 payment request
-const payment = await txApi.x402Payment(walletUuid, {
-  payment_required: '<PAYMENT-REQUIRED header value>',
-  sync: true,
+const payment = await txApi.payment(walletUuid, {
+  protocol: 'x402',
+  x402_payment_required: '<PAYMENT-REQUIRED header value>',
+  request_id: 'payment-001',
 });
 
 // Drop (cancel) a pending transaction
@@ -238,7 +239,9 @@ const result = await pactsApi.submitPact({
   intent: 'DCA into ETH for 3 months',
   spec: {
     permissions: ['write:contract_call'],
-    duration_seconds: 7776000,
+    completion_conditions: [
+      { type: 'time_elapsed', threshold: '7776000' },
+    ],
   },
 });
 const pactId = result.data.result.pact_id;

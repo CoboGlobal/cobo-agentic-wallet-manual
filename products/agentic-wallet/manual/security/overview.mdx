@@ -1,79 +1,47 @@
 ---
-title: "How your pact protects your assets"
-description: "Your agent has real power — and real boundaries. Here's how a pact makes that safe."
+title: "Security overview"
+description: "How Cobo Agentic Wallet protects your assets — from key custody to policy enforcement to emergency controls."
 ---
 
-Your agent can hold crypto, execute trades, interact with DeFi protocols, and make payments — all autonomously. That's the point. But every operation passes through your pact before it reaches the blockchain. Here's how that works.
+Your agent can hold crypto, execute trades, interact with DeFi protocols, and make payments — all autonomously. The security model is designed so that giving your agent real power doesn't mean giving up control.
 
-<Info>Built on 8 years protecting institutional crypto. $2B under custody. Zero breaches.</Info>
+Security is layered. No single mechanism carries all the risk. Here's what each layer does.
 
-## Your rules can't be broken
+## Key custody — your assets are protected at the infrastructure level
 
-Your agent operates the wallet but cannot modify the rules that govern it — even if compromised. This isn't a best practice. It's architectural.
+Cobo offers two wallet models, each with a different custody architecture. Both are available to use with Cobo Agentic Wallet.
 
-The agent's operator credentials are structurally separated from governance credentials at the infrastructure level. The agent can submit transactions, but it cannot:
+**MPC wallets** split signing authority across multiple independent parties using Multi-Party Computation. Signing authority is split into independent key shares held by separate parties. A threshold number must cooperate to sign a transaction. This is a mathematical guarantee, not a software promise.
 
-- Raise or modify spending limits
-- Change which addresses, chains, or contracts are allowed
-- Approve its own requests
-- Access wallets it hasn't been connected to
-- Escalate its own permissions
+**Custodial wallets** keep your private keys protected by Cobo's institutional-grade infrastructure — generated and stored inside hardware security modules (HSMs) that prevent key extraction by any party, including Cobo's own operators. Assets are held across three tiers (cold, warm, hot) with ~95% kept offline in FIPS-certified hardware.
 
-The rules you set in your pact are enforced by a different layer than the one your agent talks to. There is no API call, prompt injection, or agent behavior that can change them.
+- [MPC model →](/products/agentic-wallet/manual/security/mpc-model)
+- [Custodial model →](/products/agentic-wallet/manual/security/custodial-model)
 
-## Your limits can't be gamed
+## Pact mechanism — your agent can't exceed what you approved
 
-Every transaction is checked against your pact's budget rules before execution. The policy engine enforces:
+Every task your agent takes on runs inside a pact — a structured authorization you review and approve before anything executes. The pact defines intent, an execution plan, spending limits, allowed chains and contracts, and completion conditions. When the pact ends, access revokes automatically.
 
-- **Per-transaction caps** — no single transfer can exceed your limit
-- **Rolling budgets** — cumulative limits over hourly, daily, weekly, and monthly windows using sliding-window counters with atomic reservation
-- **Chain and token restrictions** — your agent can only transact on chains and with tokens you've approved
-- **Contract and function allowlists** — limit which smart contracts and specific functions your agent can call
-- **Address allowlists** — restrict destinations to addresses you've explicitly approved
-- **Review thresholds** — operations above a defined value pause for your approval before execution
+Your agent cannot modify its own pact, raise its own limits, or approve its own requests. Every transaction is evaluated by the policy engine before it reaches the blockchain: it must match approved allowlists, stay within spending limits, and clear any review thresholds. The most restrictive rule always wins.
 
-The most restrictive rule always wins. Limits compose — a transaction must satisfy every applicable rule to execute. No race conditions. No workarounds.
+- [How pacts work →](/products/agentic-wallet/manual/security/pact-mechanism)
+- [Policy engine →](/products/agentic-wallet/manual/security/policy-engine)
+- [Spend limits →](/products/agentic-wallet/manual/security/spend-limits)
+- [Address allowlists →](/products/agentic-wallet/manual/security/address-allowlists)
 
-[Spending limits and rules →](/products/agentic-wallet/manual/security/spend-limits) · [Address allowlists →](/products/agentic-wallet/manual/security/address-allowlists)
+## Emergency controls — stop your agent immediately
 
-## Your authority can't be bypassed
+If something looks wrong, you can act in one step:
 
-Signing authority for your wallet is split across multiple independent parties using Multi-Party Computation (MPC). This is a mathematical guarantee, not a software promise.
-
-After you pair the wallet with the Human App, two separate threshold groups control signing:
-
-- **Agent + Cobo** — handles everyday transactions that stay within your pact. Your phone is not involved for routine operations.
-- **You + Cobo** — required for high-value operations above your approval threshold, policy changes, and ownership actions. Enforced cryptographically.
-
-No single party — not your agent, not Cobo, not you alone — can move funds unilaterally. Every transaction requires cooperation, and that cooperation only happens when your pact allows it.
-
-[MPC key shares →](/products/agentic-wallet/manual/security/mpc-key-shares)
-
-## Every decision is on record
-
-Every operation your agent attempts — allowed, paused, or blocked — is logged with a timestamp, the policy decision, and the full context. Nothing happens silently.
-
-From the Human App, you can:
-- See your agent's full transaction history at any time
-- Review why an operation was blocked or held for approval
-- Approve or reject transactions waiting for your review
-- Query audit logs for compliance or debugging
-
-[Activity and audit logs →](/products/agentic-wallet/manual/get-started/activity)
-
-## Pause or revoke in one step
-
-- **Pause** — suspends your agent immediately. Your pact terms are preserved. Unpausing restores access with no re-approval needed.
+- **Freeze** — suspends your agent immediately. Your pact terms are preserved. Unfreezing restores access with no re-approval needed.
 - **Revoke** — permanently terminates the pact. Your agent must submit a new pact and go through approval before it can act again.
 
 Both take effect the moment you confirm. There is no delay or grace period.
 
-[Pause and revoke →](/products/agentic-wallet/manual/security/freeze-revoke)
+- [Freeze and revoke →](/products/agentic-wallet/manual/security/freeze-revoke)
 
 ## What's at risk if something goes wrong
 
-Your agent can only access the one wallet you connected it to — not any other wallets, and not more than the balance in that wallet. Within that wallet, your agent can only act within the pact you set.
-
-If your agent is compromised, the damage is bounded by your pact. Transactions above your approval threshold are blocked until you review them. Pausing your agent stops all new operations immediately.
+Your agent can only access the one wallet you connected it to, and only within the limits of the active pact. If your agent is compromised, the damage is bounded by those limits. Transactions above your approval threshold are blocked until you review them. Freezing stops all new operations immediately.
 
 The one thing a pact cannot undo is a transaction your agent already executed within its approved limits. Set your limits at a level you're comfortable with, and review your activity regularly.

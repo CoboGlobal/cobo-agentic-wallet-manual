@@ -1,43 +1,41 @@
 ---
 title: "Features"
-description: "What Cobo Agentic Wallet gives your agent — and what it enforces on your behalf."
+description: "What Cobo Agentic Wallet gives an agent or automation that needs scoped authority for blockchain actions."
 ---
 
-Don't build spend limits. Don't build approval workflows. Don't build audit logs. Put your agent on Cobo Agentic Wallet and ship with pacts built in — structured delegation agreements with intent, execution plan, policies, and completion conditions.
+If you are writing an agent, bot, or automation that executes blockchain actions, Cobo Agentic Wallet gives you an authorization-scoped wallet abstraction instead of raw wallet access.
 
-## Integration options
+That means you do not need to build your own:
 
-All integrations give your agent the same wallet capabilities. They differ in how your agent is built and how much custom code you want to write.
+- spend limits
+- approval escalation
+- delegation lifecycle
+- audit trail
+- denial feedback contract
 
-| Integration | Code required | Install | Best for | Denial handling |
-|---|---|---|---|---|
-| **Skill** | None | Drop a file | Agent owners using skill-compatible agents | Automatic via skill |
-| **CLI** | Shell scripts | Binary download | Terminal workflows, scripts, automation | Structured JSON output |
-| **MCP Server** | Config only | `pip install "cobo-agent-wallet[mcp]"` | Claude Desktop, Cursor, MCP-compatible clients | Tool error messages |
-| **LangChain** | Python | `pip install "cobo-agent-wallet[langchain]"` | LangChain agents with chains/tools | Formatted text in agent context |
-| **OpenAI Agents** | Python | `pip install "cobo-agent-wallet[openai]"` | OpenAI Agents SDK function calling | Injected into conversation |
-| **Agno** | Python | `pip install "cobo-agent-wallet[agno]"` | Agno multi-modal agents | Tool run response |
-| **CrewAI** | Python | `pip install "cobo-agent-wallet[crewai]"` | CrewAI multi-agent crews | Formatted text per agent |
-| **Python SDK** | Python | `pip install cobo-agent-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` exception |
-| **TypeScript SDK** | TypeScript | `npm install cobo-agentic-wallet` | Node.js agents, TypeScript-first stacks | Typed error classes |
+CAW gives your program pacts built in: structured delegation agreements with intent, execution plan, policies, and completion conditions.
 
-## What your agent can do
+See [Overview](/products/agentic-wallet/manual/developer/quickstart-overview) for the recommended onboarding path and the alternate integration surfaces.
+
+## What your program can do
 
 **Transfer tokens** — send ERC-20 tokens and native assets to any address on supported chains. Every transfer passes through the policy engine before execution.
+
+**Execute payments and settlements** — automate payout, collection, treasury, and settlement flows while keeping approval thresholds and policy checks in place.
 
 **Call smart contracts** — invoke contract functions on supported EVM chains and Solana. Contract addresses and functions are checked against the contract call allowlist before execution.
 
 **Query balances and transaction history** — read wallet balances, token holdings, and transaction history programmatically without spending permissions.
 
-**Submit pacts for owner authorization** — when your agent needs scoped access for a specific task, it submits a pact. The owner reviews and approves once; your agent operates within those boundaries automatically.
+**Submit pacts for owner authorization** — when your program needs scoped access for a specific task, it submits a pact. The owner reviews and approves once; the program operates within those boundaries automatically.
 
-**Respond to policy denials with self-correction** — when the policy engine denies an operation, your agent receives a structured error with the denial reason. Your agent can adjust its approach — for example, splitting a large transfer or requesting human approval — rather than failing silently.
+**Respond to policy denials with self-correction** — when the policy engine denies an operation, your program receives a structured error with the denial reason. It can adjust its approach — for example, lowering amount, narrowing scope, or escalating — rather than failing silently.
 
-**Access audit logs for compliance and debugging** — every operation your agent attempts is logged with the decision outcome, policy context, and principal. Your agent can query these logs for compliance reporting or to debug unexpected denials.
+**Access audit logs for compliance and debugging** — every operation your program attempts is logged with the decision outcome, policy context, and principal. Your program can query these logs for compliance reporting or to debug unexpected denials.
 
 ## What the policy engine enforces
 
-The policy engine runs before every transaction and applies the most restrictive rule across all active policy tiers:
+The policy engine runs before every blockchain operation request and evaluates the applicable authorization and control layers in three parts:
 
 - Per-transaction spending limits
 - Daily and cumulative budgets
@@ -46,16 +44,16 @@ The policy engine runs before every transaction and applies the most restrictive
 - Address allowlists and denylists
 - Approval thresholds — operations above a defined value pause for owner review before execution
 
-Your agent does not need to implement these checks itself. The service enforces them on every request, regardless of which integration your agent uses.
+In practice, a request must fit the active pact or delegation scope, then satisfy the relevant policy rules, and then stay within the applicable usage counters. Matching rules can allow, deny, or require owner review depending on how they are defined. Your program does not need to implement any of that itself. The service enforces it on every request, regardless of which integration path you use.
 
 ## Pact-based authorization
 
-Every task your agent takes on starts with a pact — a structured, enforceable delegation agreement that defines intent, execution plan, policies, and completion conditions. The owner approves once; your agent operates within those boundaries automatically. The infrastructure enforces them, not trust.
+Every task your program takes on starts with a pact — a structured, enforceable delegation agreement that defines intent, execution plan, policies, and completion conditions. The owner approves once; your program operates within those boundaries automatically. The infrastructure enforces them, not trust.
 
 When the pact expires, completes, or is revoked, all access is removed instantly — the API key is invalidated server-side with no grace period. No zombie permissions. No forgotten credentials.
 
-This model means you don't need to build custom approval workflows, spend limits, or access-control logic — pacts handle all of it.
+This model means you do not need to build custom approval workflows, spend limits, or delegation lifecycle logic yourself — pacts handle all of it.
 
 ## Gas
 
-Gas fees are covered automatically via Cobo Gasless (Fee Station). Your agent does not need to hold gas tokens or estimate fees before submitting transactions.
+Gas fees are covered automatically via Cobo Gasless (Fee Station). Your program does not need to hold gas tokens before submitting transactions.

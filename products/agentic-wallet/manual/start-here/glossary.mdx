@@ -1,0 +1,44 @@
+---
+title: "Glossary"
+description: "Key terms and definitions for Cobo Agentic Wallet."
+---
+
+## Product
+
+| Term | Definition |
+|---|---|
+| **Cobo Agentic Wallet** | A wallet infrastructure by Cobo that lets AI agents operate on-chain under structured, owner-approved authorization. |
+| **Cobo Agentic Wallet app** | The mobile app through which owners manage [pacts](/products/agentic-wallet/manual/start-here/what-is-a-pact), set guardrails, approve transactions, and control their agent. |
+
+## Roles
+
+| Term | Definition |
+|---|---|
+| **Owner** | A human who has paired their wallet with the app. Before pairing, the agent itself is the wallet owner. After pairing, the human takes ownership and has full control — pact approval, policies, freeze, and revoke. |
+| **Agent** | The AI program or automated runtime that operates the wallet. Before pairing it is the wallet owner; after pairing it becomes a delegate. |
+
+## Authorization
+
+| Term | Definition |
+|---|---|
+| **Pact** | A structured, owner-approved delegation agreement that defines what an agent can do, how, and for how long. See [What is a pact](/products/agentic-wallet/manual/start-here/what-is-a-pact). |
+| **Pairing** | The one-time setup that transfers wallet control from the agent to a human owner. See [Pairing overview](/products/agentic-wallet/manual/start-here/pairing-overview). |
+| **Pairing code** | A short-lived token used during pairing. Valid for 15 minutes. |
+| **Owner guardrails** | Wallet-level controls set by the owner — per-transaction limit, daily limit, approval threshold, allowed addresses, and allowed chains. Apply on top of any active pact. |
+| **Pending operation** | A transaction flagged by policy as requiring owner approval before it can execute. Transactions that exceed the approval threshold become pending operations. |
+| **Approval threshold** | A pact-set amount above which transactions pause for manual approval rather than executing automatically. Distinct from a hard limit, which blocks outright. See [Handle transactions](/products/agentic-wallet/manual/owners/pending-ops). |
+
+## Security
+
+| Term | Definition |
+|---|---|
+| **MPC key share** | One partial component of a private key distributed across independent parties using Multi-Party Computation. No single party holds a complete key. See [MPC model](/products/agentic-wallet/manual/security/mpc-model). |
+| **Freeze** | An emergency control that suspends the agent's access immediately while preserving pact terms. Reversible. |
+| **Revoke** | An emergency control that permanently terminates a pact. The agent must submit a new pact to operate again. |
+
+## Other
+
+| Term | Definition |
+|---|---|
+| **Audit log** | An immutable record of every operation attempted by the agent, including the policy decision outcome and full context. |
+| **Policy decision** | The outcome of evaluating a transaction against all applicable policies: `ALLOW`, `REQUIRE_APPROVAL`, or `DENY`. |

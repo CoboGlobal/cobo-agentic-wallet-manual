@@ -4,14 +4,14 @@ description: "Set up and operate a wallet from the terminal using the caw CLI."
 sidebarTitle: "CLI"
 ---
 
-Use this path when you want a no-code terminal workflow.
+Use this path when you want the fastest way to get from download to a first working CAW integration.
 
 ## Install
 
-The `caw` CLI is a standalone binary. Download and install it using the bootstrap script:
+The `caw` CLI is a standalone binary. The CLI's environment default is `prod`.
 
 ```bash
-curl -sL https://download.agenticwallet.cobo.com/bootstrap-env.sh | bash -s -- --env sandbox
+curl -sL https://download.agenticwallet.cobo.com/bootstrap-env.sh | bash
 ```
 
 This downloads the `caw` binary to `~/.cobo-agentic-wallet/bin/caw`. Add it to your PATH:
@@ -26,15 +26,15 @@ Verify the installation:
 caw --version
 ```
 
-## Onboard your agent
+## Pair with the owner wallet
 
-Ask your user to generate a pairing code from the Human App (see [Guide your users](/products/agentic-wallet/manual/developer/guide-users) for instructions to share with them). Once you have the code, run:
+Ask the wallet owner to generate a pairing code from the Cobo Agentic Wallet app. If the owner needs step-by-step pairing instructions, send them to [Connect Agent in Cobo Agentic Wallet App](/products/agentic-wallet/manual/owners/connect-agent-human-app). Once you have the code, run:
 
 ```bash
 caw onboard provision --token <PAIRING_CODE>
 ```
 
-This creates an API key, binds it to the user's account, and saves config to `~/.cobo-agentic-wallet/config`.
+This creates an API key, binds it to the owner's account, and saves config to `~/.cobo-agentic-wallet/config`.
 
 ## Verify the setup
 
@@ -42,9 +42,9 @@ This creates an API key, binds it to the user's account, and saves config to `~/
 caw onboard self-test
 ```
 
-## Submit a pact
+## First hello-world flow
 
-Before executing transfers, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Human App.
+Before executing blockchain actions, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Cobo Agentic Wallet app.
 
 ```bash
 # Submit a pact requesting transfer permissions
@@ -106,29 +106,22 @@ async def main():
 asyncio.run(main())
 ```
 
-## Optional: run the demo
-
-```bash
-caw demo
-```
-
 ## Go further
 
-The CLI is a complete interface on its own, and it also composes well with other integration paths:
+Once the CLI path works, move to an SDK if you want to keep the same flow inside application code:
 
-- **Wrap in shell functions** — build custom `caw`-based scripts for repeated workflows: nightly balance checks, batched transfers, or policy dry-runs before execution.
-- **Call from any language** — invoke `caw` via subprocess from Python, Node, Go, or any runtime. The structured JSON output makes it easy to parse results programmatically.
-- **Add a skill** — install `SKILL.md` so your AI agent understands wallet commands without being explicitly prompted. The skill and CLI work together: the skill provides reasoning context, `caw` provides execution.
-- **Upgrade to the Python SDK** — for async workflows, pact lifecycle management, or custom error handling with `PolicyDeniedError`, use `WalletAPIClient` directly.
+- **Python SDK** — same flow, async client, better for custom logic and long-running runtimes.
+- **TypeScript SDK** — same flow, typed Node.js client for backend services and agent runtimes.
+- **Custom Skill** — good when your runtime already supports skill files and you want the lightest path.
 
 <CardGroup cols={2}>
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Move the same flow into Python application code.
+  </Card>
+  <Card title="TypeScript SDK" href="/products/agentic-wallet/manual/developer/api-client-typescript">
+    Move the same flow into Node.js or TypeScript application code.
+  </Card>
   <Card title="CLI Reference" icon="terminal" href="/products/agentic-wallet/manual/reference/cli">
     Full command surface, options, and error handling.
-  </Card>
-  <Card title="Custom Skill" href="/products/agentic-wallet/manual/developer/custom-skill">
-    Add wallet reasoning to any skill-compatible agent.
-  </Card>
-  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
-    Programmatic control and custom error handling.
   </Card>
 </CardGroup>

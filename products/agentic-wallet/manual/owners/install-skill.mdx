@@ -1,0 +1,37 @@
+---
+title: "Install the skill and create your wallet"
+sidebarTitle: "Install the skill"
+description: "Install the Cobo Agentic Wallet skill on your agent to create a wallet, authorize tasks through pacts, and execute on-chain transfers and contract calls."
+---
+
+Install the skill to give your agent everything it needs to operate on-chain. From there, you have two tracks depending on how much control you want.
+
+## What you need
+
+- An AI agent that supports skills (for example, Claude Code or openclaw)
+
+## Step 1: Install the skill
+
+Tell your agent to install the Cobo Agentic Wallet skill:
+
+```
+Install the skill: skills add CoboGlobal/cobo-agentic-wallet --skill cobo-agentic-wallet --yes --global
+```
+
+## Step 2: Create your wallet
+
+Tell your agent to create a wallet:
+
+```
+Follow the skill instructions to create a wallet for me.
+```
+
+The skill guides your agent through the full setup — provisioning credentials, generating MPC key shares, and creating your wallet. When it's done, your agent confirms the wallet is ready and shows you the wallet address.
+
+## What's next
+
+Your wallet is ready. Your agent owns it and can start transacting immediately — no approval required. When you are ready to take personal control, pair your agent to require pact approvals and enable freeze/revoke.
+
+<Card title="Pair your agent" icon="mobile" href="/products/agentic-wallet/manual/owners/connect-agent-human-app">
+  Transfer ownership to yourself in the Cobo Agentic Wallet app.
+</Card>

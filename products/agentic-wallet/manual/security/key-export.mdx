@@ -1,0 +1,59 @@
+---
+title: "Key export"
+description: "Export your MPC wallet private key for use outside of Cobo Agentic Wallet."
+---
+
+When migrating to another wallet provider or as a last-resort recovery option, you can use key export. Key export reconstructs a standard private key from your MPC key shares and lets you download it for use in any wallet that supports private key import.
+
+<Warning>
+Key export is a high-risk operation. A reconstructed private key gives full, unilateral control of your funds to anyone who possesses it — the MPC protections that normally prevent any single party from acting alone no longer apply. Only export in a private, offline environment, and only when necessary.
+</Warning>
+
+## What gets exported
+
+Key export reconstructs the complete private key from your MPC key shares. The result is a standard private key — not an MPC key share — and can be imported into any wallet that supports standard private key import.
+
+## Before you begin
+
+- Ensure you are in a private environment with no screen sharing, remote access, or observers
+- Have a secure offline storage location ready (encrypted USB drive or external hard drive)
+- Your Cobo wallet remains fully functional after export — both the exported key and your Cobo wallet control the same addresses, so any transaction made with either affects the shared balance
+
+
+## How to export your private keys
+
+<Steps>
+  <Step title="Open key export">
+    In the Cobo Agentic Wallet app, go to **Account** > **Wallet Management**, tap the **...** icon beside your wallet name, and tap **Export Private Keys**.
+  </Step>
+  <Step title="Export your key">
+    Follow the instructions on the screen to complete the export.
+  </Step>
+  <Step title="Save your key">
+    Copy the key and paste it into a file, or download the CSV file directly. Store it **offline only** — on an encrypted USB drive, external hard drive, or another physically secure location.
+
+    <Warning>
+    Do not store the exported key in cloud storage, email, or any internet-connected location.
+    </Warning>
+  </Step>
+</Steps>
+
+## After export
+
+Once you have finished using the exported key:
+
+- Do not retain copies in any location you do not physically control
+- If you believe the exported key was exposed or compromised at any point, treat all funds in the affected addresses as at risk and move them to a new wallet immediately
+
+## Importing into another wallet
+
+Each address in the exported CSV has its own private key. Import is done at the address level — select the specific address key you want to import. EVM and Solana keys are separate and not interchangeable; make sure to import each key into a wallet that supports its chain type.
+
+Import steps vary by wallet provider. In general:
+
+1. Select the address key you want to import from the exported CSV
+2. Import it into a non-custodial wallet that supports the corresponding chain
+3. Verify the imported address matches your original
+
+
+Your Cobo wallet continues to work normally after export — both wallets control the same funds, so transactions in one affect the balance in both.

@@ -1,0 +1,102 @@
+---
+title: "Contract Calls"
+description: "Submit smart-contract calls and estimate fees before execution."
+---
+
+Contract calls follow the same CAW guardrails as transfers, but the runtime is usually operating against specific protocol allowlists and function-level policy controls. This is the core path for DeFi automation, payments, and broader onchain interaction.
+
+## Submit a contract call
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx call <PACT_ID> \
+  --contract 0xContract... \
+  --calldata 0x... \
+  --chain-id BASE_ETH \
+  --request-id swap-001
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+result = await agent_client.contract_call(
+    wallet_uuid=WALLET_UUID,
+    chain_id="BASE_ETH",
+    contract_addr="0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+    calldata="0x38ed1739...",
+    value="0",
+    request_id="swap-2026-001",
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.contractCall({
+  wallet_id: walletUuid,
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+  calldata: '0x38ed1739...',
+  value: '0',
+  request_id: 'swap-2026-001',
+});
+```
+</Tab>
+</Tabs>
+
+## Estimate fees
+
+Preview the transfer or call cost before submitting:
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx estimate-call-fee <WALLET_UUID> \
+  --chain-id BASE_ETH \
+  --contract 0x7a250d... \
+  --calldata 0x38ed1739... \
+  --value 0
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+fee = await agent_client.estimate_contract_call_fee(
+    wallet_uuid=WALLET_UUID,
+    chain_id="BASE_ETH",
+    contract_addr="0x7a250d...",
+    calldata="0x38ed1739...",
+    value="0",
+)
+print(fee)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const fee = await client.estimateContractCallFee({
+  wallet_id: walletUuid,
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d...',
+  calldata: '0x38ed1739...',
+  value: '0',
+});
+console.log(fee);
+```
+</Tab>
+</Tabs>
+
+## Related toolkit tools
+
+If you are using the framework toolkits or MCP server, the relevant subset is:
+
+- `submit_pact`
+- `get_pact`
+- `estimate_contract_call_fee`
+- `contract_call`
+- `get_transaction_record_by_request_id`
+- `get_audit_logs`
+
+## Related guides
+
+- [Submit and Manage Pacts](/products/agentic-wallet/manual/developer/pacts)
+- [Handle Policy Denial](/products/agentic-wallet/manual/developer/handle-policy-denial)
+- [Transaction Tracking](/products/agentic-wallet/manual/developer/transaction-tracking)
+

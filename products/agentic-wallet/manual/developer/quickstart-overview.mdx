@@ -1,65 +1,141 @@
 ---
-title: "Integrate Wallet Into Your Agent"
-description: "Compare integration paths and choose the right one for your agent."
-sidebarTitle: "Overview"
+title: "Developer Quickstart"
+description: "Choose the right integration path for an agent, bot, or automation that needs scoped authority to operate onchain."
+sidebarTitle: "Quickstart"
 ---
 
-Cobo Agentic Wallet supports several integration styles. All of them give your agent the same wallet capabilities — they differ in how your agent is built and how much custom code you want to write.
+CAW in developer mode is simple:
 
-## Comparison
+- your runtime gets an API key, not raw private keys
+- the wallet owner pairs once in the Human App
+- your runtime submits a pact for a task
+- CAW enforces policy rules and approval escalation server-side
 
-| Integration | Code required | Install | Best for | Denial handling |
-|---|---|---|---|---|
-| **Skill** | None | Drop a file | Agent owners using skill-compatible agents | Automatic via skill |
-| **CLI** | Shell scripts | Binary download | Terminal workflows, scripts, automation | Structured JSON output |
-| **MCP Server** | Config only | `pip install "cobo-agentic-wallet[mcp]"` | Claude Desktop, Cursor, MCP-compatible clients | Tool error messages |
-| **LangChain** | Python | `pip install "cobo-agentic-wallet[langchain]"` | LangChain agents with chains/tools | Formatted text in agent context |
-| **OpenAI Agents** | Python | `pip install "cobo-agentic-wallet[openai]"` | OpenAI Agents SDK function calling | Injected into conversation |
-| **Agno** | Python | `pip install "cobo-agentic-wallet[agno]"` | Agno multi-modal agents | Tool run response |
-| **CrewAI** | Python | `pip install "cobo-agentic-wallet[crewai]"` | CrewAI multi-agent crews | Formatted text per agent |
-| **Python SDK** | Python | `pip install cobo-agentic-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` exception |
-| **TypeScript SDK** | TypeScript | `npm install cobo-agentic-wallet` | Full programmatic control, custom logic | `PolicyDeniedError` equivalent |
+That means you can build a bot, agent, or automation that transfers tokens, makes payments, signs messages, or calls contracts without building your own wallet control layer.
 
-## Skill
+## Canonical path
 
-Drop a single file into your agent's skill configuration. No code, no packages — your agent immediately understands wallet commands.
+If you want the fastest path from zero to a real runnable flow, use this sequence:
+
+1. Install the `caw` CLI
+2. Pair with the owner wallet using a pairing code
+3. Run the first program in Python or TypeScript
+4. Submit a pact, wait for approval, execute a blockchain action, and inspect audit logs
+
+This is the shortest path from zero setup to a real hello-world flow:
 
 <CardGroup cols={2}>
-  <Card title="Custom Skill" href="/products/agentic-wallet/manual/developer/custom-skill">
-    Works with any skill-compatible agent (OpenClaw, Cursor, Claude Desktop).
+  <Card title="CLI Setup" href="/products/agentic-wallet/manual/developer/cli">
+    Download `caw`, pair with the owner wallet, and verify your local setup.
+  </Card>
+  <Card title="Python Hello World" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Run the canonical Python quickstart with pact submission, denial handling, and audit logs.
+  </Card>
+  <Card title="TypeScript Hello World" href="/products/agentic-wallet/manual/developer/api-client-typescript">
+    Run the canonical TypeScript quickstart with the same end-to-end flow.
+  </Card>
+  <Card title="Pacts" href="/products/agentic-wallet/manual/developer/pacts">
+    Understand the authorization object your runtime operates within.
   </Card>
 </CardGroup>
 
-## CLI
+<Note>
+Most developers should ignore the advanced integration modes at first. Start in standard Agent Mode: your runtime integrates with CAW, and Cobo provides the owner-facing pairing, policy, and approval surfaces. Core Mode and Owner Mode exist, but they are available upon request.
+</Note>
 
-Issue `caw` commands from any shell or subprocess — no SDK, no framework needed.
+## First run outcome
+
+After the canonical path, your runtime should have:
+
+- one paired wallet it can inspect and operate
+- one pact approved by the owner
+- one successful blockchain action
+- one denied action with structured retry guidance
+- one audit trail you can inspect programmatically
+
+## Choose your language first
+
+The primary onboarding branch is language, not framework.
+
+<Tabs>
+<Tab title="Python">
+
+Use this if your runtime logic is Python-first or you expect to adopt LangChain, OpenAI Agents SDK, Agno, or CrewAI later.
+
+1. Run [CLI Setup](/products/agentic-wallet/manual/developer/cli)
+2. Run [Python SDK](/products/agentic-wallet/manual/developer/api-client-python)
+3. Expand to [LangChain](/products/agentic-wallet/manual/developer/langchain), [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai), [Agno](/products/agentic-wallet/manual/developer/agno), or [CrewAI](/products/agentic-wallet/manual/developer/crewai)
+
+</Tab>
+<Tab title="TypeScript">
+
+Use this if your runtime is Node.js or TypeScript-first, or you plan to integrate with Vercel AI SDK, Mastra, or TypeScript LangChain/OpenAI stacks.
+
+1. Run [CLI Setup](/products/agentic-wallet/manual/developer/cli)
+2. Run [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript)
+3. Expand to [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai), [LangChain](/products/agentic-wallet/manual/developer/langchain), [Vercel AI SDK](/products/agentic-wallet/manual/developer/vercel-ai-sdk), or [Mastra](/products/agentic-wallet/manual/developer/mastra)
+
+</Tab>
+</Tabs>
+
+## What you get
+
+Across the canonical flow, CAW gives your runtime:
+
+- scoped onchain authority through pacts
+- server-side policy enforcement
+- owner approval when thresholds are crossed
+- audit logs and structured denial feedback
+- MPC signing without exposing key material to your code
+
+## Start with a narrow tool subset
+
+Do not hand your runtime all 20 tools on day one unless it truly needs them. A narrower tool set is easier to prompt, easier to review, and safer to operate.
+
+Start with one of these presets:
+
+- **Pact Drafting** — `submit_pact`, `get_pact`, `list_pacts`
+- **Execution** — `transfer_tokens`, `contract_call`, `estimate_transfer_fee`, `estimate_contract_call_fee`, `get_transaction_record_by_request_id`
+- **Observer** — `list_wallets`, `get_wallet`, `get_balance`, `list_transaction_records`, `get_audit_logs`
+
+This gives most agentic runtimes a clean split:
+
+- one path to request scoped authority
+- one path to perform approved blockchain actions
+- one path to inspect state, track results, and explain what happened
+
+## Add a framework only after the hello world works
+
+Once the hello-world path works, choose the surface that fits your runtime:
+
+- **Python SDK** — the primary async path for custom logic and long-running runtimes.
+- **TypeScript SDK** — the primary typed Node.js path for backend services and agent runtimes.
+- **MCP Server** — best when your client already speaks MCP.
+- **LangChain / OpenAI Agents SDK** — good when you want one framework path that can work in Python or TypeScript.
+- **Vercel AI SDK / Mastra** — good when your runtime is TypeScript-first.
+- **Agno / CrewAI** — good when you already have a Python framework loop and want CAW tools inside it.
 
 <CardGroup cols={2}>
-  <Card title="CLI" href="/products/agentic-wallet/manual/developer/cli">
-    Direct agent-to-wallet interaction via shell commands.
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    Canonical Python hello-world flow.
   </Card>
-</CardGroup>
-
-## MCP server
-
-Connect any MCP-compatible client to the wallet MCP server via a config entry. No code to write.
-
-<CardGroup cols={2}>
+  <Card title="TypeScript SDK" href="/products/agentic-wallet/manual/developer/api-client-typescript">
+    Canonical TypeScript hello-world flow.
+  </Card>
   <Card title="MCP Server" href="/products/agentic-wallet/manual/developer/mcp">
-    Works with Cursor, Claude Desktop, and any MCP-compatible client.
+    Wallet tools for MCP-compatible clients.
   </Card>
-</CardGroup>
-
-## Frameworks
-
-Use these if you're building an agent with a Python framework. Your agent gets wallet tools as native framework tools — no manual API calls.
-
-<CardGroup cols={2}>
   <Card title="LangChain" href="/products/agentic-wallet/manual/developer/langchain">
-    Inject wallet tools into a LangChain agent.
+    Use CAW with LangChain in Python or TypeScript.
   </Card>
   <Card title="OpenAI Agents" href="/products/agentic-wallet/manual/developer/openai">
-    Inject wallet tools into an OpenAI Agents SDK agent.
+    Use CAW with OpenAI Agents SDK in Python or TypeScript.
+  </Card>
+  <Card title="Vercel AI SDK" href="/products/agentic-wallet/manual/developer/vercel-ai-sdk">
+    Build CAW-backed tools for TypeScript agent flows.
+  </Card>
+  <Card title="Mastra" href="/products/agentic-wallet/manual/developer/mastra">
+    Build TypeScript agents with CAW-backed tools.
   </Card>
   <Card title="Agno" href="/products/agentic-wallet/manual/developer/agno">
     Inject wallet tools into an Agno agent.
@@ -69,12 +145,12 @@ Use these if you're building an agent with a Python framework. Your agent gets w
   </Card>
 </CardGroup>
 
-## API client
+## Where advanced modes fit
 
-Use when you need full programmatic control — custom logic, wallet management, policy configuration.
+If you are only building an agent, bot, or automation, stay on the standard developer path above.
 
-<CardGroup cols={2}>
-  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
-    Call the Cobo Agentic Wallet API directly via WalletAPIClient.
-  </Card>
-</CardGroup>
+- **Agent Mode** — default path in these docs; available now
+- **Core Mode** — for teams that want the core engine without the standard owner-facing product; available upon request
+- **Owner Mode** — for teams building their own owner interface; available upon request
+
+Use [Technical Architecture](/products/agentic-wallet/manual/developer/technical-architecture) only when you need to understand those boundaries more deeply.

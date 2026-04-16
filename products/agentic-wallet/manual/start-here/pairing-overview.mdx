@@ -1,0 +1,38 @@
+---
+title: "Pairing overview"
+description: "What pairing is, what it changes, and why it matters — for both owners and developers."
+---
+
+Pairing is the step that puts a human in control of the wallet.
+
+## Before and after pairing
+
+When a wallet is first created, the agent is the wallet owner. It has full access and no restrictions — useful for development and testing.
+
+When the wallet is paired with the Cobo Agentic Wallet app, the structure changes permanently:
+
+| | Before pairing | After pairing |
+|---|---|---|
+| **Agent role** | Wallet owner | Delegate |
+| **Who controls access** | Agent | Human owner |
+| **Spending limits** | None | Set by owner via pacts and guardrails |
+| **Pact approval** | Automatic | Owner reviews and approves each one |
+| **MPC key holders** | Agent machine + Cobo | Agent machine + Cobo, plus owner device + Cobo |
+
+## What pairing involves
+
+Pairing connects the owner's phone to the wallet using a **pairing code** — a short-lived token generated during setup. The agent displays or provides the code; the owner enters it in the Cobo Agentic Wallet app. After that, the wallet knows who controls it.
+
+The owner downloads the Cobo Agentic Wallet app, connects the agent using a pairing code, and the wallet knows who controls it from that point on. The owner's key shares are created on their device during this process.
+
+## What it means for owners
+
+Pairing is the step that turns an autonomous agent into a delegated one. Before you pair, your agent can do anything — which is fine for setup, but not for real funds. After pairing, every task your agent takes on requires your approval through a pact. You set the limits; the wallet enforces them.
+
+See [Pair your agent](/products/agentic-wallet/manual/owners/connect-agent-human-app) for the step-by-step process.
+
+## What it means for developers
+
+Your program does not need to detect whether the wallet has been paired. The pact flow works the same way in both cases — when there is no owner, pact approval is automatic; when there is one, it waits for their sign-off.
+
+Design your agent to handle both: full testing without pairing, then a clean hand-off to human control when real funds are involved.

@@ -43,7 +43,7 @@
   <circle cx="42" cy="255" r="13" fill="#EDE9FE" stroke="#DDD6FE" stroke-width="1.5"/>
   <text x="42" y="259" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#7C3AED">3</text>
   <text x="66" y="249" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Pair later (optional)</text>
-  <text x="66" y="266" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Run caw profile claim to start pairing with the Human App</text>
+  <text x="66" y="266" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Run caw pair to start pairing with the Human App</text>
 
   <!-- Convergence -->
   <line x1="215" y1="282" x2="215" y2="318" stroke="#C4B5FD" stroke-width="1.5"/>

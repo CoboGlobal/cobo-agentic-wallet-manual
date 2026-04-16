@@ -1,36 +1,49 @@
 ---
 title: "MCP Server"
-description: "5-minute MCP Server quickstart with stdio server, pact submission, policy denial, and self-correction."
+description: "5-minute MCP Server quickstart with stdio server, pact submission, onchain actions, policy denial, and transaction tracking."
 sidebarTitle: "MCP Server"
 ---
 
-Use this path when your runtime already supports MCP (Claude Desktop, Claude Code, Cursor, and similar clients).
+Use this path when your runtime already supports MCP (Claude Desktop, Claude Code, Cursor, and similar clients) and you want real wallet operations exposed without writing a custom adapter first.
+
+If you have not run the SDK quickstart yet, do that first:
+
+- [CLI Setup](/products/agentic-wallet/manual/developer/cli)
+- [Python SDK](/products/agentic-wallet/manual/developer/api-client-python) or [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript)
 
 ## 5-minute outcome
 
 1. Start the Cobo MCP stdio server
 2. Submit a pact and wait for owner activation notification
-3. Invoke wallet tools from your MCP client
-4. Observe policy denial returned as tool content
-5. Retry with compliant params from `suggestion`
-6. Confirm via audit logs
+3. Activate a pact from the MCP client itself
+4. Execute a blockchain action and track the resulting record
+5. Observe policy denial returned as tool content
+6. Retry with compliant params from `suggestion`
+7. Confirm via audit logs
 
 ## Step 1: Install MCP extra
 
 ```bash
-pip install "cobo-agent-wallet[mcp]"
+pip install "cobo-agentic-wallet[mcp]"
 ```
 
 ## Step 2: Configure API access
 
 ```bash
-export AGENT_WALLET_API_URL=https://api.sandbox.agenticwallet.cobo.com
+export AGENT_WALLET_API_URL=https://api.agenticwallet.cobo.com
 export AGENT_WALLET_API_KEY=your-api-key
 ```
 
 ## Step 3: Start stdio MCP server
 
 ```bash
+python -m cobo_agentic_wallet.mcp
+```
+
+To keep the runtime narrower, start with a subset:
+
+```bash
+export AGENT_WALLET_INCLUDE_TOOLS=submit_pact,get_pact,contract_call,get_transaction_record_by_request_id,get_audit_logs
 python -m cobo_agentic_wallet.mcp
 ```
 
@@ -45,7 +58,7 @@ Example (`claude_desktop_config.json`):
       "command": "python",
       "args": ["-m", "cobo_agentic_wallet.mcp"],
       "env": {
-        "AGENT_WALLET_API_URL": "https://api.sandbox.agenticwallet.cobo.com",
+        "AGENT_WALLET_API_URL": "https://api.agenticwallet.cobo.com",
         "AGENT_WALLET_API_KEY": "your-api-key"
       }
     }
@@ -57,35 +70,47 @@ Example (`claude_desktop_config.json`):
 
 In your MCP client, execute this flow:
 
-1. Submit a pact for approval: use `transfer_tokens` tool description to explain to the agent what pact is needed, or submit the pact via the Python SDK (`client.submit_pact(...)`) before starting the MCP session. Wait for the owner to approve in the Human App before proceeding.
-2. `list_wallets`
-3. `transfer_tokens` with compliant amount (success)
-4. `transfer_tokens` with too-large amount (policy denial)
-5. Parse `suggestion` from tool output and retry with smaller amount
-6. `get_audit_logs` to verify allowed plus denied events
+1. `list_wallets` and `get_wallet` to identify the wallet the runtime should operate on
+2. `submit_pact` with an intent and PactSpec, then `get_pact` until the owner activates it in the Human App
+3. `estimate_transfer_fee` or `estimate_contract_call_fee` to preview the operation cost
+4. `transfer_tokens`, `contract_call`, `message_sign`, or `payment` with a stable `request_id` where applicable
+5. `get_transaction_record_by_request_id` or `list_transaction_records` to track the submitted operation
+6. Trigger a too-large transfer or disallowed contract call to observe the policy denial payload
+7. Parse `suggestion` from tool output and retry with compliant params
+8. `get_audit_logs` to verify allowed plus denied events
 
-Policy denials are intentionally returned as normal tool content (not protocol-level tool failures), so the LLM can reason and retry.
+Policy denials are intentionally returned as normal tool content (not protocol-level tool failures), so the LLM can reason and retry. Non-policy API failures still surface as MCP errors.
 
-## Quick reference tool set
+## Useful tool groups
 
-- `list_wallets`
-- `get_balance`
-- `transfer_tokens`
-- `list_transactions`
-- `get_audit_logs`
-- `create_delegation`
+- Wallet discovery: `list_wallets`, `get_wallet`, `list_wallet_addresses`, `get_balance`
+- Pact lifecycle: `submit_pact`, `get_pact`, `list_pacts`
+- Blockchain execution: `transfer_tokens`, `contract_call`, `message_sign`, `payment`
+- Fee planning: `estimate_transfer_fee`, `estimate_contract_call_fee`
+- Tracking and recovery: `list_transactions`, `list_transaction_records`, `get_transaction_record`, `get_transaction_record_by_request_id`, `list_recent_addresses`
+- Audit and provisioning: `get_audit_logs`, `create_delegation`
+
+## Recommended presets
+
+Most MCP clients perform better when you expose a small, role-specific subset instead of the full surface.
+
+- **Pact Drafting** — `submit_pact`, `get_pact`, `list_pacts`
+- **Execution** — `transfer_tokens`, `contract_call`, `estimate_transfer_fee`, `estimate_contract_call_fee`, `get_transaction_record_by_request_id`
+- **Observer** — `list_wallets`, `get_wallet`, `get_balance`, `list_transaction_records`, `get_audit_logs`
+
+If your runtime both drafts and executes, start with Pact Drafting plus Execution. Add Observer tools when you want the runtime to explain balances, inspect transaction outcomes, or review audit history on its own.
 
 ## Go further
 
-The MCP server exposes the standard wallet tool set. You can extend it with custom tools and other integration paths:
+The MCP server exposes the same canonical toolkit surface as the other CAW integrations. You can still extend it with custom tools and combine it with direct SDK usage:
 
 - **Add custom MCP tools** — define additional MCP tools alongside Cobo's for your own business logic (e.g. a `check_price` tool that fetches a token price before submitting a transfer).
 - **Use the Python SDK for non-MCP operations** — pact lifecycle management, policy configuration, and audit queries are all available via `WalletAPIClient` for operations you want to handle outside the LLM loop.
-- **Use framework integrations for code-based agents** — if you're building a Python agent with LangChain, OpenAI Agents SDK, Agno, or CrewAI, use the framework-native toolkit instead of the MCP server. You get the same tools natively integrated with your agent's tool-calling mechanism.
+- **Use framework integrations for code-based runtimes** — if you're building a Python agent with LangChain, OpenAI Agents SDK, Agno, or CrewAI, use the framework-native toolkit instead of the MCP server. You get the same tools natively integrated with your runtime's tool-calling mechanism.
 
 <CardGroup cols={2}>
   <Card title="Full MCP Integration Guide" icon="plug" href="/products/agentic-wallet/manual/reference/mcp">
-    Advanced config and behavior details.
+    Full 20-tool surface, config, and error semantics.
   </Card>
   <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
     Direct programmatic access for operations outside the LLM loop.

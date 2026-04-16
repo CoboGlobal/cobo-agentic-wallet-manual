@@ -45,7 +45,6 @@ mintlify/
 │   ├── error-handling.mdx    #   错误处理
 │   ├── self-correction.mdx   #   Agent 自我修正
 │   └── audit.mdx             #   审计日志
-├── recipes/                  # 使用场景模板（12 篇）
 │   ├── discord-tip-bot.mdx
 │   ├── api-micropayment.mdx
 │   ├── org-payroll.mdx

@@ -1,87 +1,54 @@
 ---
 title: "Tokens and token standards"
-description: "Native tokens, ERC-20, SPL, and how Cobo token IDs are formatted."
+description: "Native tokens, ERC-20, and SPL token standards."
 ---
 
 ## Native tokens vs. token contracts
 
-Every chain has a **native token** — the asset used to pay gas. ETH is the native token of Ethereum and Base. MATIC is the native token of Polygon. SOL is the native token of Solana.
+Every chain has a **native token** — the asset used to pay gas fees generally. For example, ETH is the native token of Ethereum and Base. MATIC is the native token of Polygon. SOL is the native token of Solana.
 
 All other tokens are implemented as **smart contracts**. On EVM chains, the dominant standard is ERC-20. On Solana, it is SPL.
 
 | Type | Examples | Stored as |
 |---|---|---|
 | Native token | ETH, MATIC, SOL | Account balance on-chain |
-| ERC-20 token | USDC, USDT, WETH, LINK | Balance in a token contract |
+| ERC-20 token | USDC, USDT, WETH, LINK | Balance tracked inside a token contract |
 | SPL token (Solana) | USDC, BONK | Token account managed by the SPL program |
-
-<Tip>
-Wrapped ETH (WETH) is an ERC-20 token that is always redeemable 1:1 for ETH. Many DeFi protocols require WETH instead of native ETH for consistency — they can only accept tokens through the ERC-20 interface.
-</Tip>
 
 ## ERC-20 tokens
 
-An ERC-20 token is defined by a contract at a specific address. The contract keeps a ledger of balances — which address owns how much. When you "transfer" ERC-20 tokens, you call the `transfer()` function on that contract.
+An ERC-20 token is defined by a contract deployed at a specific address. The contract keeps a ledger of balances — which address owns how much. When you "transfer" ERC-20 tokens, you are calling a function on that contract, which updates its internal ledger.
 
-Key functions in every ERC-20 contract:
+All ERC-20 tokens share the same standard interface, which means wallets, exchanges, and protocols can interact with any ERC-20 token in the same way. The key operations are:
 
-| Function | What it does |
-|---|---|
-| `balanceOf(address)` | Returns the token balance of an address |
-| `transfer(to, amount)` | Move tokens from your address to another |
-| `approve(spender, amount)` | Allow another contract to spend up to `amount` on your behalf |
-| `transferFrom(from, to, amount)` | Move tokens on behalf of another address (requires prior approval) |
-| `allowance(owner, spender)` | How much a spender is approved to move |
-| `decimals()` | Number of decimal places (6 for USDC, 18 for most others) |
+- **Check balance** — look up how many tokens an address holds
+- **Transfer** — move tokens from your address to another
+- **Approve** —  grant a DeFi protocol permission to spend tokens on your behalf. This must be done before most DeFi interactions: the protocol cannot move your tokens until you explicitly authorize it via an `approve` call. See [Smart contracts](/products/agentic-wallet/manual/learn/smart-contracts) for why this matters in practice.
 
-See [ERC-20 approvals](/products/agentic-wallet/manual/learn/erc20-approvals) for why `approve` matters so much in DeFi.
+### Wrapped tokens
 
-## Token decimals
+Some native tokens — such as ETH — predate the ERC-20 standard and do not implement it natively. Wrapped tokens solve this: WETH is an ERC-20 contract that holds ETH 1:1, allowing ETH to be used in DeFi protocols that only accept ERC-20 inputs. Wrapping and unwrapping can be done at any time with no fees beyond gas.
 
-Token amounts on-chain are always integers — the decimal is a display convention set by the token contract's `decimals()` function.
+## SPL tokens
 
-| Token | Decimals | 1 token = |
-|---|---|---|
-| ETH, WETH | 18 | `1_000_000_000_000_000_000` (1e18) |
-| USDC, USDT | 6 | `1_000_000` (1e6) |
-| WBTC | 8 | `100_000_000` (1e8) |
+On Solana, tokens follow the SPL standard. The core difference from ERC-20 is how balances are stored: rather than a single contract tracking all holders, each wallet must have a dedicated **token account** for each SPL token it holds. This token account is a separate on-chain account owned by the SPL program.
 
-Cobo's SDK and CLI accept human-readable decimal amounts (e.g., `1.5` USDC) for token transfers. When encoding contract calldata manually, you must use the raw integer amount.
+Key implications for agents:
 
-## Cobo token IDs
-
-Cobo uses string token IDs. Non-native tokens follow the format `{CHAIN_ID}_{TOKEN_SYMBOL}`.
-
-| Token | Cobo token ID |
-|---|---|
-| Sepolia ETH (native) | `SETH` |
-| Sepolia USDC | `SETH_USDC` |
-| Solana Devnet SOL (native) | `SOLDEV_SOL` |
-| Solana Devnet USDC | `SOLDEV_SOL_USDC` |
-| Ethereum mainnet ETH (native) | `ETH` |
-
-<Note>
-The Cobo chain ID and the native token ID share the same string. `SETH` is both the chain ID for Ethereum Sepolia and the token ID for Sepolia ETH.
-</Note>
-
-## Discovering supported tokens
-
-```bash
-caw meta tokens
-```
-
-Or via the API: [List assets](/products/agentic-wallet/manual/reference/list-assets).
+- Before receiving an SPL token for the first time, a token account must be created. This requires a small SOL deposit (rent) and a separate transaction.
+- Sending SPL tokens requires the recipient to already have a token account for that token, or the transaction must include account creation.
+- Closing unused token accounts recovers the SOL rent deposit.
 
 ## Stablecoins
 
-Stablecoins are tokens designed to maintain a fixed value relative to a reference asset (usually USD). They are by far the most commonly transferred tokens in DeFi.
+Stablecoins are tokens designed to maintain a fixed value relative to a reference asset (usually USD). They are the most commonly transferred tokens in DeFi.
 
 | Stablecoin | Type | Issuer |
 |---|---|---|
 | USDC | Fiat-backed | Circle |
 | USDT | Fiat-backed | Tether |
-| DAI | Crypto-collateralized | MakerDAO |
+| DAI | Crypto-collateralized | Sky (formerly MakerDAO)|
 | USDS | Crypto-collateralized | Sky (MakerDAO successor) |
 | FRAX | Fractional-algorithmic | Frax Finance |
 
-Each stablecoin is a separate ERC-20 contract with its own address on each chain. USDC on Base and USDC on Ethereum are different contracts, though both maintain 1:1 USD parity.
+Each stablecoin is a separate contract with its own address on each chain. USDC on Base and USDC on Ethereum are different contracts, though both maintain 1:1 USD parity.

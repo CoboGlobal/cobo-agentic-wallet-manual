@@ -3,11 +3,9 @@ title: "Custodial Model"
 description: "How Cobo secures fully custodial wallets through layered asset segregation, HSM-based key isolation, and distributed infrastructure controls."
 ---
 
-With a custodial wallet, your private keys are protected by Cobo's institutional-grade infrastructure. Keys are generated and stored inside hardware security modules engineered to prevent extraction by any party — including Cobo's own operators. No person can retrieve a key in plaintext; all signing operations run inside the hardware boundary itself. The security of your assets rests on the physical and cryptographic properties of the infrastructure, not on trusting any individual or team.
+With a custodial wallet, Cobo holds and manages private keys on your behalf using institutional-grade infrastructure. This model is suited for users that prefer to delegate key management entirely rather than operate their own signing infrastructure.
 
-<Info>
-If you are using an MPC wallet, your security model is different — key shares are distributed between you, your agent, and Cobo so no single party can act unilaterally. See [MPC Model](/products/agentic-wallet/manual/security/mpc-key-shares).
-</Info>
+No individual — including Cobo — can access key material in plaintext. Keys are generated and stored inside hardware security modules where all signing operations execute within the hardware boundary itself. Security rests on physical and cryptographic controls, not on trusting any individual or team.
 
 ## Three-tier asset segregation
 
@@ -21,9 +19,9 @@ Cobo's custodial architecture separates assets into three tiers matched to secur
 
 ```mermaid
 flowchart TB
-    Cold["Cold Storage\n~95% of assets · Offline HSMs\nLong-term reserves · Highest security"]
-    Warm["Warm Storage\nOperational buffer\nScheduled payouts · Rebalancing"]
-    Hot["Hot Storage\nMinimal assets · Real-time operations\nHSM + SGX + Risk controls"]
+    Cold["Cold Storage<br/>~95% of assets · Offline HSMs<br/>Long-term reserves · Highest security"]
+    Warm["Warm Storage<br/>Operational buffer<br/>Scheduled payouts · Rebalancing"]
+    Hot["Hot Storage<br/>Minimal assets · Real-time operations<br/>HSM + SGX + Risk controls"]
     Cold <-->|"Periodic rebalancing"| Warm
     Warm <-->|"Operational flow"| Hot
 ```
@@ -54,22 +52,24 @@ These controls limit the impact of any hot-wallet incident and ensure that high-
 
 Across all tiers, private key security is anchored by FIPS 140-2 certified Hardware Security Modules (HSMs). HSMs provide a tamper-resistant environment where private keys are generated, stored, and used exclusively within hardware. If physical tampering is detected, built-in mechanisms trigger automatic zeroization of key material.
 
+The application layer above the HSM can request that a signature be produced, but it can never extract the key itself. Even an attacker with full administrative access to the host server cannot reach key material held inside the HSM boundary.
+
 ```mermaid
 flowchart TB
-    subgraph hsm ["Hardware Security Module (HSM)"]
-        direction TB
-        KG["Key generation — inside hardware boundary"]
-        KS["Key storage — inside hardware boundary"]
-        SIG["Signing operations — inside hardware boundary"]
-        KG --> KS --> SIG
-    end
     APP["Application / service layer"]
-    OUT["Signature output only — no key exposed"]
+    subgraph hsm ["HSM boundary"]
+        direction TB
+        NOTE["No key extraction possible"]:::note
+        KG["Key generation"]
+        KS["Key storage"]
+        SIG["Signing operations"]
+        NOTE ~~~ KG --> KS --> SIG
+    end
+    OUT["Signature output only"]
     APP -->|"Signing request"| hsm
     hsm --> OUT
+    classDef note fill:#f5f5f5,stroke:#aaa,color:#666,font-style:italic
 ```
-
-The application layer above the HSM can request that a signature be produced, but it can never extract the key itself. Even an attacker with full administrative access to the host server cannot reach key material held inside the HSM boundary.
 
 ## Infrastructure resilience
 
@@ -81,12 +81,4 @@ Cobo's custodial infrastructure is deployed across multiple geographic regions a
 
 Physical data centers use controlled access, surveillance, redundant power, and environmental safeguards consistent with high-security infrastructure standards.
 
-## Operational controls
 
-Access to custodial key operations is governed by role-based access control, multi-factor authentication, and multi-party approval requirements for all privileged operations. All key operations are logged and auditable.
-
-Cobo conducts regular penetration tests and simulated attack exercises to validate that custodial controls remain effective against evolving threat conditions.
-
-<Info>
-For details on how transaction policies and spend limits are enforced on custodial wallet operations, see [Policy Engine](/products/agentic-wallet/manual/security/policy-engine) and [Spend Limits](/products/agentic-wallet/manual/security/spend-limits).
-</Info>

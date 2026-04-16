@@ -1,0 +1,36 @@
+---
+title: "DeFi protocols"
+description: "A brief introduction to decentralized finance primitives and how AI agents interact with them."
+---
+
+## What is DeFi
+
+**Decentralized Finance (DeFi)** is a set of financial services built on public blockchains. DeFi protocols run as open-source smart contracts — typically requiring no accounts, no KYC, and no intermediaries. All logic and balances are on-chain and publicly verifiable.
+
+## Key DeFi primitives
+
+| Primitive | What it does | Example protocols |
+|---|---|---|
+| Token swaps (DEX) | Exchange one token for another at a market rate | Uniswap, Curve, Orca |
+| Liquidity provision | Deposit tokens into a pool to enable DEX trading; earn a share of fees in return | Uniswap v3, Curve |
+| Lending and borrowing | Earn interest by supplying assets; borrow against collateral | Aave, Compound |
+| Liquid staking | Stake native tokens and receive a tradable receipt token | Lido (stETH), Jito (jitoSOL) |
+| Yield aggregators | Automatically route and compound positions across protocols to optimize returns | Yearn, Convex |
+
+## DeFi risks
+
+**Smart contract risk** — Protocols can contain bugs or be exploited. Prefer audited protocols with long track records.
+
+**Price impact and slippage** — Large trades move the market price. Always set a minimum acceptable output when swapping.
+
+**Liquidation risk** — Borrow positions are liquidated automatically if collateral value falls too far. Agents managing leveraged positions must monitor health continuously.
+
+**Impermanent loss** — Providing liquidity may return less value than simply holding the tokens if prices diverge significantly.
+
+## How agents interact with DeFi
+
+An agent executes DeFi operations by calling smart contracts — the same way any on-chain participant would. See [Smart contracts](/products/agentic-wallet/manual/learn/smart-contracts) for how contract calls are structured.
+
+The difference with Cobo Agentic Wallet is that every contract call is validated against the owner's [Pact policy](/products/agentic-wallet/manual/security/policy-engine) — a configurable ruleset that defines which contracts, which functions, and which parameter limits the agent is allowed to use — before it is signed and broadcast.
+
+The agent operates autonomously within those bounds. No manual approval is needed per transaction unless a policy threshold is exceeded.

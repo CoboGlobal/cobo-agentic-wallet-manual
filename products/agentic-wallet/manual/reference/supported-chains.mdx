@@ -1,0 +1,37 @@
+---
+title: "Supported chains"
+description: "Cobo chain IDs for all chains supported by Cobo Agentic Wallet."
+---
+
+Wherever a `chain_id` is required — in CLI commands, API requests, or policy rules — use the Cobo chain ID from the table below, not the public chain name.
+
+## Mainnet
+
+| Cobo chain ID | Chain name |
+|---|---|
+| `ARBITRUM_ETH` | Arbitrum |
+| `AVAXC` | Avalanche C-Chain |
+| `BASE_ETH` | Base |
+| `BSC_BNB` | BNB Chain |
+| `ETH` | Ethereum |
+| `MATIC` | Polygon |
+| `OPT_ETH` | Optimism |
+| `SOL` | Solana |
+| `TEMPO_TEMPO` | Tempo |
+
+## Testnet
+
+| Cobo chain ID | Chain name |
+|---|---|
+| `SETH` | Ethereum Sepolia |
+| `TBASE_SETH` | Base Sepolia |
+| `SOLDEV_SOL` | Solana Devnet |
+| `TTEMPO_TEMPO` | Tempo Testnet |
+
+To retrieve this list programmatically:
+
+```bash
+caw meta chains
+```
+
+Or via the API: [List chains](/products/agentic-wallet/manual/reference/list-chains).

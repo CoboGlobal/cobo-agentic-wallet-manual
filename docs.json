@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
+  "css": "/styles.css",
   "name": "Cobo Agentic Wallet",
   "api": {
     "playground": {
@@ -15,7 +16,8 @@
   },
   "logo": {
     "dark": "/products/agentic-wallet/manual/logo/dark.svg",
-    "light": "/products/agentic-wallet/manual/logo/light.svg"
+    "light": "/products/agentic-wallet/manual/logo/light.svg",
+    "href": "https://agenticwallet.cobo.com/"
   },
   "favicon": "/products/agentic-wallet/manual/favicon.svg",
   "colors": {
@@ -42,44 +44,103 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Get Started",
+        "tab": "Start Here",
         "groups": [
           {
             "group": "Overview",
             "pages": [
-              "products/agentic-wallet/manual/get-started/introduction",
-              "products/agentic-wallet/manual/learn/what-is-a-pact",
-              "products/agentic-wallet/manual/get-started/pact-flow",
-              "products/agentic-wallet/manual/get-started/features",
-              "products/agentic-wallet/manual/get-started/key-concepts",
-              "products/agentic-wallet/manual/developer/supported-chains"
+              "products/agentic-wallet/manual/start-here/introduction",
+              "products/agentic-wallet/manual/start-here/choose-your-path",
+              "products/agentic-wallet/manual/start-here/what-is-a-pact",
+              "products/agentic-wallet/manual/start-here/pact-flow",
+              "products/agentic-wallet/manual/start-here/pairing-overview",
+              "products/agentic-wallet/manual/start-here/glossary"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "For Agent Owners",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "products/agentic-wallet/manual/owners/features"
             ]
           },
           {
-            "group": "Connect Your Agent",
+            "group": "Give Your Agent a Wallet",
             "pages": [
-              "products/agentic-wallet/manual/get-started/connect-agent-human-app"
+              "products/agentic-wallet/manual/owners/install-skill",
+              "products/agentic-wallet/manual/owners/connect-agent-human-app"
             ]
           },
           {
             "group": "Control Your Agent",
             "pages": [
-              "products/agentic-wallet/manual/get-started/approve",
-              "products/agentic-wallet/manual/get-started/pending-ops",
-              "products/agentic-wallet/manual/get-started/freeze"
+              "products/agentic-wallet/manual/owners/approve",
+              "products/agentic-wallet/manual/owners/pending-ops"
             ]
           },
           {
             "group": "Manage Your Wallet",
             "pages": [
-              "products/agentic-wallet/manual/get-started/activity",
-              "products/agentic-wallet/manual/get-started/policies"
+              "products/agentic-wallet/manual/owners/transfers",
+              "products/agentic-wallet/manual/owners/activity"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "For Agent Developers",
+        "groups": [
+          {
+            "group": "Start Here",
+            "pages": [
+              "products/agentic-wallet/manual/developer/quickstart-overview",
+              "products/agentic-wallet/manual/developer/cli",
+              "products/agentic-wallet/manual/developer/api-client-python",
+              "products/agentic-wallet/manual/developer/api-client-typescript"
             ]
           },
           {
-            "group": "Human Interfaces",
+            "group": "Frameworks & MCP",
             "pages": [
-              "products/agentic-wallet/manual/get-started/human-app"
+              "products/agentic-wallet/manual/developer/mcp",
+              "products/agentic-wallet/manual/developer/langchain",
+              "products/agentic-wallet/manual/developer/openai",
+              "products/agentic-wallet/manual/developer/vercel-ai-sdk",
+              "products/agentic-wallet/manual/developer/mastra",
+              "products/agentic-wallet/manual/developer/agno",
+              "products/agentic-wallet/manual/developer/crewai"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "products/agentic-wallet/manual/developer/features",
+              "products/agentic-wallet/manual/developer/technical-architecture",
+              "products/agentic-wallet/manual/developer/pacts"
+            ]
+          },
+          {
+            "group": "How-to",
+            "pages": [
+              "products/agentic-wallet/manual/developer/transfers",
+              "products/agentic-wallet/manual/developer/contract-calls",
+              "products/agentic-wallet/manual/developer/handle-policy-denial",
+              "products/agentic-wallet/manual/developer/batch-transfers",
+              "products/agentic-wallet/manual/developer/transaction-tracking",
+              "products/agentic-wallet/manual/developer/transaction-recovery",
+              "products/agentic-wallet/manual/developer/wallets",
+              "products/agentic-wallet/manual/developer/addresses",
+              "products/agentic-wallet/manual/developer/audit"
+            ]
+          },
+          {
+            "group": "Changelog",
+            "pages": [
+              "products/agentic-wallet/manual/developer/changelog"
             ]
           }
         ]
@@ -97,7 +158,7 @@
             "group": "Why Your Funds Stay Yours",
             "pages": [
               "products/agentic-wallet/manual/security/custodial-model",
-              "products/agentic-wallet/manual/security/mpc-key-shares"
+              "products/agentic-wallet/manual/security/mpc-model"
             ]
           },
           {
@@ -118,152 +179,8 @@
           {
             "group": "Key Share Management",
             "pages": [
-              "products/agentic-wallet/manual/security/keygen-resharing",
-              "products/agentic-wallet/manual/security/key-share-recovery"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Blockchain basics",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "products/agentic-wallet/manual/learn/overview"
-            ]
-          },
-          {
-            "group": "Agentic Wallets",
-            "pages": [
-              "products/agentic-wallet/manual/learn/what-is-a-pact",
-              "products/agentic-wallet/manual/learn/what-is-agentic-wallet",
-              "products/agentic-wallet/manual/learn/delegated-authority",
-              "products/agentic-wallet/manual/learn/policy-first-design",
-              "products/agentic-wallet/manual/learn/autonomy-spectrum",
-              "products/agentic-wallet/manual/learn/ai-specific-risks",
-              "products/agentic-wallet/manual/learn/multi-agent-trust"
-            ]
-          },
-          {
-            "group": "Blockchain Basics",
-            "pages": [
-              "products/agentic-wallet/manual/learn/chains",
-              "products/agentic-wallet/manual/learn/tokens",
-              "products/agentic-wallet/manual/learn/wallets",
-              "products/agentic-wallet/manual/learn/transactions",
-              "products/agentic-wallet/manual/learn/smart-contracts",
-              "products/agentic-wallet/manual/learn/testnets"
-            ]
-          },
-          {
-            "group": "DeFi Fundamentals",
-            "pages": [
-              "products/agentic-wallet/manual/learn/defi-overview",
-              "products/agentic-wallet/manual/learn/token-swaps",
-              "products/agentic-wallet/manual/learn/lending-borrowing",
-              "products/agentic-wallet/manual/learn/liquidity-pools",
-              "products/agentic-wallet/manual/learn/staking"
-            ]
-          },
-          {
-            "group": "Working with Contracts",
-            "pages": [
-              "products/agentic-wallet/manual/learn/abi-calldata",
-              "products/agentic-wallet/manual/learn/erc20-approvals",
-              "products/agentic-wallet/manual/learn/common-protocols"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Recipes",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "products/agentic-wallet/manual/recipes/overview"
-            ]
-          },
-          {
-            "group": "DeFi & Trading",
-            "pages": [
-              "products/agentic-wallet/manual/recipes/trading-execution",
-              "products/agentic-wallet/manual/recipes/dca-trader",
-              "products/agentic-wallet/manual/recipes/defi-yield-optimizer",
-              "products/agentic-wallet/manual/recipes/lending-arbitrage",
-              "products/agentic-wallet/manual/recipes/prediction-market"
-            ]
-          },
-          {
-            "group": "Payments",
-            "pages": [
-              "products/agentic-wallet/manual/recipes/discord-tip-bot",
-              "products/agentic-wallet/manual/recipes/api-micropayment",
-              "products/agentic-wallet/manual/recipes/org-payroll",
-              "products/agentic-wallet/manual/recipes/streaming-payroll",
-              "products/agentic-wallet/manual/recipes/saas-subscription"
-            ]
-          },
-          {
-            "group": "Agent Infrastructure",
-            "pages": [
-              "products/agentic-wallet/manual/recipes/emergency-kill-switch",
-              "products/agentic-wallet/manual/recipes/agent-to-agent"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Developer",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "products/agentic-wallet/manual/developer/integration-modes",
-              "products/agentic-wallet/manual/developer/features",
-              "products/agentic-wallet/manual/developer/technical-architecture",
-              "products/agentic-wallet/manual/developer/supported-chains",
-              "products/agentic-wallet/manual/developer/glossary"
-            ]
-          },
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "products/agentic-wallet/manual/developer/pact-lifecycle",
-              "products/agentic-wallet/manual/developer/mpc-security"
-            ]
-          },
-          {
-            "group": "Quick Start",
-            "pages": [
-              "products/agentic-wallet/manual/developer/quickstart-overview",
-              "products/agentic-wallet/manual/developer/guide-users",
-              "products/agentic-wallet/manual/developer/cli",
-              "products/agentic-wallet/manual/developer/custom-skill",
-              "products/agentic-wallet/manual/developer/mcp",
-              "products/agentic-wallet/manual/developer/api-client-python",
-              "products/agentic-wallet/manual/developer/langchain",
-              "products/agentic-wallet/manual/developer/openai",
-              "products/agentic-wallet/manual/developer/agno",
-              "products/agentic-wallet/manual/developer/crewai"
-            ]
-          },
-          {
-            "group": "How-to",
-            "pages": [
-              "products/agentic-wallet/manual/developer/pacts",
-              "products/agentic-wallet/manual/developer/transact",
-              "products/agentic-wallet/manual/developer/handle-policy-denial",
-              "products/agentic-wallet/manual/developer/batch-operations",
-              "products/agentic-wallet/manual/developer/manage-wallet",
-              "products/agentic-wallet/manual/developer/audit"
-            ]
-          },
-          {
-            "group": "Changelog",
-            "pages": [
-              "products/agentic-wallet/manual/developer/changelog"
+              "products/agentic-wallet/manual/security/key-share-backup",
+              "products/agentic-wallet/manual/security/key-export"
             ]
           }
         ]
@@ -271,6 +188,12 @@
       {
         "tab": "Reference",
         "groups": [
+          {
+            "group": "Supported Chains",
+            "pages": [
+              "products/agentic-wallet/manual/reference/supported-chains"
+            ]
+          },
           {
             "group": "Tools",
             "pages": [
@@ -291,6 +214,8 @@
               "products/agentic-wallet/manual/reference/toolkit",
               "products/agentic-wallet/manual/reference/langchain",
               "products/agentic-wallet/manual/reference/openai",
+              "products/agentic-wallet/manual/reference/vercel-ai-sdk",
+              "products/agentic-wallet/manual/reference/mastra",
               "products/agentic-wallet/manual/reference/agno",
               "products/agentic-wallet/manual/reference/crewai"
             ]
@@ -335,6 +260,7 @@
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-transaction-records",
                   "products/agentic-wallet/manual/reference/get-transaction-record-by-request-id",
+                  "products/agentic-wallet/manual/reference/get-transaction-record-by-uuid",
                   "products/agentic-wallet/manual/reference/get-transaction-record"
                 ]
               },
@@ -345,7 +271,6 @@
                   "products/agentic-wallet/manual/reference/list-wallets",
                   "products/agentic-wallet/manual/reference/get-wallet",
                   "products/agentic-wallet/manual/reference/update-wallet",
-                  "products/agentic-wallet/manual/reference/archive-wallet",
                   "products/agentic-wallet/manual/reference/wallet-reshare",
                   "products/agentic-wallet/manual/reference/wallet-tss-callback",
                   "products/agentic-wallet/manual/reference/create-wallet-address",
@@ -407,7 +332,7 @@
                 ]
               },
               {
-                "group": "Approvals V2",
+                "group": "Approvals",
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-approvals",
                   "products/agentic-wallet/manual/reference/get-approval",
@@ -419,6 +344,8 @@
                 "pages": [
                   "products/agentic-wallet/manual/reference/submit-pact",
                   "products/agentic-wallet/manual/reference/list-pacts",
+                  "products/agentic-wallet/manual/reference/get-wallet-pact-stats",
+                  "products/agentic-wallet/manual/reference/get-wallet-pact-history",
                   "products/agentic-wallet/manual/reference/get-pact",
                   "products/agentic-wallet/manual/reference/revoke-pact",
                   "products/agentic-wallet/manual/reference/withdraw-pact",
@@ -480,8 +407,25 @@
               {
                 "group": "Recipes",
                 "pages": [
+                  "products/agentic-wallet/manual/reference/list-recipe-library",
+                  "products/agentic-wallet/manual/reference/create-recipe",
+                  "products/agentic-wallet/manual/reference/list-featured-recipes",
+                  "products/agentic-wallet/manual/reference/list-recipe-categories",
+                  "products/agentic-wallet/manual/reference/get-recipe-by-slug",
+                  "products/agentic-wallet/manual/reference/update-recipe",
+                  "products/agentic-wallet/manual/reference/archive-recipe",
+                  "products/agentic-wallet/manual/reference/track-recipe-share",
+                  "products/agentic-wallet/manual/reference/track-recipe-use",
+                  "products/agentic-wallet/manual/reference/submit-recipe",
+                  "products/agentic-wallet/manual/reference/review-recipe-submission",
                   "products/agentic-wallet/manual/reference/search-recipes",
                   "products/agentic-wallet/manual/reference/get-recipe-document"
+                ]
+              },
+              {
+                "group": "Suggestions",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/get-suggestion"
                 ]
               },
               {
@@ -490,13 +434,40 @@
                   "products/agentic-wallet/manual/reference/list-system-configs",
                   "products/agentic-wallet/manual/reference/upsert-system-config"
                 ]
-              },
-              {
-                "group": "AP2",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/get-merchants"
-                ]
               }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Learn",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "products/agentic-wallet/manual/learn/overview"
+            ]
+          },
+          {
+            "group": "Agentic Wallets",
+            "pages": [
+              "products/agentic-wallet/manual/learn/what-is-agentic-wallet",
+              "products/agentic-wallet/manual/learn/delegated-authority",
+              "products/agentic-wallet/manual/learn/policy-first-design",
+              "products/agentic-wallet/manual/learn/autonomy-spectrum",
+              "products/agentic-wallet/manual/learn/ai-specific-risks"
+            ]
+          },
+          {
+            "group": "Blockchain Basics",
+            "pages": [
+              "products/agentic-wallet/manual/learn/chains",
+              "products/agentic-wallet/manual/learn/tokens",
+              "products/agentic-wallet/manual/learn/wallets",
+              "products/agentic-wallet/manual/learn/transactions",
+              "products/agentic-wallet/manual/learn/smart-contracts",
+              "products/agentic-wallet/manual/learn/testnets",
+              "products/agentic-wallet/manual/learn/defi-protocols"
             ]
           }
         ]
