@@ -56,10 +56,10 @@ Allowlists are defined inline when the agent submits the pact. The agent include
   "rules": {
     "effect": "allow",
     "when": {
-      "chain_in": ["BASE"],
+      "chain_in": ["BASE_ETH"],
       "target_in": [
         {
-          "chain_id": "BASE",
+          "chain_id": "BASE_ETH",
           "contract_addr": "0xabc...router"
         }
       ]
@@ -104,7 +104,7 @@ When the policy engine evaluates an operation at Stage 2, it checks whether the 
 A mismatch at Stage 2 produces a structured denial:
 
 - For a destination address not in the list: HTTP 403 with a policy denial response.
-- For a contract address not in the list: HTTP 403 with code `CONTRACT_NOT_WHITELISTED`, with `details.requested_contract` identifying the address that was blocked.
+- For a contract address not in the list: HTTP 403 with code `CONTRACT_NOT_WHITELISTED`, with `details.contract_addr` identifying the address that was blocked.
 
 The denial response includes a `suggestion` field advising the agent to ask the wallet owner to add the address to the allowlist before retrying.
 

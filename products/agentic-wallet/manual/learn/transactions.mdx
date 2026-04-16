@@ -1,99 +1,112 @@
 ---
 title: "Transactions and gas"
-description: "How on-chain transactions work, what gas fees are, and how Cobo Gasless handles them automatically."
+description: "How on-chain transactions work and what gas fees are."
 ---
 
 ## What is a transaction
 
-A **transaction** is a signed message submitted to a blockchain that changes state — transferring tokens, calling a contract function, or deploying a new contract. Once included in a block, transactions are permanent and irreversible.
+A **transaction** is a signed message submitted to a blockchain that changes its state — transferring tokens, calling a contract function, or deploying a new contract. Once included in a block, transactions are permanent and irreversible.
 
-Every EVM transaction has:
+When you inspect an EVM transaction on a block explorer, its recorded parameters show everything that single submission includes:
 
 | Field | Description |
 |---|---|
 | `from` | The account initiating and paying gas |
 | `to` | The recipient address or contract |
-| `value` | Amount of native token to send (can be zero) |
+| `value` | Amount of native token to send (zero for most contract calls) |
 | `data` | Encoded function call for contracts; empty for plain transfers |
 | `gas limit` | Maximum computation the sender is willing to pay for |
-| `nonce` | A counter that prevents duplicate transactions from being replayed |
+| `maxFeePerGas` | Maximum total gas price the sender is willing to pay (EIP-1559) |
+| `maxPriorityFeePerGas` | Tip paid to the block producer to prioritize inclusion (EIP-1559) |
+| `nonce` | A sequential counter that prevents the same transaction from being submitted twice |
 
-## Transaction hash
+> Most modern EVM transactions use the EIP-1559 fee format. Legacy transactions with a single `gasPrice` field are still valid but less common.
 
-Every submitted transaction receives a unique **transaction hash** (tx hash) — a 32-byte hex string like `0x4a3f8b2c...`. This is how you look up a transaction on a block explorer:
 
-- Ethereum / Sepolia: [etherscan.io](https://etherscan.io) / [sepolia.etherscan.io](https://sepolia.etherscan.io)
-- Base / Base Sepolia: [basescan.org](https://basescan.org) / [sepolia.basescan.org](https://sepolia.basescan.org)
-- Polygon: [polygonscan.com](https://polygonscan.com)
+### Transaction hash
+
+Every submitted transaction receives a unique **transaction hash** (tx hash) — a hex string like `0x4a3f8b2c...`. This is how you look up a transaction on a block explorer:
+
+| Chain | Block explorer |
+|---|---|
+| Ethereum mainnet | [etherscan.io](https://etherscan.io) |
+| Ethereum Sepolia | [sepolia.etherscan.io](https://sepolia.etherscan.io) |
+| Base mainnet | [basescan.org](https://basescan.org) |
+| Base Sepolia | [sepolia.basescan.org](https://sepolia.basescan.org) |
+| Polygon PoS | [polygonscan.com](https://polygonscan.com) |
+| Arbitrum One | [arbiscan.io](https://arbiscan.io) |
+| Optimism | [optimistic.etherscan.io](https://optimistic.etherscan.io) |
+| BNB Smart Chain | [bscscan.com](https://bscscan.com) |
+| Avalanche C-Chain | [snowtrace.io](https://snowtrace.io) |
+| Solana mainnet | [solscan.io](https://solscan.io) |
 
 Cobo returns the transaction hash after successful submission.
 
-## Gas fees
+### Gas fees
 
-**Gas** is the unit of computational work on EVM chains. Every operation (storing a value, running code, transferring tokens) costs a fixed amount of gas. The total fee is:
+On-chain transactions require a fee to compensate the network for computation and storage. The fee model differs between EVM chains and Solana.
+
+#### EVM chains
+
+Gas is the unit of computational work. Every operation costs a fixed amount of gas, and the total fee depends on how much computation the transaction requires:
 
 ```
-Transaction fee = gas used × gas price (in Gwei)
+Transaction fee (EVM) = gas used × gas price (in Gwei)
 ```
 
-Gas is paid in the chain's native token (ETH on Ethereum and Base, MATIC on Polygon). On Solana, fees are paid in lamports (SOL).
+Gas is paid in the chain's native token — ETH on Ethereum and Base, POL on Polygon, BNB on BNB Smart Chain, AVAX on Avalanche.
+
+Modern EVM transactions use the EIP-1559 fee model, which splits the gas price into two components:
+
+| Component | Field | Description |
+|---|---|---|
+| Base fee | — | Set by the protocol; burned, not paid to validators |
+| Priority fee | `maxPriorityFeePerGas` | Tip paid to the block producer to prioritize inclusion |
+
+The `maxFeePerGas` field caps the total amount the sender is willing to pay. Any difference between `maxFeePerGas` and the actual base fee + priority fee is refunded.
 
 Gas prices fluctuate with network congestion. During high activity, fees can spike significantly.
 
-## Cobo Gasless (Fee Station)
+#### Solana
 
-Cobo Agentic Wallet includes **Cobo Gasless**, which automatically sponsors gas fees on behalf of your wallet. You do not need to hold ETH, MATIC, SOL, or any other native token to execute transactions.
+Solana uses a different fee model with two components:
 
-This means:
-- An agent wallet holding only USDC can still transfer USDC.
-- Token swaps and contract calls work without pre-funding gas.
-- Developers do not need to build gas management into their agents.
-
-Gas sponsorship is applied automatically at the signing layer — no configuration required.
-
-## Checking transaction status
-
-After submitting a transaction, poll for its confirmation status:
-
-```bash
-caw tx get <WALLET_ID> <TX_ID>
-```
-
-Or via the Python SDK:
-
-```python
-tx = await client.get_transaction(wallet_id=wallet_id, tx_id=tx_id)
-print(tx["status"])  # pending, confirmed, failed
-```
-
-## Transaction lifecycle
+| Component | Description |
+|---|---|
+| Base fee | A flat fee per signature, charged in lamports (1 SOL = 1,000,000,000 lamports) |
+| Priority fee | An optional fee per compute unit to increase processing priority during congestion |
 
 ```
-Agent submits → Policy engine validates → Cobo signs → Broadcast to network
-    → Included in block → Additional confirmations → Confirmed
+Transaction fee (Solana) = (number of signatures × base fee per signature) + (compute units × compute unit price)
 ```
 
-The policy engine step is synchronous — if the transaction violates a policy, it is blocked before reaching the network. If it is within policy but requires approval, it is queued as a pending operation.
+Solana transactions also carry a recent blockhash that expires after approximately 150 blocks (~1 minute). If a transaction is not included within that window, it becomes invalid and must be resubmitted. Agents that submit transactions autonomously should account for this expiry when retrying.
+
+## Transaction lifecycle in Cobo Agentic Wallet
+
+<Note>
+This lifecycle is specific to Cobo Agentic Wallet. Other products and platforms may handle transaction submission and signing differently.
+</Note>
+
+```
+Submit → Policy validation → MPC signing → Broadcast → Included in block → Confirmed
+```
+
+1. **Policy validation** — the policy engine (governed by the pact) checks the transaction. If it violates a policy, it is blocked before reaching the network.
+2. **MPC signing** — if it passes, the transaction is co-signed: the agent and Cobo for agent-initiated transactions; the app and Cobo for app-initiated transactions.
+3. **Broadcast** — the signed transaction is sent to the network, included in a block, and confirmed.
 
 ## Transaction finality
 
-Transactions are not final the moment they are submitted. They must be included in a block and confirmed by subsequent blocks.
+TTransactions are not final the moment they are submitted. They must be included in a block and confirmed by subsequent blocks. For high-value operations, waiting for additional confirmations beyond the first provides stronger settlement guarantees.
 
-| Chain | Time to first confirmation |
-|---|---|
-| Ethereum mainnet | ~12 seconds |
-| Base mainnet | ~2 seconds |
-| Polygon mainnet | ~2 seconds |
-| Solana mainnet | ~400 milliseconds |
-| Ethereum Sepolia | ~12 seconds |
-| Base Sepolia | ~2 seconds |
+| Chain | Time to first confirmation | Practical finality |
+|---|---|---|
+| Ethereum mainnet | ~12 seconds | ~3 minutes (15 blocks) |
+| Base mainnet | ~2 seconds | ~10 seconds |
+| Polygon PoS | ~2 seconds | ~10 seconds |
+| Solana mainnet | ~400 milliseconds | ~2 seconds |
+| Ethereum Sepolia | ~12 seconds | ~3 minutes |
+| Base Sepolia | ~2 seconds | ~10 seconds |
 
 Cobo waits for block inclusion before marking a transaction as confirmed.
-
-## Failed transactions
-
-A transaction can fail at two stages:
-
-**Before submission** — blocked by the Cobo policy engine (violates a policy rule). No gas is consumed. The agent receives a `deny` or `require_approval` response.
-
-**After submission** — the transaction is broadcast but reverts on-chain (e.g., insufficient token balance, slippage exceeded, contract revert). Gas is consumed up to the point of failure. Cobo reports the transaction as `failed` with the revert reason if available.

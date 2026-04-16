@@ -1,0 +1,118 @@
+---
+title: "Mastra"
+description: "Reference pattern for using Cobo Agentic Wallet with Mastra in TypeScript."
+icon: "boxes-stacked"
+sidebarTitle: "Mastra"
+---
+
+## Overview
+
+CAW does not currently ship a dedicated Mastra adapter package. The recommended integration pattern is:
+
+1. use `@cobo/agentic-wallet` for API access
+2. expose CAW operations through Mastra tools
+3. keep CAW submission and retry logic in a narrow execution layer
+4. track resulting operations by `request_id`
+
+This works well for TypeScript-first runtimes that want explicit agent and workflow boundaries.
+
+## Installation
+
+```bash
+npm install @cobo/agentic-wallet @mastra/core @ai-sdk/openai zod
+```
+
+## Canonical Tool Split
+
+For Mastra agents, the recommended split is:
+
+- **Execution agent** — `submit_pact`, one execution tool, one tracking tool
+- **Observer agent** — balances, transaction records, audit logs
+- **Planner plus executor** — keep CAW submission in the executor only
+
+Do not give every agent the full CAW surface by default.
+
+## Example Pattern
+
+```typescript
+import { openai } from '@ai-sdk/openai';
+import { Agent } from '@mastra/core/agent';
+import { createTool } from '@mastra/core/tools';
+import { z } from 'zod';
+import {
+  Configuration,
+  PactsApi,
+  TransactionRecordsApi,
+  TransactionsApi,
+} from '@cobo/agentic-wallet';
+
+const config = new Configuration({
+  apiKey: process.env.AGENT_WALLET_API_KEY!,
+  basePath: process.env.AGENT_WALLET_API_URL!,
+});
+
+const pactsApi = new PactsApi(config);
+const txApi = new TransactionsApi(config);
+const recordsApi = new TransactionRecordsApi(config);
+
+const submitPactTool = createTool({
+  id: 'submit-pact',
+  description: 'Submit a pact and return the pact id.',
+  inputSchema: z.object({
+    wallet_id: z.string(),
+    intent: z.string(),
+  }),
+  execute: async ({ context }) => {
+    const response = await pactsApi.submitPact({
+      wallet_id: context.wallet_id,
+      intent: context.intent,
+      spec: {
+        completion_conditions: [{ type: 'time_elapsed', threshold: '86400' }],
+      },
+    });
+    return response.data.result;
+  },
+});
+
+const recordTool = createTool({
+  id: 'get-transaction-record-by-request-id',
+  description: 'Look up a transaction record by request id.',
+  inputSchema: z.object({
+    wallet_uuid: z.string(),
+    request_id: z.string(),
+  }),
+  execute: async ({ context }) => {
+    const response = await recordsApi.getTransactionRecordByRequestId(
+      context.wallet_uuid,
+      context.request_id,
+    );
+    return response.data.result;
+  },
+});
+
+const agent = new Agent({
+  name: 'cobo-operator',
+  model: openai('gpt-4.1-mini'),
+  tools: { submitPactTool, recordTool },
+});
+```
+
+## Denial Behavior
+
+When a CAW execution call is denied:
+
+- return the structured denial payload as normal tool output
+- preserve `suggestion` so the agent can adapt
+- avoid collapsing policy denials into generic execution failures
+
+For non-policy failures, let the tool error surface normally.
+
+## Use This Pattern When
+
+- your runtime is already built on Mastra agents or workflows
+- you want TypeScript-native orchestration
+- you want CAW inside a controlled execution layer rather than as a broad tool dump
+
+<Card title="Developer Guide" href="/products/agentic-wallet/manual/developer/mastra">
+  Full TypeScript quickstart for Mastra.
+</Card>

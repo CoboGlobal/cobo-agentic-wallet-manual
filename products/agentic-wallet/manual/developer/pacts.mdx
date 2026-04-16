@@ -3,41 +3,40 @@ title: "Submit and Manage Pacts"
 description: "How to use pacts for task-level authorization — submit, poll, operate, and revoke."
 ---
 
-A pact is the agreement between you and your agent. It captures the agent's intent, the execution plan, the policy boundaries you enforce, and when the authority expires. When you approve a pact, Cobo Agentic Wallet creates a scoped delegation with enforced policies — the agent can operate, but only within the boundaries you defined.
+A pact is the agreement between the wallet owner and your runtime. It captures the program's intent, the execution plan, the policy boundaries the owner enforces, and when the authority expires. When the owner approves a pact, Cobo Agentic Wallet creates a scoped delegation with enforced policies so the runtime can operate, but only within the approved boundaries.
 
 ## How pacts work
 
 The pact flow has three phases: **propose**, **approve**, **operate**.
 
 ```
-1. Agent proposes a pact
+1. Runtime proposes a pact
    └── "I want to DCA $500/week into ETH on Base for 3 months"
-   └── Specifies: spending limits, allowed contracts, duration
+   └── Specifies: spending limits, allowed contracts, and completion conditions
 
 2. You review and approve
-   └── Pact appears in the Human App
+   └── Pact appears in the Cobo Agentic Wallet app
    └── You see the intent, execution plan, and spending rules
    └── You can revise the policies before approving
-   └── Approve → agent gets scoped access. Reject → nothing happens.
+   └── Approve → runtime gets scoped access. Reject → nothing happens.
 
-3. Agent operates within the pact
+3. Runtime operates within the pact
    └── Every transaction is checked against the pact's policies
    └── Exceeds a limit → denied with a clear reason
    └── Exceeds your threshold → paused for your approval
-   └── Duration expires or task completes → access revoked automatically
+   └── Completion conditions are met or the owner revokes → access removed automatically
 ```
 
 ## What a pact contains
 
-A pact specification (PactSpec) defines the agent's operating boundaries:
+For the conceptual overview of the four elements, see [What is a pact](/products/agentic-wallet/manual/start-here/what-is-a-pact). The following table maps those elements to PactSpec fields:
 
 | Field | What it controls |
 |---|---|
-| **Intent** | A plain-language description of what the agent wants to do — e.g., "DCA $500/week into ETH on Base for 3 months" |
-| **Execution plan** | A detailed markdown plan explaining the agent's strategy, steps, and rationale — helps you understand *how* the agent intends to accomplish the intent |
+| **Intent** | A plain-language description of what the runtime wants to do — e.g., "DCA $500/week into ETH on Base for 3 months" |
+| **Execution plan** | A detailed markdown plan explaining the runtime's strategy, steps, and rationale — helps the owner understand *how* the program intends to accomplish the intent |
 | **Policies** | Spending rules — per-transaction limits, daily/weekly budgets, allowed chains/tokens/contracts |
-| **Duration** | How long the pact stays active (e.g., 90 days). When it expires, access is revoked automatically |
-| **Completion conditions** | Optional conditions that end the pact early — e.g., after 12 transactions or $6,000 total spent |
+| **Completion conditions** | Conditions that end the pact automatically — e.g., after 12 transactions, $6,000 total spent, or 90 days elapsed |
 
 ### Example PactSpec
 
@@ -80,8 +79,8 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
       }
     }
   ],
-  "duration_seconds": 7776000,
   "completion_conditions": [
+    { "type": "time_elapsed", "threshold": "7776000" },
     { "type": "tx_count", "threshold": "12" }
   ]
 }
@@ -107,14 +106,14 @@ COMPLETED  EXPIRED
 
 | State | What it means |
 |---|---|
-| `PENDING_APPROVAL` | Agent submitted the pact. Waiting for your approval in the Human App. |
-| `ACTIVE` | You approved. The agent now has a scoped delegation and API key to operate within the pact's boundaries. |
-| `REJECTED` | You rejected the pact. No access was granted. |
+| `PENDING_APPROVAL` | Runtime submitted the pact. Waiting for owner approval in the Cobo Agentic Wallet app. |
+| `ACTIVE` | Owner approved. The runtime now has a scoped delegation and API key to operate within the pact's boundaries. |
+| `REJECTED` | Owner rejected the pact. No access was granted. |
 | `COMPLETED` | A completion condition was met (e.g., 12 transactions completed). Access revoked automatically. |
-| `EXPIRED` | The pact's duration elapsed. Access revoked automatically. |
-| `REVOKED` | You revoked the pact manually. Access revoked immediately. |
+| `EXPIRED` | The pact expired because approval timed out or a time-based completion condition elapsed. Access revoked automatically. |
+| `REVOKED` | Owner revoked the pact manually. Access revoked immediately. |
 
-When a pact reaches any terminal state (`COMPLETED`, `EXPIRED`, `REVOKED`), the delegation and its pact-scoped API key are both revoked. The agent can no longer transact.
+When a pact reaches any terminal state (`COMPLETED`, `EXPIRED`, `REVOKED`), the delegation and its pact-scoped API key are both revoked. The runtime can no longer submit onchain operations.
 
 ## Pact, delegation, and policy relationship
 
@@ -130,7 +129,7 @@ Pact (what you approve)
   │     └── transfer limits, contract allowlists, rolling budgets
   │
   └── Pact-scoped API key (operator credential)
-        └── bound to the delegation, returned only to the agent
+        └── bound to the delegation, returned only to the runtime
 ```
 
 You don't need to create delegations or policies manually when using pacts — the pact does it for you.
@@ -161,7 +160,9 @@ async with WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY) as client:
         intent="Transfer up to $100/day for testing",
         spec={
             "policies": [...],
-            "duration_seconds": 86400
+            "completion_conditions": [
+                {"type": "time_elapsed", "threshold": "86400"}
+            ],
         }
     )
     pact_id = result["pact_id"]
@@ -189,7 +190,9 @@ const result = await client.submitPact({
   intent: 'Transfer up to $100/day for testing',
   spec: {
     policies: [...],
-    duration_seconds: 86400,
+    completion_conditions: [
+      { type: 'time_elapsed', threshold: '86400' },
+    ],
   },
 });
 const pactId = result.pact_id;
@@ -271,7 +274,7 @@ await client.revokePact(pactId);
 
 ## Approval experience
 
-When your agent submits a pact, you receive a notification in the Human App. The approval screen shows:
+When your runtime submits a pact, the owner receives a notification in the Cobo Agentic Wallet app. The approval screen shows:
 
 - **Intent** — what the agent wants to do, in plain language
 - **Execution plan** — the agent's detailed strategy and steps, so you understand the reasoning

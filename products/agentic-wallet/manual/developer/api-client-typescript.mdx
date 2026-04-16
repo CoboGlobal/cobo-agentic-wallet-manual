@@ -1,0 +1,226 @@
+---
+title: "TypeScript SDK"
+description: "Canonical 5-minute TypeScript SDK quickstart: submit a pact, execute an onchain action, handle policy denial, and verify in audit logs."
+sidebarTitle: "TypeScript SDK"
+---
+
+This is the canonical TypeScript path for Cobo Agentic Wallet.
+
+## 5-minute outcome
+
+In one run, you will:
+
+1. Pair and provision a wallet by running `caw onboard provision`
+2. Submit a pact requesting scoped onchain permissions
+3. Wait for owner approval
+4. Execute one allowed onchain action using the pact-scoped API key
+5. Trigger one policy denial
+6. Self-correct using denial guidance
+7. Verify the result in audit logs
+
+## Prerequisites
+
+- Node.js 18+
+- A wallet already provisioned via `caw onboard provision` (see [CLI quickstart](/products/agentic-wallet/manual/developer/cli))
+- Your runtime API key and wallet UUID set as environment variables
+
+## Step 1: Install SDK
+
+```bash
+npm install @cobo/agentic-wallet
+```
+
+## Step 2: Set environment variables
+
+Set `AGENT_WALLET_API_URL` to your CAW API endpoint.
+
+```bash
+export AGENT_WALLET_API_URL=https://api.agenticwallet.cobo.com
+export AGENT_WALLET_API_KEY=your-agent-api-key
+export AGENT_WALLET_WALLET_ID=your-wallet-uuid
+```
+
+## Step 3: Run the end-to-end script
+
+```typescript title="quickstart.ts"
+import {
+  AuditApi,
+  Configuration,
+  PactsApi,
+  TransactionsApi,
+} from '@cobo/agentic-wallet';
+
+const CHAIN_ID = 'BASE_ETH';
+const TOKEN_ID = 'USDC';
+const DESTINATION = '0x1111111111111111111111111111111111111111';
+
+async function main(): Promise<void> {
+  const basePath =
+    process.env.AGENT_WALLET_API_URL!;
+  const apiKey = process.env.AGENT_WALLET_API_KEY!;
+  const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+
+  const ownerConfig = new Configuration({ apiKey, basePath });
+  const pactsApi = new PactsApi(ownerConfig);
+
+  const pactResp = await pactsApi.submitPact({
+    wallet_id: walletId,
+    intent: 'Transfer tokens for integration testing',
+    spec: {
+      policies: [
+        {
+          name: 'max-tx-limit',
+          type: 'transfer',
+          rules: {
+            effect: 'allow',
+            when: {},
+            deny_if: { amount_usd_gt: '100' },
+          },
+        },
+      ],
+      completion_conditions: [
+        { type: 'time_elapsed', threshold: '86400' },
+      ],
+    },
+  });
+
+  const pactId = pactResp.data.result.pact_id;
+  console.log(`PACT SUBMITTED: ${pactId}`);
+
+  console.log('Waiting for owner approval in Human App...');
+  let pactApiKey: string | undefined;
+
+  while (true) {
+    const pact = (await pactsApi.getPact(pactId)).data.result;
+    console.log(`  pact status: ${pact.status}`);
+
+    if (pact.status === 'active') {
+      pactApiKey = pact.api_key;
+      break;
+    }
+
+    if (['rejected', 'expired', 'revoked', 'completed'].includes(pact.status)) {
+      throw new Error(`Pact reached terminal status before use: ${pact.status}`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+
+  if (!pactApiKey) {
+    throw new Error('Active pact did not return a pact-scoped API key');
+  }
+
+  console.log('PACT ACTIVE');
+
+  const pactConfig = new Configuration({ apiKey: pactApiKey, basePath });
+  const txApi = new TransactionsApi(pactConfig);
+  const auditApi = new AuditApi(ownerConfig);
+
+  const allowed = await txApi.transferTokens(walletId, {
+    wallet_id: walletId,
+    chain_id: CHAIN_ID,
+    dst_addr: DESTINATION,
+    token_id: TOKEN_ID,
+    amount: '50',
+  });
+  console.log('ALLOWED:', allowed.data.result.status);
+
+  try {
+    await txApi.transferTokens(walletId, {
+      wallet_id: walletId,
+      chain_id: CHAIN_ID,
+      dst_addr: DESTINATION,
+      token_id: TOKEN_ID,
+      amount: '200',
+    });
+  } catch (error) {
+    const response = (error as { response?: { data?: { error?: { code?: string; suggestion?: string; details?: Record<string, string> } } } }).response;
+    const denial = response?.data?.error;
+    const retryAmount = denial?.details?.limit_value ?? '100';
+
+    console.log('DENIED:', denial?.code ?? 'POLICY_DENIED');
+    console.log('SUGGESTION:', denial?.suggestion ?? 'Retry with a compliant amount');
+
+    const retried = await txApi.transferTokens(walletId, {
+      wallet_id: walletId,
+      chain_id: CHAIN_ID,
+      dst_addr: DESTINATION,
+      token_id: TOKEN_ID,
+      amount: retryAmount,
+    });
+    console.log('RETRIED:', retried.data.result.status);
+  }
+
+  const logs = await auditApi.listAuditLogs(walletId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 20);
+  const items = logs.data.result.items ?? [];
+  const allowedCount = items.filter(item => item.result === 'allowed').length;
+  const deniedCount = items.filter(item => item.result === 'denied').length;
+  console.log(`AUDIT: allowed=${allowedCount}, denied=${deniedCount}`);
+}
+
+main().catch(error => {
+  console.error(error);
+  process.exit(1);
+});
+```
+
+## Step 4: Validate output
+
+You should see:
+
+- `PACT SUBMITTED: <pact-id>`
+- `PACT ACTIVE`
+- `ALLOWED: ...`
+- `DENIED: ...`
+- `SUGGESTION: ...`
+- `RETRIED: ...`
+- `AUDIT: allowed=..., denied=...`
+
+## Broaden beyond transfers
+
+The same pact model also works for contract execution, payments, and broader blockchain automation. After the transfer hello-world works, the next canonical expansion is `contractCall` plus durable tracking by `request_id`:
+
+```typescript
+const callFee = await txApi.estimateContractCallFee(walletId, {
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+  calldata: '0x38ed1739...',
+  value: '0',
+});
+console.log('CALL FEE:', callFee.data.result);
+
+const callResult = await txApi.contractCall(walletId, {
+  chain_id: 'BASE_ETH',
+  contract_addr: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+  calldata: '0x38ed1739...',
+  value: '0',
+  request_id: 'swap-2026-001',
+});
+console.log('CALL:', callResult.data.result.status);
+```
+
+Use [Contract Calls](/products/agentic-wallet/manual/developer/contract-calls) when your runtime automates swaps, vault deposits, staking, or other protocol interaction.
+
+## Go further
+
+The TypeScript SDK gives you direct typed access to the CAW API surface. Build on top of it by:
+
+- wrapping API calls in domain-specific helpers for your runtime
+- designing around Pact Drafting, Execution, and Observer responsibilities so each runtime path stays scoped
+- combining it with your own tool-calling or orchestration layer
+- using the CLI for pairing and debugging while keeping application logic in Node.js
+
+<CardGroup cols={2}>
+  <Card title="Handle Policy Denial" icon="triangle-exclamation" href="/products/agentic-wallet/manual/developer/handle-policy-denial">
+    Production retry loop patterns and structured denial fields.
+  </Card>
+  <Card title="OpenAI Agents SDK" href="/products/agentic-wallet/manual/developer/openai">
+    Use the TypeScript SDK inside an OpenAI Agents tool layer.
+  </Card>
+  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
+    The equivalent end-to-end flow in Python.
+  </Card>
+  <Card title="TypeScript Reference" href="/products/agentic-wallet/manual/reference/typescript">
+    Full generated client reference and API classes.
+  </Card>
+</CardGroup>

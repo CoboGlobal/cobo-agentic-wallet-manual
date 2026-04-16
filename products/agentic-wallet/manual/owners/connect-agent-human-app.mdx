@@ -1,0 +1,59 @@
+---
+title: "Pair Your Agent"
+sidebarTitle: "Pair Your Agent"
+description: "Pair your agent with the Cobo Agentic Wallet app from your phone. Once paired, you set the rules and your agent operates within your limits."
+---
+
+When your agent runs `caw onboard`, it creates a wallet and is immediately the owner with no restrictions. Pairing the agent with the Cobo Agentic Wallet app establishes you as the human controller: your key shares are generated on your phone, your agent becomes a delegate operating through pacts, and over-limit operations pause for your approval in the Cobo Agentic Wallet app.
+
+## What changes when you pair
+
+| | Before pairing | After pairing |
+|---|---|---|
+| **Owner** | Your agent | You |
+| **Authorization model** | No restrictions | Every new task requires a pact — a structured delegation agreement with intent, execution plan, policies, and completion conditions |
+| **Spending limits** | None | Controlled by your approved pacts and owner-side guardrails |
+| **Approval requirement** | None | New pacts and over-limit operations pause for your approval |
+| **Key shares** | Agent machine + Cobo (2-of-2) | Agent machine + Cobo (2-of-2) plus your phone + Cobo (2-of-2) |
+
+<Info>Pairing is optional and can be done at any time — even after your agent has been transacting for a while. Your wallet history and funds carry over.</Info>
+
+## How to pair
+
+<Steps>
+
+<Step title="Download and sign in to the Cobo Agentic Wallet app">
+Download the Cobo Agentic Wallet app from the App Store or Google Play, then create an account or sign in.
+</Step>
+
+<Step title="Get the pairing code from your agent">
+Ask your agent to generate a pairing code. Your agent will return a code in the format `CAW-XXXXX`. It is valid for 30 minutes.
+</Step>
+
+<Step title="Enter the pairing code in the Cobo Agentic Wallet app">
+In the Cobo Agentic Wallet app, follow the instructions to enter the pairing code and start pairing. If you have already paired with one wallet and want to pair another, tap the wallet name in the top-left corner of the main page, then tap **Pair Wallet** at the bottom.
+
+</Step>
+
+<Step title="Confirm and complete pairing">
+Review the wallet details and tap **Confirm**. The app completes the pairing process and generates the mobile key share on your phone. This takes about 30 seconds.
+</Step>
+
+<Step title="Back up your key share">
+Your mobile key share is the only copy held by you — if you lose your phone without a backup, you lose access to your wallet. Back it up now. See [Key share backup](/products/agentic-wallet/manual/security/key-share-backup) for instructions.
+</Step>
+
+<Step title="Approve your agent's first pact">
+When you give your agent a task, it proposes a pact — a structured authorization request covering what it intends to do, which tokens and contracts it needs access to, spending limits, and when the authorization ends.
+
+You receive a notification in the Cobo Agentic Wallet app. Review the pact details and tap **Approve** or **Reject**. Your agent cannot act until you approve. You can also open the AI assistant in the app to chat about how to modify the pact before approving.
+
+> "Send 100 USDC to 0xABC… on Base."
+
+Once you approve, the agent executes — and the authorization expires automatically when the task is done.
+
+</Step>
+
+</Steps>
+
+<Info>For a full overview of the Cobo Agentic Wallet app — including how transaction approval works and how your keys are protected — see [The Cobo Agentic Wallet app](/products/agentic-wallet/manual/owners/human-app).</Info>

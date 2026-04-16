@@ -20,7 +20,7 @@ pip install cobo-agentic-wallet
 import asyncio
 from cobo_agentic_wallet.client import WalletAPIClient
 
-API_URL = "https://api-core.agenticwallet.cobo.com"
+API_URL = "https://api.agenticwallet.cobo.com"
 API_KEY = "your-api-key"
 WALLET_UUID = "your-wallet-uuid"
 
@@ -39,14 +39,14 @@ All methods are `async`. Use `async with WalletAPIClient(...) as client:` to ens
 from cobo_agentic_wallet.client import WalletAPIClient
 
 client = WalletAPIClient(
-    base_url="https://api-core.agenticwallet.cobo.com",
+    base_url="https://api.agenticwallet.cobo.com",
     api_key="your-api-key",
     timeout=30.0,
 )
 ```
 
 <ParamField path="base_url" type="str" required>
-  API base URL (for example, `http://localhost:8000`).
+  API base URL (for example, `https://api.agenticwallet.cobo.com`).
 </ParamField>
 
 <ParamField path="api_key" type="str | None" default="None">
@@ -148,14 +148,6 @@ Update the name or metadata of a specific wallet.
   Update payload containing the fields to change.
 </ParamField>
 
-### `archive_wallet()`
-
-Archive a specific wallet. Archived wallets are excluded from `list_wallets()` by default.
-
-<ParamField path="wallet_uuid" type="str" required>
-  The wallet UUID. Retrieve it by calling `list_wallets()`.
-</ParamField>
-
 ### `create_wallet_address()`
 
 Derive a new on-chain address for the specified wallet and chain.
@@ -163,7 +155,7 @@ Derive a new on-chain address for the specified wallet and chain.
 <ParamField path="wallet_uuid" type="str" required>
   The wallet UUID. Retrieve it by calling `list_wallets()`.
 </ParamField>
-<ParamField path="chain_identifier" type="str" required>
+<ParamField path="chain_type" type="str" required>
   The Cobo chain ID for the new address (for example, `SETH`, `BASE_ETH`, `SOL`). Use `list_chains()` to retrieve all supported chain IDs.
 </ParamField>
 
@@ -185,7 +177,7 @@ Get the online status of the TSS node associated with a specific wallet.
 
 ### `initiate_wallet_pair()`
 
-Initiate wallet ownership pairing and obtain a one-time pairing token for the user to enter in the Cobo Human App.
+Initiate wallet ownership pairing and obtain a one-time pairing token for the user to enter in the Cobo Cobo Agentic Wallet app.
 
 <ParamField path="wallet_pair_initiate" type="Any" required>
   The wallet pair initiation payload. Must include the wallet UUID.
@@ -302,7 +294,7 @@ Initiate a token transfer from the specified wallet. Gas fees are covered automa
   Custom fee parameters. If omitted, the network default is used.
 </ParamField>
 <ParamField path="src_addr" type="str | None" default="None">
-  The source address to transfer from. If omitted, the wallet's default address is used.
+  The source address to transfer from. If omitted, the wallet's most recently created address for this chain is used.
 </ParamField>
 <ParamField path="sponsor" type="bool | None" default="None">
   Whether to use Cobo Gasless (Fee Station) to cover gas fees. Defaults to `True` for human-owned wallets, `False` for agent-owned wallets.
@@ -328,7 +320,7 @@ Estimate the network fee for a token transfer without submitting it. Returns `re
   The chain ID. Automatically resolved from `token_id` if omitted.
 </ParamField>
 <ParamField path="src_addr" type="str | None" default="None">
-  The source address. If omitted, the wallet's default address is used.
+  The source address. If omitted, the wallet's most recently created address for this chain is used.
 </ParamField>
 
 ### `contract_call()`
@@ -363,7 +355,7 @@ Submit a smart contract call from the specified wallet. For EVM chains, provide 
   Custom fee parameters. If omitted, the network default is used.
 </ParamField>
 <ParamField path="src_addr" type="str | None" default="None">
-  The source address. If omitted, the wallet's default address is used.
+  The source address. If omitted, the wallet's most recently created address for this chain is used.
 </ParamField>
 <ParamField path="sponsor" type="bool | None" default="None">
   Whether to use Cobo Gasless to cover gas fees. Defaults to `True` for human-owned wallets, `False` for agent-owned wallets.
@@ -818,7 +810,7 @@ Submit a pact specification for owner approval. The pact enters `pending_approva
   A natural-language description of what the agent intends to do (for example, `"DCA $500/week into ETH on Base for 3 months"`). Shown to the owner during approval.
 </ParamField>
 <ParamField path="spec" type="dict" required>
-  The PactSpec object describing permissions, policies, and duration. Must include `permissions` (list of permission strings) and `duration_seconds` (int).
+  The PactSpec object describing the requested scope, including permissions, policies, and completion conditions.
 </ParamField>
 <ParamField path="name" type="str | None" default="None">
   A short display name for the pact. If omitted, a name is derived from `intent`.
@@ -834,7 +826,9 @@ result = await client.submit_pact(
     spec={
         "permissions": ["write:contract_call", "read:wallet"],
         "policies": [...],
-        "duration_seconds": 7776000,
+        "completion_conditions": [
+            {"type": "time_elapsed", "threshold": "7776000"}
+        ],
     }
 )
 pact_id = result["pact_id"]
@@ -929,10 +923,10 @@ Update the completion conditions for an active pact.
 
 Provision an agent by creating an API key and binding it to an owner.
 
-Supply `token` to use the pairing code from the Human App. If `token` is omitted, provisioning runs in agent-first mode — the response contains a temporary `activation_secret` that the human uses to complete binding.
+Supply `token` to use the pairing code from the Cobo Agentic Wallet app. If `token` is omitted, provisioning runs in agent-first mode — the response contains a temporary `activation_secret` that the human uses to complete binding.
 
 <ParamField path="token" type="str | None" default="None">
-  The pairing code from the Human App.
+  The pairing code from the Cobo Agentic Wallet app.
 </ParamField>
 <ParamField path="invitation_code" type="str | None" default="None">
   An alternative invitation code.
@@ -1114,10 +1108,10 @@ Search for token candidates matching a symbol across supported chains.
 
 Request a test token deposit to a specified address. Only available on testnets.
 
-<ParamField path="address" type="str" required>
+<ParamField path="address" type="str | None" default="None">
   The destination address to receive test tokens.
 </ParamField>
-<ParamField path="token_id" type="str" required>
+<ParamField path="token_id" type="str | None" default="None">
   The token to request (for example, `SETH_USDC`). Use `list_tokens()` to see available tokens.
 </ParamField>
 
@@ -1143,4 +1137,3 @@ Get current prices for one or more tokens.
 ### `get_merchants()`
 
 List AP2 merchants available to the authenticated principal.
-

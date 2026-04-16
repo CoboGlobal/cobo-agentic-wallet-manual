@@ -6,13 +6,7 @@ sidebarTitle: "Agno"
 
 ## Before you start
 
-Ask your user to generate a pairing code from the Human App. See [Guide your users](/products/agentic-wallet/manual/developer/guide-users) for instructions to share with them. Then provision your agent:
-
-```bash
-caw onboard provision --token <PAIRING_CODE>
-```
-
-This saves your API key and wallet UUID to `~/.cobo-agentic-wallet/config`. You'll need both for the steps below.
+Complete the [CLI quickstart](/products/agentic-wallet/manual/developer/cli) first so your runtime already has a paired wallet, API key, and wallet UUID.
 
 ## 5-minute outcome
 
@@ -25,13 +19,13 @@ This saves your API key and wallet UUID to `~/.cobo-agentic-wallet/config`. You'
 ## Step 1: Install
 
 ```bash
-pip install "cobo-agent-wallet[agno]"
+pip install "cobo-agentic-wallet[agno]"
 ```
 
 ## Step 2: Configure environment
 
 ```bash
-export AGENT_WALLET_API_URL=https://api.sandbox.agenticwallet.cobo.com
+export AGENT_WALLET_API_URL=https://api.agenticwallet.cobo.com
 export AGENT_WALLET_API_KEY=your-api-key
 export OPENAI_API_KEY=your-openai-api-key
 ```
@@ -89,6 +83,22 @@ if __name__ == "__main__":
     main()
 ```
 
+If you want to keep the runtime narrower at first, select a smaller tool subset:
+
+```python
+tools = CoboAgentWalletTools(
+    client=client,
+    include_tools=[
+        "submit_pact",
+        "get_pact",
+        "transfer_tokens",
+        "estimate_transfer_fee",
+        "get_transaction_record_by_request_id",
+        "get_audit_logs",
+    ],
+)
+```
+
 ## Step 4: Validate behavior
 
 Look for:
@@ -101,11 +111,12 @@ Look for:
 
 ## Go further
 
-`CoboAgentWalletTools` gives you the standard wallet tool set as Agno-native tools. You can extend it:
+`CoboAgentWalletTools` gives you the widened CAW runtime toolkit as Agno-native tools. You can extend it:
 
 - **Write custom Agno tools** — subclass or define additional tool functions backed by `WalletAPIClient` for your specific use case (e.g. multi-step DeFi flows, price-conditional transfers). Register them alongside `CoboAgentWalletTools`.
 - **Use the Python SDK for structured operations** — call `WalletAPIClient` directly outside the agent for operations that need deterministic outcomes: pact management, batch queries, and policy dry-runs.
 - **Pair with CLI for onboarding and ops** — use `caw` for provisioning and debugging without touching agent code.
+- **Use role-based presets** — start with Pact Drafting, Execution, and Observer responsibilities rather than giving every agent the full toolkit.
 
 <CardGroup cols={2}>
   <Card title="Agno Integration Details" icon="gear" href="/products/agentic-wallet/manual/reference/agno">

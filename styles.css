@@ -1,0 +1,36 @@
+.icon {
+  display: inline;
+  height: 30px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.screenshot_full_screen {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    border-color: #EDEEF3;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: auto;
+}
+
+.screenshot_nav_bar {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    border-color: #EDEEF3;
+    width: 180px;
+    height: auto;
+    display: block;
+    margin: auto;
+}
+
+.screenshot_modal {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    border-color: #EDEEF3;
+    width: 450px;
+    height: auto;
+    display: block;
+    margin: auto;
+}

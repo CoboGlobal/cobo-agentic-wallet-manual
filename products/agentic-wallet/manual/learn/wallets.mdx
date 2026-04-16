@@ -14,51 +14,28 @@ Your address is public and safe to share — it is how others send tokens to you
 
 ## What is a private key
 
-The **private key** is the secret that proves ownership of an address. It is what you use to sign transactions — authorizing them to execute on-chain. Anyone who knows your private key can sign transactions from that address and move all funds.
+The **private key** is the secret that proves ownership of an address. It authorizes transactions from that address. Anyone who knows your private key can move all funds in the wallet.
 
-In traditional EOA wallets (MetaMask, hardware wallets), the private key is a single 32-byte secret. This creates a single point of failure: if the key is lost, stolen, or compromised, the funds are gone.
+Most users encounter private keys indirectly through a seed phrase (also called a mnemonic or recovery phrase) — a human-readable sequence of 12 or 24 words that encodes the key. The seed phrase is the master secret: anyone who has it can recreate the private key and access the funds.
+
+In traditional wallets (like MetaMask or a hardware wallet), the private key is a single secret. This creates a single point of failure: if the key is lost or stolen, the funds are gone.
 
 ## MPC wallets and key shares
 
-Cobo Agentic Wallet uses **multi-party computation (MPC)** to eliminate the single point of failure. Instead of a single private key, the system generates multiple **key shares** distributed across separate parties:
+**Multi-party computation (MPC)** wallets eliminate the single point of failure by splitting signing authority across multiple parties. Instead of one private key held by one person, the system generates multiple **key shares** — each held by a different party. Signing a transaction requires a threshold number of parties to cooperate; no single share is useful on its own. See [MPC Model](/products/agentic-wallet/manual/security/mpc-model) for how Cobo implements this.
 
-- Agent-managed path: the agent's signing node + Cobo's infrastructure (2-of-2)
-- Human App path: your phone's main key + your phone's backup key + Cobo (2-of-3)
+## How addresses are organized in Cobo Agentic Wallet
 
-Signing a transaction requires at least 2 share holders to cooperate. A single key share is cryptographically useless on its own — it cannot be used to sign anything. Cobo never has enough shares alone to move your funds.
-
-<Info>
-The AI agent never has access to private key material. The LLM layer and the signing layer are physically separate. The agent submits requests through the Cobo policy engine, which validates them against your rules before triggering the MPC signing process.
-</Info>
-
-## Wallet vs. address
-
-In Cobo Agentic Wallet, a **wallet** is a logical container that can have multiple **addresses** — one per supported chain. Your wallet has a single wallet ID, but distinct on-chain addresses on Ethereum, Base, Polygon, and Solana.
+In Cobo Agentic Wallet, a **wallet** is a logical container that can hold multiple **addresses** across one or more chains. Your wallet has a single wallet ID, but can have distinct on-chain addresses on Ethereum, Base, Polygon, Solana, and more.
 
 ```
 Wallet (one wallet ID)
 ├── 0xAbcDef...  (ETH / BASE_ETH / MATIC — same address across EVM chains)
-└── vines1v...   (SOL)
+├── 0x123456...  (ETH / BASE_ETH / MATIC — same address across EVM chains)
+├── vines1v...   (SOL)
+└── mN7dP2...    (SOL)
 ```
 
-EVM chains share a deterministic address derivation, so the same key produces the same address on Ethereum, Base, and Polygon. Solana uses a different key scheme.
+EVM chains share a deterministic address derivation scheme, so the same underlying key produces the same address on Ethereum, Base, and Polygon. This means a single 0x address is valid across all EVM chains — but each chain maintains its own independent balance, nonce, and contract state. Holding tokens on Ethereum at a given address does not make them available on Base at the same address.
 
-## Getting your wallet address
-
-After onboarding, list your wallets and their addresses:
-
-```bash
-caw wallet list
-```
-
-Or via the Python SDK:
-
-```python
-wallets = await client.list_wallets()
-for w in wallets["data"]:
-    print(w["wallet_id"], w["addresses"])
-```
-
-## Key share recovery
-
-If a device holding a key share is lost, key shares can be regenerated through a process called **resharing** — Cobo coordinates this without ever reconstructing the full private key. See [Key share management](/products/agentic-wallet/manual/security/keygen-resharing) for details.
+Solana uses a different derivation scheme and produces a distinct address format.

@@ -1,0 +1,103 @@
+---
+title: "Transaction Tracking"
+description: "Track submitted operations using transaction records, request IDs, and audit logs."
+---
+
+For runtime reliability, treat `request_id` as the primary correlation key. `list_transactions` is useful for compatibility and quick inspection, but `list_transaction_records` and `get_transaction_record_by_request_id` are the stronger primitives for durable tracking.
+
+## Track by request ID
+
+<Tabs>
+<Tab title="Python SDK">
+```python
+record = await client.get_transaction_record_by_request_id(
+    wallet_uuid=WALLET_UUID,
+    request_id="swap-2026-001",
+)
+print(record["status"], record["record_type"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const record = await client.getTransactionRecordByRequestId({
+  wallet_uuid: walletUuid,
+  request_id: 'swap-2026-001',
+});
+console.log(record.status, record.record_type);
+```
+</Tab>
+</Tabs>
+
+## List transaction records
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx list <WALLET_UUID> --limit 20 --status submitted
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+records = await client.list_transaction_records(
+    wallet_uuid=WALLET_UUID,
+    limit=20,
+    status="submitted",
+)
+for record in records.get("items", []):
+    print(record["record_uuid"], record["status"], record["record_type"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const records = await client.listTransactionRecords({
+  wallet_uuid: walletUuid,
+  limit: 20,
+  status: 'submitted',
+});
+for (const record of records.items ?? []) {
+  console.log(record.record_uuid, record.status, record.record_type);
+}
+```
+</Tab>
+</Tabs>
+
+## Get a single transaction record
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx get --tx-id <TX_ID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+record = await client.get_transaction_record(
+    wallet_uuid=WALLET_UUID,
+    record_uuid=TX_ID,
+)
+print(record["status"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const record = await client.getTransactionRecord({
+  wallet_uuid: walletUuid,
+  record_uuid: txId,
+});
+console.log(record.status);
+```
+</Tab>
+</Tabs>
+
+## Status values
+
+| Status | Meaning |
+|---|---|
+| `pending` | Accepted but not yet executed |
+| `broadcasting` | Broadcast to the network |
+| `confirming` | Waiting for confirmations |
+| `completed` | Confirmed on-chain |
+| `failed` | Failed before or after chain execution |
+
+Combine transaction records with [Audit and Activity Logs](/products/agentic-wallet/manual/developer/audit) when you need both execution status and policy/approval history.
+

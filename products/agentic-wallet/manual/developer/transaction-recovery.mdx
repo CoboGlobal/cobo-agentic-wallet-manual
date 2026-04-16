@@ -1,0 +1,82 @@
+---
+title: "Transaction Recovery"
+description: "Speed up or drop stuck transactions and understand when to use each path."
+---
+
+For EVM-style pending transactions, CAW supports two recovery flows:
+
+- `speedup_transaction` to replace the pending transaction with a higher-fee version
+- `drop_transaction` to cancel it with a replacement transaction to the same nonce
+
+## Speed up a transaction
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx speedup <TRANSACTION_UUID> \
+  --fee '{"fee_type":"EVM_EIP_1559","max_fee_per_gas":"50000000000","max_priority_fee_per_gas":"2000000000"}'
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+result = await client.speedup_transaction(
+    wallet_uuid=wallet_id,
+    transaction_uuid=transaction_uuid,
+    fee={
+        "fee_type": "EVM_EIP_1559",
+        "max_fee_per_gas": "50000000000",
+        "max_priority_fee_per_gas": "2000000000",
+    },
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.speedupTransaction({
+  wallet_uuid: walletId,
+  transaction_uuid: transactionUuid,
+  fee: {
+    fee_type: 'EVM_EIP_1559',
+    max_fee_per_gas: '50000000000',
+    max_priority_fee_per_gas: '2000000000',
+  },
+});
+```
+</Tab>
+</Tabs>
+
+## Drop a transaction
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx drop <TRANSACTION_UUID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+await client.drop_transaction(
+    wallet_uuid=wallet_id,
+    transaction_uuid=transaction_uuid,
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+await client.dropTransaction({
+  wallet_uuid: walletId,
+  transaction_uuid: transactionUuid,
+});
+```
+</Tab>
+</Tabs>
+
+## When to use which
+
+| Action | Use when |
+|---|---|
+| `speedup_transaction` | You still want the same operation to execute, just faster |
+| `drop_transaction` | You want to cancel the pending operation altogether |
+
+For recovery, always pair these actions with [Transaction Tracking](/products/agentic-wallet/manual/developer/transaction-tracking).
+

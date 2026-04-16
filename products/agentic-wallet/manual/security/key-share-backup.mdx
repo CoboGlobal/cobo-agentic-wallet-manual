@@ -1,0 +1,38 @@
+---
+title: "Key share backup and recovery"
+description: "Back up your MPC wallet key shares to protect against device loss, and restore them on a new device."
+---
+
+Your key share is stored locally on your device. If the device is lost, stolen, or reset, you lose the ability to sign transactions — so back up your key share immediately after creating your wallet.
+
+## Backup options
+
+The Cobo Agentic Wallet app offers two backup methods:
+
+| Method | How it works | Best for |
+|---|---|---|
+| **Cloud backup** | Encrypts your key share and stores it in your cloud account (Google Drive or iCloud) | Convenience — easy to restore on a new device |
+| **Local backup** | Exports your encrypted key share as a file you store yourself | Full control — no dependency on a cloud provider |
+
+<Warning>
+Cobo recommends completing both. Cloud backup is convenient but depends on your cloud account security. Local backup is fully under your control but requires you to manage the file.
+</Warning>
+
+From the main wallet screen, tap the **Backup** notification, or go to **Account** > **Wallet Management** > **Backup Key Shares**. Then select **Cloud Backup** or **Local Backup**.
+
+<Warning>
+During backup, you will be asked to set a **recovery passphrase**. You must enter this password whenever you restore your key share. If you forget the password or lose the backup file, your key share is permanently unrecoverable.
+</Warning>
+
+<div style={{ display: "flex", gap: "16px", maxWidth: "480px" }}>
+  <img src="/products/agentic-wallet/manual/images/backup-entry.jpg" className="screenshot_modal" alt="Wallet dashboard with backup notification prompting user to complete key share backup" />
+  <img src="/products/agentic-wallet/manual/images/key-share-back-up.jpg" className="screenshot_modal" alt="Key Share Backup screen showing Cloud Backup and Local Backup options" />
+</div>
+
+For cloud backup, grant the app permission to access your Google Drive or iCloud. For local backup, save the exported file to a secure offline location such as a USB drive or encrypted disk.
+
+Your key share is encrypted on your device before it leaves — Cobo never sees your unencrypted key share.
+
+## Restore from backup
+
+If you lose your phone or uninstall the app, you lose access to your key share. To get it back, install the Cobo Agentic Wallet app on your new device, sign in to your account, and import your key share from cloud or local backup.

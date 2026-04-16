@@ -185,6 +185,14 @@ for attempt in range(MAX_RETRIES + 1):
 Cumulative limits (daily, monthly) can't be fixed by adjusting parameters. Escalate to the owner instead:
 
 ```python
+try:
+    await agent_client.transfer_tokens(
+        wallet_uuid=WALLET_UUID,
+        chain_id="SETH",
+        dst_addr="0x...",
+        token_id="SETH_USDC",
+        amount=amount,
+    )
 except PolicyDeniedError as exc:
     if exc.denial.code in ("DAILY_CUMULATIVE_EXCEEDED", "MONTHLY_CUMULATIVE_EXCEEDED"):
         await notify_owner(
@@ -192,7 +200,8 @@ except PolicyDeniedError as exc:
             f"Remaining: {exc.denial.details.get('remaining', '?')}"
         )
         return {"status": "escalated"}
-    # Per-tx limits — self-correct
+
+    # Per-tx limits can still be self-corrected.
     amount = str(exc.denial.details.get("limit_value", amount))
 ```
 </Accordion>

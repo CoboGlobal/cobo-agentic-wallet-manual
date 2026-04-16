@@ -1,19 +1,25 @@
 ---
 title: "Technical Architecture"
-description: "How the Cobo Agentic Wallet service, SDK, human interfaces, and agent integrations fit together."
+description: "How the Cobo Agentic Wallet service, owner controls, and developer integrations fit together for agents and automations that operate onchain."
 ---
+
+For most developers, this page is background context. The canonical onboarding path is still:
+
+1. [CLI](/products/agentic-wallet/manual/developer/cli)
+2. [Python SDK](/products/agentic-wallet/manual/developer/api-client-python) or [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript)
+3. Add a framework or MCP layer only after that first run works
 
 ## Component overview
 
 ```mermaid
 flowchart TD
-    subgraph AI["**Your Agent**"]
+    subgraph AI["**Your Runtime**"]
         sdk["MCP + CLI + SDK & integrations
         LangChain / OpenAI / Agno / TypeScript"]
     end
 
     subgraph Human["**Human (You)**"]
-        im["Human App
+        im["Cobo Agentic Wallet app
         Pair · Approve · Policies · Notifications"]
     end
 
@@ -31,8 +37,8 @@ flowchart TD
 
 | Platform | Primary role |
 |---|---|
-| **CLI (`caw`)** | Create wallets, execute transactions, generate pairing codes, submit pacts — the agent-native interface |
-| **Human App** | Pair agents, manage owner guardrails, approve pacts and over-limit transactions, freeze/revoke, review activity, back up keys |
+| **CLI (`caw`)** | Create wallets, execute transactions, generate pairing codes, submit pacts — the program-native interface |
+| **Cobo Agentic Wallet app** | Pair agents, manage owner guardrails, approve pacts and over-limit transactions, freeze/revoke, review activity, back up keys |
 
 ## Cobo Agentic Wallet Service
 
@@ -46,7 +52,7 @@ The Cobo Agentic Wallet service is the single source of truth for all wallet, id
 | **Wallets** | Wallet + address lifecycle; executing on-chain transactions |
 | **Transactions** | Transfer and contract call submission; fee estimation; WaaS webhook handling |
 | **Delegations** | Owner → Operator scoped permission grants with expiry and freeze/unfreeze |
-| **Pact** | Pact lifecycle management — agents submit pacts, owners approve them, system creates delegations and API keys automatically on approval |
+| **Pact** | Pact lifecycle management — runtimes submit pacts, owners approve them, system creates delegations and API keys automatically on approval |
 | **Policy Engine** | Three-stage gate: ① permission check → ② policy rule evaluation → ③ counter limits |
 | **Audit Pipeline** | Logs every allow/deny/approval decision; delivers events via webhook outbox |
 
@@ -58,17 +64,38 @@ The Cobo Agentic Wallet service is the single source of truth for all wallet, id
 
 ## SDK & integrations
 
+From a developer perspective, CAW splits into two layers:
+
+- a **control layer** you call from your program
+- an **owner layer** that handles pairing, approvals, and guardrails
+
+You write the program logic. CAW owns authorization enforcement and owner control surfaces.
+
 The Python SDK is a pure Python client library that all Python developer-facing integrations build on. The TypeScript SDK provides equivalent functionality for Node.js and TypeScript environments.
 
 | Layer | What it is |
 |---|---|
 | `WalletAPIClient` (Python) | Async HTTP client — direct access to all Cobo Agentic Wallet service endpoints |
 | `WalletAPIClient` (TypeScript) | Promise-based HTTP client with full TypeScript types — same endpoint coverage as the Python client |
-| `AgentWalletToolkit` | 6 agent runtime tools (list_wallets, get_balance, transfer_tokens, list_transactions, get_audit_logs, create_delegation) wrapped for LLM consumption |
+| `AgentWalletToolkit` | 20 canonical runtime tools covering wallet discovery, pact flows, transfers, contract calls, signing, payments, fee estimation, transaction tracking, audit, and delegation |
 | Framework adapters | LangChain, OpenAI Agents, Agno, CrewAI — each wraps the toolkit in the framework's tool format |
 | CLI (`caw`) | Shell command interface for developers and AI coding assistants |
 
-The MCP Server (`cobo-agent-wallet[mcp]`) is a separate stdio server that exposes the same wallet tools to any MCP-compatible client (Claude Desktop, Cursor, etc.).
+The MCP Server (`cobo-agentic-wallet[mcp]`) is a separate stdio server that exposes the same wallet tools to any MCP-compatible client (Claude Desktop, Cursor, etc.).
+
+## Integration modes
+
+For nearly all developers in these docs, the only mode that matters is **Agent Mode**.
+
+In Agent Mode, your runtime integrates with the CAW service and Cobo provides the owner-facing controls, pairing flow, policy management, and approval UX.
+
+| Mode | You build | Cobo provides | Status |
+|---|---|---|---|
+| **Agent Mode** | Your runtime, CLI usage, SDK usage, MCP integration, or framework integration | Human App, owner approvals, policy management, wallet control surfaces | Available now |
+| **Core Mode** | Your full custom stack, including your own owner-facing control surface | Core engine APIs only | Available upon request |
+| **Owner Mode** | Your own owner-facing interface | Agent-side framework abstractions | Available upon request |
+
+For the developer experience in these docs, Agent Mode is the default path because it lets you focus on runtime logic instead of rebuilding the owner layer. Core Mode and Owner Mode should be treated as advanced deployment options, not the main onboarding story.
 
 ## Human Interface
 
@@ -76,17 +103,19 @@ A separate service that provides the owner-facing experience.
 
 | | |
 |---|---|
-| **Primary channel** | Human App — iOS / Android |
+| **Primary channel** | Cobo Agentic Wallet app — iOS / Android |
 | **Owner tools** | Pair agent, manage owner guardrails, approve/reject pacts, approve/reject over-limit transactions, freeze/unfreeze, review activity |
-| **Push notifications** | Delivered to the Human App for pact approvals and over-limit transaction reviews |
+| **Push notifications** | Delivered to the Cobo Agentic Wallet app for pact approvals and over-limit transaction reviews |
 
 The Human Interface service holds an owner's API key and acts on behalf of the owner when calling the Cobo Agentic Wallet service.
+
+For developers, this is the key separation to understand: your runtime never needs to implement owner pairing, approval UI, or policy-management UI in the default integration mode.
 
 ## Security architecture
 
 ### Signing layer is isolated from the AI layer
 
-Your agent interacts with the Cobo Agentic Wallet service through the REST API using an API key. The API key grants the agent permission to submit transaction requests — it does not give the agent access to private key material. Signing happens inside the Cobo Agentic Wallet service using Multi-Party Computation, which requires cooperation from multiple independent parties. The LLM component of your agent never sees, holds, or derives private keys.
+Your program interacts with the Cobo Agentic Wallet service through the REST API using an API key. The API key grants permission to submit transaction requests — it does not give the runtime access to private key material. Signing happens inside the Cobo Agentic Wallet service using Multi-Party Computation, which requires cooperation from multiple independent parties. The LLM component of your agent, if you have one, never sees, holds, or derives private keys.
 
 ### Policy engine as a structural guard
 
@@ -96,10 +125,10 @@ Every transaction request passes through a three-stage policy gate before anythi
 2. **Policy rule evaluation** — does this operation satisfy the owner's configured rules?
 3. **Counter check** — does this operation stay within rolling spend limits?
 
-This gate runs server-side and cannot be bypassed by the agent. Even if an attacker manipulates your agent into submitting a malicious transaction, the policy engine blocks it if it violates the owner's rules. The agent's intent is not trusted — only the request is evaluated against the rules.
+This gate runs server-side and cannot be bypassed by the runtime. Even if an attacker manipulates your agent into submitting a malicious transaction, the policy engine blocks it if it violates the owner's rules. The runtime's intent is not trusted — only the request is evaluated against the rules.
 
 ### Prompt injection
 
-Prompt injection — where malicious content in an external source hijacks an agent into performing unauthorized actions — is a real threat for agents that read external data. The policy engine provides structural protection: a successfully injected instruction cannot cause fund movement unless the resulting request passes the owner's spending limits and address allowlists.
+Prompt injection — where malicious content in an external source hijacks an agent into performing unauthorized actions — is a real threat for agents that read external data. The policy engine provides structural protection: a successfully injected instruction cannot cause unauthorized onchain activity unless the resulting request passes the owner's spending limits, allowlists, and contract-call controls.
 
 For stronger protection at the agent layer, limit your agent's access to external data sources that are not necessary for the task, and keep spending limits and address allowlists as tight as possible for the operations your agent needs to perform.

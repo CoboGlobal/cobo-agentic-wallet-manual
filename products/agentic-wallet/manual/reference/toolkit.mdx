@@ -1,13 +1,13 @@
 ---
 title: "AgentWalletToolkit"
-description: "Framework-agnostic tool definitions for AI agent integrations."
+description: "Framework-agnostic canonical runtime toolkit for AI agent integrations."
 icon: "toolbox"
 sidebarTitle: "Toolkit"
 ---
 
 ## Overview
 
-`AgentWalletToolkit` provides canonical tool definitions that framework-specific integrations (LangChain, OpenAI, Agno, CrewAI, MCP) consume and adapt to their runtimes.
+`AgentWalletToolkit` provides the canonical CAW runtime tool surface that framework-specific integrations (LangChain, OpenAI, Agno, CrewAI, MCP) consume and adapt to their runtimes.
 
 ## Constructor
 
@@ -19,18 +19,80 @@ client = WalletAPIClient(base_url="http://localhost:8000", api_key="...")
 toolkit = AgentWalletToolkit(client=client)
 ```
 
+For production docs and examples, prefer `https://api.agenticwallet.cobo.com` as the API base URL.
+
+You can also restrict the canonical surface up front:
+
+```python
+toolkit = AgentWalletToolkit(
+    client=client,
+    include_tools=["submit_pact", "get_pact", "contract_call", "get_transaction_record_by_request_id"],
+)
+```
+
+`include_tools` keeps only the named tools, in the same order you provide. `exclude_tools` removes tools from the default surface. This selection propagates cleanly to LangChain, OpenAI Agents SDK, CrewAI, Agno, and MCP-backed custom usage when those adapters are built from the toolkit.
+
+## Recommended Presets
+
+Most agentic runtimes should start with a smaller role-based subset rather than the full 20-tool surface.
+
+- **Pact Drafting** — `submit_pact`, `get_pact`, `list_pacts`
+- **Execution** — `transfer_tokens`, `contract_call`, `estimate_transfer_fee`, `estimate_contract_call_fee`, `get_transaction_record_by_request_id`
+- **Observer** — `list_wallets`, `get_wallet`, `get_balance`, `list_transaction_records`, `get_audit_logs`
+
+These presets map well to common runtime responsibilities:
+
+- draft and monitor scoped authorization
+- execute approved blockchain actions or payments
+- inspect balances, records, and audit history
+
 ## `get_tools()`
 
-Returns `ToolDefinition` objects:
+Returns `ToolDefinition` objects for the full 20-tool runtime surface.
 
-| Tool | Required Parameters | Description |
+### Wallet context
+
+| Tool | Required Parameters | Purpose |
 |---|---|---|
-| `list_wallets` | — | List wallets accessible to the caller. Use this tool to discover wallet UUIDs required by other tools such as get_balance and transfer_tokens. |
-| `get_balance` | `wallet_uuid` | Get wallet balances for a specific wallet. |
-| `transfer_tokens` | `wallet_uuid`, `chain_id`, `dst_addr`, `token_id`, `amount` | Transfer tokens from a Cobo wallet to a destination address. Organisation spending policies are enforced; the transfer may require approval before it is executed. |
-| `list_transactions` | `wallet_uuid` | List transactions associated with a wallet, optionally filtered by status. Returns both incoming and outgoing transactions in reverse-chronological order. |
-| `get_audit_logs` | — | Query the organisation audit log, returning records of actions performed by operators on wallets. Supports filtering by wallet, principal, action type, result, and time range using cursor-based pagination. |
-| `create_delegation` | `operator_id`, `wallet_id`, `permissions` | Create a delegation that grants an operator scoped permissions on a wallet. Use this tool to authorise another party to perform limited actions (e.g. transfer up to a spending limit) without giving full wallet access. |
+| `list_wallets` | — | Discover wallets accessible to the caller. |
+| `get_wallet` | `wallet_uuid` | Inspect wallet metadata and status. |
+| `list_wallet_addresses` | `wallet_uuid` | List on-chain addresses for a wallet. |
+| `get_balance` | `wallet_uuid` | Get token balances, optionally filtered by chain or token. |
+
+### Scoped authority
+
+| Tool | Required Parameters | Purpose |
+|---|---|---|
+| `submit_pact` | `wallet_id`, `intent`, `spec` | Submit a pact for owner approval. |
+| `get_pact` | `pact_id` | Fetch the latest pact status and details. |
+| `list_pacts` | — | List pacts visible to the caller. |
+| `create_delegation` | `operator_id`, `wallet_id`, `permissions` | Create a delegation directly when needed. |
+
+### Onchain and payment actions
+
+| Tool | Required Parameters | Purpose |
+|---|---|---|
+| `transfer_tokens` | `wallet_uuid`, `chain_id`, `dst_addr`, `token_id`, `amount` | Submit a transfer with policy enforcement. |
+| `contract_call` | `wallet_uuid`, `chain_id` | Submit a smart-contract call with policy enforcement. |
+| `message_sign` | `wallet_uuid`, `chain_id` | Sign a message or typed data without broadcasting. |
+| `payment` | `wallet_uuid`, `protocol` | Submit an x402 or MPP payment request. |
+| `estimate_transfer_fee` | `wallet_uuid`, `dst_addr`, `amount` | Preview a transfer fee before submission. |
+| `estimate_contract_call_fee` | `wallet_uuid`, `chain_id` | Preview a contract-call fee before submission. |
+
+### Tracking and audit
+
+| Tool | Required Parameters | Purpose |
+|---|---|---|
+| `list_transactions` | `wallet_uuid` | List live transactions associated with a wallet. |
+| `list_transaction_records` | `wallet_uuid` | List persisted transaction records across operation types. |
+| `get_transaction_record` | `wallet_uuid`, `record_uuid` | Fetch a transaction record by record UUID. |
+| `get_transaction_record_by_request_id` | `wallet_uuid`, `request_id` | Look up a record by idempotency request ID. |
+| `list_recent_addresses` | `wallet_uuid` | Retrieve recently used destination addresses. |
+| `get_audit_logs` | — | Query actions, denials, approvals, and other audit events. |
+
+<Note>
+`list_transactions` is retained for compatibility with earlier integrations. For durable runtime tracking, prefer `list_transaction_records` and `get_transaction_record_by_request_id`.
+</Note>
 
 ## ToolDefinition
 
@@ -78,7 +140,7 @@ formatted = AgentWalletToolkit._format_denial(denial)
 # Suggestion: Retry with amount <= 100.
 ```
 
-Framework integrations use this formatting to return denials as readable tool output rather than raising exceptions — enabling agent self-correction.
+Framework integrations use this formatting to return denials as readable tool output rather than raising exceptions, which lets the agent adapt and retry.
 
 <Card title="Source Code" icon="github" href="https://github.com/CoboGlobal/cobo-agentic-wallet">
   `src/cobo_agentic_wallet/toolkit.py`

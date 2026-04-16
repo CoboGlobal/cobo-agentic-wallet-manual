@@ -1,0 +1,125 @@
+---
+title: "Transfers"
+description: "Submit token transfers, handle pending approval, and use request_id correctly."
+---
+
+Transfers are the most common CAW operation. A runtime submits a transfer with an active pact or delegation, CAW evaluates it against the policy engine, and the result is either allowed, denied, or paused for owner approval.
+
+## Submit a transfer
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw tx transfer <PACT_ID> \
+  --to 0xRecipient... \
+  --token-id SETH_USDC \
+  --amount 50 \
+  --chain-id SETH \
+  --request-id invoice-001
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet import WalletAPIClient
+
+agent_client = WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY)
+
+result = await agent_client.transfer_tokens(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="50",
+    request_id="invoice-001",
+)
+print(result["status"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.transferTokens({
+  wallet_id: walletUuid,
+  chain_id: 'SETH',
+  dst_addr: '0xRecipient...',
+  token_id: 'SETH_USDC',
+  amount: '50',
+  request_id: 'invoice-001',
+});
+console.log(result.status);
+```
+</Tab>
+</Tabs>
+
+## Response model
+
+| Field | Description |
+|---|---|
+| `status` | `submitted`, `pending`, or `pending_approval` |
+| `cobo_transaction_id` | Transaction identifier if the request reached execution |
+| `transaction_hash` | On-chain hash after broadcast/confirmation |
+| `request_id` | Your idempotency key |
+| `pending_operation_id` | Present only when the operation needs owner approval |
+
+## Idempotency
+
+Use a stable `request_id` tied to your business action. If the runtime retries the same transfer after a timeout or process restart, CAW returns the original operation instead of creating a duplicate.
+
+```python
+result = await agent_client.transfer_tokens(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="50",
+    request_id="invoice-2026-001",
+)
+```
+
+## Pending approval
+
+If the transfer is above an owner review threshold, CAW returns `status="pending_approval"` instead of failing. Your runtime should pause that task and resume after the owner acts in the Human App.
+
+<Tabs>
+<Tab title="Python SDK">
+```python
+result = await agent_client.transfer_tokens(
+    wallet_uuid=WALLET_UUID,
+    chain_id="SETH",
+    dst_addr="0xRecipient...",
+    token_id="SETH_USDC",
+    amount="800",
+)
+
+if result.get("status") == "pending_approval":
+    pending_id = result["pending_operation_id"]
+    print(f"Waiting for owner approval: {pending_id}")
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const result = await client.transferTokens({
+  wallet_id: walletUuid,
+  chain_id: 'SETH',
+  dst_addr: '0xRecipient...',
+  token_id: 'SETH_USDC',
+  amount: '800',
+});
+
+if (result.status === 'pending_approval') {
+  console.log(result.pending_operation_id);
+}
+```
+</Tab>
+</Tabs>
+
+<Note>
+If the operation is outside policy entirely, CAW returns a denial instead. See [Handle Policy Denial](/products/agentic-wallet/manual/developer/handle-policy-denial).
+</Note>
+
+## Before you submit
+
+For production flows, estimate fees first and keep tracking tied to `request_id`.
+
+- Estimate fees: [Contract Calls](/products/agentic-wallet/manual/developer/contract-calls)
+- Track results: [Transaction Tracking](/products/agentic-wallet/manual/developer/transaction-tracking)
+

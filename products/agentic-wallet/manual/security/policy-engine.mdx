@@ -3,7 +3,7 @@ title: "Policy Engine"
 description: "Every operation submitted through the API passes through a three-stage evaluation pipeline before it can execute or be co-signed."
 ---
 
-The policy engine is the enforcement layer between an agent's request and the blockchain. Every transfer, contract call, and message signing request — regardless of whether it comes from an agent operating under a pact or from a direct API call — is evaluated by the policy engine before Cobo's MPC key share participates in signing.
+The policy engine is the enforcement layer between an agent's request and the blockchain. Every transfer, contract call, and message signing request is evaluated by the policy engine before the transaction reaches the signing phase.
 
 This means policies are not advisory. They are enforced at the protocol level, before the transaction can be submitted to the network.
 
@@ -13,11 +13,7 @@ The policy engine evaluates every operation in three sequential stages. A denial
 
 ### Stage 1 — Permission check
 
-The first question is whether the operation type itself is within scope for the requesting party.
-
-- For agents operating under a pact, this checks whether the operation type is covered by the delegation scope derived from the pact's policy set.
-- A transfer request under a pact whose policies only cover contract calls will be denied here, before any policy rules are consulted.
-- A denial at this stage reflects a mismatch between the pact's declared scope and what the agent is attempting.
+The first question is whether the operation type is within the scope defined by the pact. A transfer request under a pact whose policies only cover contract calls will be denied here, before any policy rules are consulted.
 
 ### Stage 2 — Policy rule evaluation
 
@@ -74,9 +70,9 @@ After all three stages complete, the engine produces one of three outcomes:
 
 The operation passed all three stages. It proceeds to execution — the MPC signing ceremony is initiated and the transaction is submitted to the network.
 
-### Require approval (HTTP 202)
+### Require approval (HTTP 200)
 
-The operation passed the permission check and the rule evaluation stage, but a `review_if` condition was triggered or an `always_review` flag is set on a matching policy. The operation is held as a **PendingOperation**. The agent receives an HTTP 202 response indicating the operation is awaiting owner approval. The user is notified via the configured interface (Human App).
+The operation passed the permission check and the rule evaluation stage, but a `review_if` condition was triggered or an `always_review` flag is set on a matching policy. The operation is held as a **PendingOperation**. The agent receives an HTTP 200 response with `status: PENDING_APPROVAL` and a `pending_operation_id` in the response body. The user is notified via the configured interface (Cobo Agentic Wallet app).
 
 The agent can poll `GET /pending-operations/{id}` to check whether the operation has been approved or rejected. Once the user approves, execution proceeds automatically.
 
@@ -86,14 +82,21 @@ The operation was blocked. The response body contains a structured `PolicyDenial
 
 ## The PolicyDenialError structure
 
-A denial response (HTTP 403) always contains a structured error body with four fields:
+A denial response (HTTP 403) returns an error envelope with the following top-level fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `success` | boolean | Always `false` for error responses. |
+| `error` | object | Contains `code`, `reason`, and `details` (see below). |
+| `suggestion` | string | A plain-language suggestion for how the agent should respond. |
+
+The `error` object contains:
 
 | Field | Type | Description |
 |---|---|---|
 | `code` | string | A stable, machine-readable error code. Agents can use this for programmatic handling. |
 | `reason` | string | A concise human-readable description of the denial reason. |
 | `details` | object | Structured details specific to the denial type — for example, the limit value, the current counter value, how much is remaining, and when the window resets. |
-| `suggestion` | string | A plain-language suggestion for how the agent should respond. |
 
 Example error codes include:
 
@@ -125,7 +128,7 @@ For approval escalations triggered at stage 3 (a `review_if` threshold), the ope
 
 ## Dry-run evaluation
 
-Agents can test whether an operation would pass the policy engine before actually submitting it using the `POST /policies/dry-run` endpoint. The dry-run response includes the full evaluation result: effect (allow, deny, pending_approval), the policy that triggered the outcome, applicable counter limits, and per-tier evaluation details. This is useful during development and for agents that want to surface policy constraints proactively before attempting an operation.
+Agents can test whether an operation would pass the policy engine before actually submitting it using the `POST /policies/dry-run` endpoint. The dry-run response includes the full evaluation result: effect (`allow`, `deny`, `require_approval`), the policy that triggered the outcome, applicable counter limits, and per-tier evaluation details. This is useful during development and for agents that want to surface policy constraints proactively before attempting an operation.
 
 ## Further reading
 

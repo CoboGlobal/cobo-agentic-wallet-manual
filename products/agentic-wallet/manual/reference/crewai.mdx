@@ -32,7 +32,10 @@ uv sync --extra crewai
 from cobo_agentic_wallet.client import WalletAPIClient
 from cobo_agentic_wallet.integrations.crewai import CoboAgentWalletCrewAIToolkit
 
-client = WalletAPIClient(base_url="http://localhost:8000", api_key="<api_key>")
+client = WalletAPIClient(
+    base_url="https://api.agenticwallet.cobo.com",
+    api_key="<api_key>",
+)
 toolkit = CoboAgentWalletCrewAIToolkit(client=client)
 tools = toolkit.get_tools()
 ```
@@ -45,6 +48,19 @@ uv run --extra crewai python examples/crewai_agent.py
 </Step>
 
 </Steps>
+
+## Tool Selection
+
+You can restrict which CAW tools CrewAI receives:
+
+```python
+toolkit = CoboAgentWalletCrewAIToolkit(
+    client=client,
+    include_tools=["submit_pact", "get_pact", "transfer_tokens", "get_transaction_record_by_request_id"],
+)
+```
+
+Use this when each CrewAI agent should only see the minimal wallet surface relevant to its role.
 
 ## Denial Behavior
 

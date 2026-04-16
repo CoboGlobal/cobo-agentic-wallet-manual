@@ -35,14 +35,14 @@
   <circle cx="42" cy="179" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
   <text x="42" y="183" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">2</text>
   <text x="66" y="173" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Tap Connect Agent</text>
-  <text x="66" y="190" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Get pairing code + setup instruction</text>
+  <text x="66" y="190" font-family="Inter,-apple-system,sans-serif" font-size="11.5" fill="#64748B">Get pairing code + pairing instructions</text>
   <line x1="215" y1="206" x2="215" y2="224" stroke="#86EFAC" stroke-width="1.5" marker-end="url(#arr)"/>
 
   <!-- Step 3 -->
   <rect x="16" y="228" width="398" height="54" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#card-shadow)"/>
   <circle cx="42" cy="255" r="13" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1.5"/>
   <text x="42" y="259" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#22C55E">3</text>
-  <text x="66" y="249" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Run setup instruction in agent</text>
+  <text x="66" y="249" font-family="Inter,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#0F172A">Run pairing instructions in agent</text>
   <text x="66" y="266" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#64748B">caw onboard --token &lt;CODE&gt;</text>
   <line x1="215" y1="282" x2="215" y2="300" stroke="#86EFAC" stroke-width="1.5" marker-end="url(#arr)"/>
 

@@ -1,0 +1,90 @@
+---
+title: "What is Cobo Agentic Wallet?"
+description: "A crypto wallet built for AI agents — gives agents real on-chain capability while keeping the human in control through structured, infrastructure-enforced authorization."
+---
+
+Cobo Agentic Wallet is a crypto wallet designed for AI agents. It lets an agent execute real on-chain operations — transfer tokens, call smart contracts, run DeFi strategies, manage multi-chain assets — under a structured authorization model that the wallet's infrastructure enforces automatically.
+
+The core mechanism is the **pact**: a structured agreement between the wallet owner and the agent that defines what the agent is authorized to do, under which rules, and when that authority ends. Every operation the agent submits is checked against the pact before it touches a chain. The agent cannot exceed or modify its own limits — enforcement is architectural, not trust-based.
+
+See [What is a pact](/products/agentic-wallet/manual/start-here/what-is-a-pact) and [Pact flow](/products/agentic-wallet/manual/start-here/pact-flow) for the full picture.
+
+## What the agent can do
+
+| Capability | Examples |
+|---|---|
+| **Transfer tokens** | Send crypto to any address, on any supported chain, within approved limits |
+| **Call smart contracts** | Interact with DeFi protocols — swaps, deposits, lending, staking |
+| **Run automated strategies** | DCA into assets, rebalance portfolios, execute recurring payments |
+| **Read wallet state** | Check balances, list transactions, and pull audit logs at any time |
+| **Operate across chains** | Ethereum, Base, Solana, and more — all from one wallet |
+
+All operations are checked against the active pact's policies before execution. Transactions within the approved limits run automatically; anything beyond pauses for the owner's review.
+
+## How it works
+
+1. **Create** — the agent creates a wallet in one step. No account or sign-up required.
+2. **Pair** — the wallet owner pairs the wallet with the Cobo Agentic Wallet app: key shares are generated on the owner's device and the agent becomes a delegate. Pairing is optional — useful to skip during testing.
+3. **Authorize** — when the agent wants to take on a task, it proposes a pact (intent, execution plan, policies, completion conditions). The owner reviews and approves, adjusts, or rejects it in the Cobo Agentic Wallet app. No access is granted until the owner approves.
+4. **Operate** — the agent works within the approved terms. Transactions within limits execute automatically; operations above the threshold pause for the owner's approval or are denied if a policy condition is met. When the task is done, the pact ends and access revokes automatically.
+
+## Key features
+
+| Feature | What it means |
+|---|---|
+| **Pact-first authorization** | Every agent task requires an approved pact. The infrastructure enforces the terms — not software best practices, not trust. [Learn more →](/products/agentic-wallet/manual/start-here/what-is-a-pact) |
+| **Human control** | The wallet owner sets the terms for every task — what the agent can do, how much it can spend, when access ends — via the Cobo Agentic Wallet app |
+| **Deep policy engine** | Per-transaction caps, rolling budgets, chain allowlists, contract whitelists — the most restrictive rule always wins |
+| **MPC security** | No single party holds the private key. Signing authority is split using Multi-Party Computation — a mathematical guarantee, not a software promise |
+| **Clean exits** | Every pact has a completion condition. When it is met, access revokes automatically — no zombie permissions, no forgotten credentials |
+| **Full audit trail** | Every action — allowed, denied, or paused for approval — is logged with timestamps and details |
+| **No-registration start** | The agent creates the wallet with one command — no account or sign-up needed |
+
+## Two interfaces
+
+**Cobo Agentic Wallet app** — the owner's management interface. Pair the agent, review and approve pacts, set spending guardrails, approve over-limit transactions, monitor activity, and freeze the agent — all from a phone. Key shares are stored on the device, not on a server.
+
+**SDK and CLI** — the agent's operational interface. The agent uses the Python SDK, TypeScript SDK, CLI, or REST API to submit transactions, manage pacts, and read wallet state. Works with LangChain, OpenAI Agents SDK, Agno, CrewAI, and MCP servers out of the box.
+
+## Common questions
+
+<AccordionGroup>
+  <Accordion title="Can the agent send money without the owner's approval?">
+    Before pairing with the Cobo Agentic Wallet app, yes — the agent is the wallet owner and has no restrictions. After pairing, the agent operates within the pact the owner set. Transactions within the pact's rules execute automatically; anything beyond pauses until the owner approves. The owner always decides where the line is.
+  </Accordion>
+  <Accordion title="Does the agent ever hold the private keys?">
+    No. The agent never holds the full private key — signing authority is distributed across multiple parties using MPC. The human owner can intervene at any point, freeze the agent instantly, and retains ultimate control over the wallet.
+  </Accordion>
+  <Accordion title="What's the worst that can happen?">
+    After pairing, the agent can only access the one wallet it is connected to, and only within the active pact. Transactions outside the pact's scope or budget are blocked. The owner can pause the agent at any time — it takes effect immediately, with no delay or grace period.
+  </Accordion>
+  <Accordion title="How do I stop everything immediately?">
+    You can use the Cobo Agentic Wallet app to freeze a wallet. There is no delay — it takes effect the moment you confirm. For details, see [Pause or revoke agent access](/products/agentic-wallet/manual/owners/freeze).
+  </Accordion>
+</AccordionGroup>
+
+## Where would you like to start?
+
+<CardGroup cols={3}>
+  <Card
+    title="What is a pact?"
+    icon="handshake"
+    href="/products/agentic-wallet/manual/start-here/what-is-a-pact"
+  >
+    The core concept behind Cobo Agentic Wallet — what a pact is and why it matters.
+  </Card>
+  <Card
+    title="I own a wallet"
+    icon="wallet"
+    href="/products/agentic-wallet/manual/owners/features"
+  >
+    What Cobo Agentic Wallet offers you — controls, benefits, and your overall flow as a wallet owner.
+  </Card>
+  <Card
+    title="I'm building an agent"
+    icon="code"
+    href="/products/agentic-wallet/manual/developer/quickstart-overview"
+  >
+    Start with the developer quickstart, run a first hello-world flow, and then choose the right integration surface for your runtime.
+  </Card>
+</CardGroup>

@@ -1,46 +1,51 @@
 ---
 title: "OpenAI Agents SDK"
-description: "5-minute OpenAI Agents SDK quickstart with pact submission and policy denial feedback."
+description: "Use Cobo Agentic Wallet with OpenAI Agents SDK in Python or TypeScript."
 sidebarTitle: "OpenAI Agents"
 ---
 
+Start with the language SDK quickstart first, then move to OpenAI Agents SDK once the pact-to-execution flow works without an agent loop.
+
 ## Before you start
 
-Ask your user to generate a pairing code from the Human App. See [Guide your users](/products/agentic-wallet/manual/developer/guide-users) for instructions to share with them. Then provision your agent:
-
-```bash
-caw onboard provision --token <PAIRING_CODE>
-```
-
-This saves your API key and wallet UUID to `~/.cobo-agentic-wallet/config`. You'll need both for the steps below.
+Complete the [CLI quickstart](/products/agentic-wallet/manual/developer/cli) first so your runtime already has a paired wallet, API key, and wallet UUID.
 
 ## 5-minute outcome
 
 1. Create Cobo-enabled OpenAI agent
 2. Submit a pact and wait for owner approval
-3. Execute success plus denial transfer sequence
+3. Execute success plus denial contract-call sequence
 4. Let agent adapt using denial context
-5. Verify with audit logs
+5. Track by `request_id` and verify with audit logs
 
 ## Step 1: Install
 
+<Tabs>
+<Tab title="Python">
 ```bash
-pip install "cobo-agent-wallet[openai]"
+pip install "cobo-agentic-wallet[openai]"
 ```
+</Tab>
+<Tab title="TypeScript">
+```bash
+npm install @cobo/agentic-wallet @openai/agents zod
+```
+</Tab>
+</Tabs>
 
 ## Step 2: Configure environment
 
 ```bash
-export AGENT_WALLET_API_URL=https://api.sandbox.agenticwallet.cobo.com
+export AGENT_WALLET_API_URL=https://api.agenticwallet.cobo.com
 export AGENT_WALLET_API_KEY=your-api-key
 export OPENAI_API_KEY=your-openai-api-key
 ```
 
 ## Step 3: Run agent flow
 
+<Tabs>
+<Tab title="Python">
 ```python title="openai_quickstart.py"
-from __future__ import annotations
-
 import asyncio
 import os
 
@@ -80,6 +85,130 @@ if __name__ == "__main__":
     main()
 ```
 
+For a smaller first integration, you can expose only the tools your runtime actually needs:
+
+```python
+agent = create_cobo_agent(
+    client=client,
+    model="gpt-4.1-mini",
+    include_tools=[
+        "submit_pact",
+        "get_pact",
+        "transfer_tokens",
+        "estimate_transfer_fee",
+        "get_transaction_record_by_request_id",
+        "get_audit_logs",
+    ],
+)
+```
+</Tab>
+<Tab title="TypeScript">
+```typescript title="openai_quickstart.ts"
+import { Agent, run, tool } from '@openai/agents';
+import { z } from 'zod';
+import {
+  Configuration,
+  PactsApi,
+  TransactionRecordsApi,
+  TransactionsApi,
+} from '@cobo/agentic-wallet';
+
+const config = new Configuration({
+  apiKey: process.env.AGENT_WALLET_API_KEY!,
+  basePath: process.env.AGENT_WALLET_API_URL!,
+});
+
+const pactsApi = new PactsApi(config);
+const txApi = new TransactionsApi(config);
+const recordsApi = new TransactionRecordsApi(config);
+
+async function returnPolicyDenial<T>(work: () => Promise<T>) {
+  try {
+    return await work();
+  } catch (error) {
+    const denial = (error as {
+      response?: { data?: { error?: Record<string, unknown> } };
+    }).response?.data?.error;
+    if (denial) return denial;
+    throw error;
+  }
+}
+
+const submitPact = tool({
+  name: 'submit_pact',
+  description: 'Submit a pact and return the pact id.',
+  parameters: z.object({
+    wallet_id: z.string(),
+    intent: z.string(),
+  }),
+  async execute({ wallet_id, intent }) {
+    const response = await pactsApi.submitPact({
+      wallet_id,
+      intent,
+      spec: {
+        completion_conditions: [{ type: 'time_elapsed', threshold: '86400' }],
+      },
+    });
+    return response.data.result;
+  },
+});
+
+const contractCall = tool({
+  name: 'contract_call',
+  description: 'Execute a policy-enforced contract call.',
+  parameters: z.object({
+    wallet_uuid: z.string(),
+    contract_addr: z.string(),
+    calldata: z.string(),
+    request_id: z.string(),
+  }),
+  async execute({ wallet_uuid, contract_addr, calldata, request_id }) {
+    return await returnPolicyDenial(async () => {
+      const response = await txApi.contractCall(wallet_uuid, {
+        chain_id: 'BASE_ETH',
+        contract_addr,
+        calldata,
+        value: '0',
+        request_id,
+      });
+      return response.data.result;
+    });
+  },
+});
+
+const getTransactionRecordByRequestId = tool({
+  name: 'get_transaction_record_by_request_id',
+  description: 'Look up a transaction record by request id.',
+  parameters: z.object({
+    wallet_uuid: z.string(),
+    request_id: z.string(),
+  }),
+  async execute({ wallet_uuid, request_id }) {
+    const response = await recordsApi.getTransactionRecordByRequestId(wallet_uuid, request_id);
+    return response.data.result;
+  },
+});
+
+const agent = new Agent({
+  name: 'cobo-operator',
+  model: 'gpt-4.1-mini',
+  instructions:
+    'Before executing blockchain actions, submit a pact and wait until it is active. If a tool returns a policy denial, read the suggestion and retry with compliant params. After submission, track the result by request_id.',
+  tools: [submitPact, contractCall, getTransactionRecordByRequestId],
+});
+
+const result = await run(
+  agent,
+  'Submit a pact, execute a contract call with request_id swap-2026-001, adapt if denied, then look up the transaction record.',
+);
+
+console.log(result.finalOutput);
+```
+
+Add `get_audit_logs` as a fourth tool when you want the model to summarize operator activity on its own. Keep it out of the first example so the core authorization and execution loop stays obvious.
+</Tab>
+</Tabs>
+
 ## Step 4: Validate results
 
 Confirm final output includes:
@@ -88,15 +217,27 @@ Confirm final output includes:
 - success event
 - denial reason and suggestion
 - successful compliant retry
+- transaction lookup by `request_id`
 - audit confirmation
+
+## Keep the OpenAI layer thin
+
+The OpenAI agent should coordinate the CAW flow, not absorb every wallet capability by default.
+
+- expose only the tools needed for the runtime role
+- keep pact submission and execution close together so the approval story stays legible
+- prefer durable tracking by `request_id`
+- move deterministic checks outside the agent loop when you need strict control
 
 ## Go further
 
-`create_cobo_agent` wires up the standard wallet tool set. You can extend it with custom function tools and other integration paths:
+In Python, `create_cobo_agent` wires up the widened CAW runtime toolkit directly. In TypeScript, the normal pattern is to wrap the CAW TypeScript SDK in OpenAI tool functions and expose only the subset your runtime needs.
 
-- **Define custom function tools** — write Python functions decorated as OpenAI Agents SDK tools that call `WalletAPIClient` directly. Add them to the agent alongside Cobo's tools for domain-specific logic (e.g. market price checks before transfers, portfolio rebalancing logic).
-- **Use the Python SDK for out-of-band operations** — run pact submission, policy dry-runs, and audit queries programmatically outside the agent loop when you need deterministic behavior.
+- **Define custom function tools** — in Python, add functions alongside CAW's built-in adapter; in TypeScript, wrap `@cobo/agentic-wallet` API calls in framework-native tool definitions.
+- **Keep CAW behind a narrow tool surface** — do not expose the whole API to the model. Start with Pact Drafting, Execution, and Observer roles.
+- **Use direct SDK calls for out-of-band operations** — run pact submission, policy dry-runs, and audit queries programmatically outside the agent loop when you need deterministic behavior.
 - **Combine with CLI** — use `caw` for onboarding and debugging; use the SDK tools for agent-time execution.
+- **Use role-based presets** — start with Pact Drafting, Execution, and Observer responsibilities instead of exposing the entire toolkit immediately.
 
 <CardGroup cols={2}>
   <Card title="OpenAI Integration Details" icon="brain" href="/products/agentic-wallet/manual/reference/openai">

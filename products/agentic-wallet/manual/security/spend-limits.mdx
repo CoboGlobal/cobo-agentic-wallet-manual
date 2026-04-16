@@ -17,10 +17,10 @@ For an overview of where spend limits fit in the overall evaluation pipeline, se
 
 A per-transaction limit caps the value of any single operation. If a transfer or contract call would exceed this value, the operation is denied immediately — regardless of how many transactions have been executed or what the rolling window counters show.
 
-- `amount_usd_gt`: the limit is expressed in USD. The engine converts the token amount to USD at the time of the operation using current market prices. If the price feed is unavailable for a token, the operation is blocked with a `COIN_PRICE_UNAVAILABLE` error.
+- `amount_usd_gt`: the limit is expressed in USD. The engine converts the token amount to USD at the time of the operation using current market prices. If the price feed is unavailable for a token, USD-denominated limits are not evaluated and the operation proceeds as if no USD rule matched.
 - `amount_gt`: the limit is expressed in the token's native units (no USD conversion).
 
-Per-transaction limits are configured in the `deny_if` block of a DENY policy:
+Per-transaction limits are configured in the `deny_if` block of a policy. They work on both DENY and ALLOW effects:
 
 ```json
 {
@@ -73,7 +73,7 @@ Review thresholds are configured in the `review_if` block of an ALLOW policy:
 }
 ```
 
-This configuration allows ETH transfers automatically for amounts up to $1,000. Transfers above $1,000 are held for user review. The agent receives HTTP 202 and can poll the pending operation for the approval outcome.
+This configuration allows ETH transfers automatically for amounts up to $1,000. Transfers above $1,000 are held for user review. The agent receives HTTP 200 with `status=PENDING_APPROVAL` in the response body, along with a `pending_operation_id` it can use to poll for the approval outcome.
 
 ## What "rolling" means
 
@@ -107,7 +107,7 @@ The outcome depends on which limit was exceeded:
 | `deny_if.usage_limits.rolling_24h` (daily count) | HTTP 403, code `DAILY_COUNT_LIMIT_EXCEEDED` |
 | `deny_if.usage_limits.rolling_7d` (weekly count) | HTTP 403, code `WEEKLY_COUNT_LIMIT_EXCEEDED` |
 | `deny_if.usage_limits.rolling_30d` (monthly count) | HTTP 403, code `MONTHLY_COUNT_LIMIT_EXCEEDED` |
-| `review_if.amount_usd_gt` (review threshold) | HTTP 202, operation held as PendingOperation |
+| `review_if.amount_usd_gt` (review threshold) | HTTP 200, `status=PENDING_APPROVAL`, operation held as PendingOperation |
 
 ## Setting limits via PactSpec vs delegation
 

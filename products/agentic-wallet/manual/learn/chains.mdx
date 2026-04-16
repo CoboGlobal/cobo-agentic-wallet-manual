@@ -1,73 +1,66 @@
 ---
 title: "Chains and chain IDs"
-description: "How blockchains are identified — EVM chain IDs, Cobo chain IDs, and which chains Cobo Agentic Wallet supports."
+description: "How blockchains are identified, and which chains Cobo Agentic Wallet supports."
 ---
 
 ## What is a blockchain
 
-A blockchain is a network of computers that jointly maintain a ledger of transactions. Each network is independent — a token on Ethereum and a token on Polygon are not interchangeable unless explicitly bridged.
+A blockchain is a network of computers that jointly maintain a shared record of transactions. Each blockchain is its own independent network — a token on Ethereum and a token on Polygon are not interchangeable unless explicitly moved between them.
 
-When you send a transaction or call a contract, you always do so on a specific chain. Sending a transaction to the wrong chain means it either fails or is lost.
+When you send a transaction or interact with a protocol, you do so on a specific chain. Sending tokens to the wrong chain means they can be lost.
 
-## EVM chain IDs
+## Supported chains
 
-Ethereum and its compatible chains (Base, Polygon, Arbitrum, Optimism, etc.) each have a numeric **chain ID** defined in [EIP-155](https://eips.ethereum.org/EIPS/eip-155). Wallets and tools use this number to prevent replay attacks — a signed transaction on one chain cannot be replayed on another.
+Cobo Agentic supports two categories of chains: EVM-compatible chains and Solana. These categories differ in address format, token standard, and contract interaction model — see [EVM vs. Solana](#evm-vs-solana) for a full comparison.
 
-| Chain | EVM chain ID |
-|---|---|
-| Ethereum mainnet | `1` |
-| Base mainnet | `8453` |
-| Polygon mainnet | `137` |
-| Ethereum Sepolia (testnet) | `11155111` |
-| Base Sepolia (testnet) | `84532` |
 
-You rarely use EVM chain IDs directly in Cobo tooling — use Cobo chain IDs instead.
+### EVM chains
+EVM chains follow the same technical rules as Ethereum and use a numeric chain ID to identify each network.
 
-## Cobo chain IDs
+Each EVM chain has a unique numeric **chain ID** so tools know which network you're on.
 
-Cobo uses its own string identifiers for chains. These are the values you pass to `--chain` in the CLI, `chain_id` in the Python and TypeScript SDKs, and policy rules.
-
-| Cobo chain ID | Chain | Network |
+| Chain | Chain identifier | EVM chain ID |
 |---|---|---|
-| `ETH` | Ethereum | Mainnet |
-| `BASE_ETH` | Base | Mainnet |
-| `MATIC` | Polygon | Mainnet |
-| `SOL` | Solana | Mainnet |
-| `SETH` | Ethereum Sepolia | Testnet |
-| `TBASE_SETH` | Base Sepolia | Testnet |
-| `SOLDEV_SOL` | Solana Devnet | Testnet |
+| Ethereum mainnet | `ETH` | `1` |
+| Base mainnet | `BASE_ETH` | `8453` |
+| Polygon PoS mainnet | `MATIC` | `137` |
+| Arbitrum One | `ARBITRUM_ETH` | `42161` |
+| Optimism mainnet | `OPT_ETH` | `10` |
+| Avalanche C-Chain | `AVAXC` | `43114` |
+| BNB Smart Chain | `BSC_BNB` | `56` |
+| Tempo mainnet | `TEMPO_TEMPO` | — |
+| Ethereum Sepolia (testnet) | `SETH` | `11155111` |
+| Base Sepolia (testnet) | `TBASE_SETH` | `84532` |
+| Tempo testnet (testnet)| `TTEMPO_TEMPO` | — |
 
-<Info>
-New wallets created via onboarding default to Base Sepolia (`TBASE_SETH`). Adding a mainnet chain requires an explicit confirmation step in the Human App.
-</Info>
+### Solana
 
-## Discovering chains at runtime
+Solana uses a cluster name rather than a numeric chain ID to identify each network.
 
-```bash
-caw meta chains
-```
-
-Or via the API: [List chains](/products/agentic-wallet/manual/reference/list-chains).
+| Cluster | Chain identifier |
+|---|---|
+| Solana mainnet| `SOL` |
+| Solana devnet (testnet) | `SOLDEV_SOL` |
 
 ## EVM vs. Solana
 
-Cobo supports both EVM-compatible chains and Solana. The differences that affect agent design most:
+Cobo supports both EVM-compatible chains and Solana. These two ecosystems work differently:
 
 | | EVM (Ethereum, Base, Polygon) | Solana |
 |---|---|---|
 | Address format | `0x`-prefixed hex, 42 characters | Base58, ~44 characters |
 | Token standard | ERC-20 | SPL |
-| Contract call encoding | Calldata (ABI-encoded bytes) | Instructions + account list |
-| Gas unit | Gwei | Lamports |
-| Cobo chain IDs | `ETH`, `BASE_ETH`, `MATIC`, `SETH`, `TBASE_SETH` | `SOL`, `SOLDEV_SOL` |
+| How contracts are called | Encoded function data | Instructions + account list |
+| Fee unit | Gwei (fractions of ETH or MATIC) | Lamports (fractions of SOL) |
 
-For EVM contract calls, pass `--calldata`. For Solana, pass `--instructions`. See [ABIs and calldata](/products/agentic-wallet/manual/learn/abi-calldata) for encoding details.
+See [Smart contracts](/products/agentic-wallet/manual/learn/smart-contracts) for more on how contract calls work on each chain type.
 
 ## Layer 2 chains
 
-Base and Polygon are **Layer 2 (L2)** chains — they process transactions faster and cheaper than Ethereum mainnet by batching them and posting compressed proofs back to Ethereum. From an agent's perspective, L2 chains behave like regular EVM chains: same address format, same ABI encoding, same token standards.
+Some EVM chains — including Base, Arbitrum, and Optimism — are Layer 2 (L2) chains. They process transactions faster and more cheaply than Ethereum mainnet by handling activity off the main chain, then periodically recording a summary back to Ethereum for security.
 
-Key differences to be aware of:
-- Gas prices on L2 are typically 10–100× cheaper than Ethereum mainnet.
-- Bridge exits from L2 to L1 may take minutes (optimistic rollups) or be near-instant (ZK rollups).
-- Some protocols (notably Uniswap) deploy separate contract addresses on each L2.
+From a user's perspective, L2 chains work just like Ethereum: same address format, same token standards, same contract interaction model. The main practical differences are:
+
+- Gas fees on L2 are typically 10–100× cheaper than Ethereum mainnet.
+- Bridge exits back to Ethereum vary by rollup type: optimistic rollups (Base, Optimism) require a challenge period of up to 7 days; ZK rollups can settle in minutes to hours.
+- Protocols like Uniswap deploy separate contracts on each L2 — the contract addresses differ across networks.

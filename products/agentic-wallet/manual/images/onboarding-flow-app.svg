@@ -26,9 +26,9 @@
 
   <line x1="250" y1="145" x2="250" y2="163" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <!-- Box 3: Run setup instruction — y=165, h=55, bottom=220 -->
+  <!-- Box 3: Run pairing instructions — y=165, h=55, bottom=220 -->
   <rect x="50" y="165" width="400" height="55" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" filter="url(#s)"/>
-  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="188" font-size="13" font-weight="600" fill="#1E293B">Run the setup instruction in your agent</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="188" font-size="13" font-weight="600" fill="#1E293B">Run the pairing instructions in your agent</text>
   <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="250" y="208" font-size="11" fill="#64748B">App provides a ready-made instruction with your pairing token</text>
 
   <line x1="250" y1="220" x2="250" y2="238" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#a)"/>

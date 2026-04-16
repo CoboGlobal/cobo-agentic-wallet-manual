@@ -1,0 +1,116 @@
+---
+title: "Wallets"
+description: "Create wallets, inspect wallet state, list wallets, and update metadata."
+---
+
+Wallets are created and owned by a principal. Owners have unrestricted access; runtimes only see wallets they can access through active delegations or pacts.
+
+## Create a wallet
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw onboard provision --token <PAIRING_CODE>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+wallet = await owner_client.create_wallet(name="Treasury")
+print(wallet["uuid"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const wallet = await client.createWallet({ name: 'Treasury' });
+console.log(wallet.uuid);
+```
+</Tab>
+</Tabs>
+
+## Get a wallet
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw wallet get <WALLET_UUID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+wallet = await owner_client.get_wallet(wallet_uuid)
+print(wallet["name"], wallet["status"])
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const wallet = await client.getWallet({ wallet_uuid: walletUuid });
+console.log(wallet.name, wallet.status);
+```
+</Tab>
+</Tabs>
+
+## List wallets
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw wallet list
+caw wallet list --archived
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+wallets = await owner_client.list_wallets(limit=50, offset=0)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const wallets = await client.listWallets({ limit: 50, offset: 0 });
+```
+</Tab>
+</Tabs>
+
+## Update wallet metadata
+
+<Tabs>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet_api.models.wallet_update import WalletUpdate
+
+await owner_client.update_wallet(
+    wallet_uuid,
+    WalletUpdate(name="Main Treasury", metadata={"env": "prod"}),
+)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+await client.updateWallet({
+  wallet_uuid: walletUuid,
+  name: 'Main Treasury',
+  metadata: { env: 'prod' },
+});
+```
+</Tab>
+</Tabs>
+
+## Archive a wallet
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw wallet archive <WALLET_UUID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+await owner_client.archive_wallet(wallet_uuid)
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+await client.archiveWallet({ wallet_uuid: walletUuid });
+```
+</Tab>
+</Tabs>
+

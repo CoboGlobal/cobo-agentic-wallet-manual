@@ -1,72 +1,48 @@
 ---
-title: "How pacts work"
-description: "A pact is a structured, enforceable delegation agreement between you and your agent — with intent, execution plan, policies, and completion conditions. Enforced by infrastructure, not trust."
+title: "Pacts"
+description: "The technical reference for pact enforcement: operating modes, PactSpec schema, state machine, and pact-scoped credentials."
 ---
 
-A pact is not just authorization — it's an enforceable agreement. Before your agent touches a single token, it declares what it intends to do, and you review the terms: intent, execution plan, policies, and completion conditions. The infrastructure enforces those terms automatically. Your agent operates within the agreed boundaries — and those boundaries are enforced architecturally, not by trust.
-
-A pact isn't a leash. It's a license — here's what you can do, here's where you stop, and here's when access ends.
+For the conceptual overview and the end-to-end flow, see [What is a pact](/products/agentic-wallet/manual/start-here/what-is-a-pact) and [Pact flow](/products/agentic-wallet/manual/start-here/pact-flow). This page covers the technical details: operating modes, the PactSpec schema, the state machine, and how pact-scoped credentials work.
 
 ## Two modes: owner and delegate
 
-The pact mechanism behaves differently depending on whether your agent is the wallet owner or a delegate:
+The pact mechanism behaves differently depending on whether your agent is the wallet owner or a delegate. Before pairing, pacts are automatically processed. After pairing, the agent is a delegate and every pact requires explicit owner approval in the Cobo Agentic Wallet app.
 
-| | Agent as owner (before pairing) | Agent as delegate (after pairing) |
-|---|---|---|
-| **Who triggers pacts** | Agent | Agent |
-| **Approval required** | No — automatically processed | Yes — owner reviews and approves in the Human App |
-| **Spending limits** | None | Enforced by the active pact and any owner-level guardrails |
-| **Purpose** | Structured execution framework | Structured delegation and enforcement for agent work after claim |
-
-When you pair the wallet with the Human App, your agent transitions from owner to delegate. From that point on, the owner uses pacts to define the terms the agent operates under: what it is trying to do, under which policies, and when that authority ends.
-
-## Owner guardrails
-
-When you pair the wallet with the Human App, the app gives you owner-level guardrails for routine control. These settings shape how the agent's active pacts execute in practice and when additional owner approval is required.
-
-Common controls include:
-
-- Per-transaction cap
-- Daily or rolling budget
-- Allowed destination addresses
-- Allowed chains
-- Approval threshold
-
-These controls work alongside the pact itself. The pact defines the job, policies, and completion conditions; owner guardrails determine which operations can proceed automatically and which pause for your approval.
+When you pair the wallet with the Cobo Agentic Wallet app, your agent transitions from owner to delegate. From that point on, the owner uses pacts to define the terms the agent operates under: what it is trying to do, under which policies, and when that authority ends.
 
 ## The PactSpec: what the agent declares
 
-When your agent needs a new scoped delegation, it submits a **PactSpec** — a machine-readable declaration of the plan and policy boundaries it needs:
+When your agent needs a new scoped delegation, it submits a **PactSpec** — a machine-readable declaration of its intent, plan, and policy boundaries:
 
 | Field | Type | Description |
 |---|---|---|
+| `intent` | string | Natural language description of the task. Shown to the owner during approval review. |
+| `execution_plan` | string | Free-form markdown description of how the agent plans to carry out the task. |
 | `policies` | list | Inline policy rules constraining the agent's actions — spend limits, address restrictions, review thresholds, and so on. Evaluated by the policy engine on every operation. |
-| `duration_seconds` | integer | How long the pact remains active after approval, in seconds. Null means no time limit. |
-| `completion_conditions` | list | Conditions that automatically complete the pact when reached. Supported types: `tx_count`, `amount_spent_usd`, `time_elapsed`, `manual`. |
-| `resource_scope` | object | Optional constraints on which resources the pact applies to. |
-| `execution_plan` | string | Free-form markdown description of what the agent plans to do. Shown to the owner during approval review. |
+| `completion_conditions` | list | Conditions that automatically complete the pact when reached — such as a transaction count, spend cap, or time limit. |
 
-## The approval gate
+## Pact state machine
 
-Submitting a pact does not grant access. It creates a pending approval request in the Human App.
+| State | Meaning |
+|---|---|
+| `pending_approval` | Submitted by the agent, awaiting owner review. No access has been granted. |
+| `active` | Approved by the owner. The delegation and API key are live. The agent can submit operations. |
+| `rejected` | Rejected by the owner during approval review. No access was ever granted. |
+| `completed` | A completion condition was met. The pact has ended naturally. |
+| `expired` | The pact was active and its `expires_at` timestamp was reached without a `time_elapsed` completion condition in effect. |
+| `revoked` | The owner explicitly revoked the pact. Access was terminated immediately. |
+| `withdrawn` | The agent withdrew the pact before it was acted on by the owner. |
 
-<Steps>
-  <Step title="Agent submits the pact">
-    The agent calls `POST /pacts/submit`. The pact is created in `PENDING_APPROVAL` status.
-  </Step>
-  <Step title="You are notified">
-    You receive a push notification in the Human App. You see the agent's stated intent, the execution plan, and the full set of policies being proposed.
-  </Step>
-  <Step title="You approve or reject">
-    You review the request and either approve or reject it. Approval is an explicit action — it cannot time out into auto-approval. Unanswered requests expire after one hour.
-  </Step>
-  <Step title="On approval: access is provisioned automatically">
-    Approval triggers two automatic actions: a delegation is created with scope derived from the pact's policies, and a pact-scoped API key is issued. The pact moves to `ACTIVE` status.
-  </Step>
-  <Step title="On rejection: no access is granted">
-    The pact moves to `REJECTED` status. No delegation or API key is created.
-  </Step>
-</Steps>
+```
+PENDING_APPROVAL
+    ├─ approved ──→ ACTIVE
+    │                 ├─ completion condition met ──→ COMPLETED
+    │                 ├─ expires_at reached ──→ EXPIRED
+    │                 └─ owner revokes ──→ REVOKED
+    ├─ rejected ──→ REJECTED
+    └─ agent withdraws ──→ WITHDRAWN
+```
 
 ## The pact-scoped API key
 
@@ -75,44 +51,12 @@ When a pact is approved, the agent receives an API key scoped to that pact's pol
 - Can only authorize operations within the delegation scope derived from the pact's policy set
 - Is subject to all policies defined in the pact's `policies` field on every call
 - Is bound to the specific wallet identified by `wallet_id`
-- Becomes invalid automatically when the pact expires, is completed, or is revoked
-- Is only visible to the agent that submitted the pact — not to the wallet owner
+- Becomes invalid immediately when the pact exits `ACTIVE` for any reason — no grace period
 
-## Full pact state machine
+## Policy controls
 
-| State | Meaning |
-|---|---|
-| `pending_approval` | Submitted by the agent, awaiting owner review. No access has been granted. |
-| `active` | Approved by the owner. The delegation and API key are live. The agent can submit operations. |
-| `rejected` | Rejected by the owner during approval review. No access was ever granted. |
-| `completed` | A completion condition was met. The pact has ended naturally. |
-| `expired` | The `duration_seconds` elapsed after activation, or the approval window (1 hour) timed out. |
-| `revoked` | The owner explicitly revoked the pact. Access was terminated immediately. |
+A pact's `policies` field is where you set the guardrails the agent must operate within. The following pages cover each control in detail:
 
-```
-PENDING_APPROVAL
-    ├─ approved ──→ ACTIVE
-    │                 ├─ completion condition met ──→ COMPLETED
-    │                 ├─ duration elapsed ──→ EXPIRED
-    │                 └─ owner revokes ──→ REVOKED
-    └─ rejected / expired ──→ REJECTED / EXPIRED
-```
-
-## Pact expiry: no zombie permissions
-
-When a pact transitions out of `ACTIVE` — for any reason — the pact-scoped API key is invalidated immediately on the server side. There is no grace period. The next API call the agent makes with that key will return an authentication error.
-
-## Security properties
-
-| Property | How it is enforced |
-|---|---|
-| **Time-bound** | `duration_seconds` sets a hard expiry. Completion conditions can also terminate the pact when spending or transaction targets are met. |
-| **Scope-bound** | The pact-scoped API key cannot authorize operations outside the scope implied by the pact's policy set. The policy engine enforces declared `policies` on every operation. |
-| **Owner-controlled** | No access is granted without the owner's explicit approval. The owner can revoke at any time. |
-| **Auditable** | Every lifecycle event is recorded in the pact event log. |
-
-## Further reading
-
-- [Policy Engine](/products/agentic-wallet/manual/security/policy-engine) — how every agent operation is evaluated before execution
-- [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) — how per-transaction and rolling limits are configured
-- [Freeze and Revoke](/products/agentic-wallet/manual/security/freeze-revoke) — how to immediately terminate agent access in an emergency
+- [Policy engine](/products/agentic-wallet/manual/security/policy-engine) — how every agent operation is evaluated before execution
+- [Spend limits](/products/agentic-wallet/manual/security/spend-limits) — per-transaction and rolling spend caps
+- [Address allowlists](/products/agentic-wallet/manual/security/address-allowlists) — restricting which addresses the agent can send to

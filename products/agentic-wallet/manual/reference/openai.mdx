@@ -7,7 +7,12 @@ sidebarTitle: "OpenAI"
 
 ## Overview
 
-The OpenAI integration exposes three levels of abstraction:
+The OpenAI integration has two practical paths:
+
+1. **Python adapter** — use the built-in CAW OpenAI adapter
+2. **TypeScript custom tools** — wrap the CAW TypeScript SDK in OpenAI Agents SDK tool definitions
+
+The Python integration exposes three levels of abstraction:
 
 1. `build_function_tools()` — raw function tools
 2. `get_cobo_tools()` — bring-your-own agent
@@ -40,7 +45,10 @@ from cobo_agentic_wallet.integrations.openai import (
     create_cobo_agent_context,
 )
 
-client = WalletAPIClient(base_url="http://localhost:8000", api_key="<api_key>")
+client = WalletAPIClient(
+    base_url="https://api.agenticwallet.cobo.com",
+    api_key="<api_key>",
+)
 agent = create_cobo_agent(client=client, model="gpt-4.1-mini")
 context = create_cobo_agent_context()
 ```
@@ -54,6 +62,30 @@ print(result.final_output)
 </Step>
 
 </Steps>
+
+## Tool Selection
+
+To restrict the CAW tools exposed to the agent, pass `include_tools` or `exclude_tools`:
+
+```python
+agent = create_cobo_agent(
+    client=client,
+    model="gpt-4.1-mini",
+    include_tools=["submit_pact", "get_pact", "contract_call", "get_transaction_record_by_request_id"],
+)
+```
+
+If you need the raw filtered tool list instead of a prebuilt agent, call `get_cobo_tools(client, include_tools=[...])`.
+
+## TypeScript Path
+
+When using the OpenAI Agents SDK in TypeScript, use `@cobo/agentic-wallet` as the backend and expose CAW operations through a small set of custom tools. Keep the same role-based split used elsewhere in the docs:
+
+- Pact Drafting: `submitPact`, `getPact`
+- Execution: `transferTokens`, `contractCall`, fee estimation
+- Observer: transaction record lookup and audit logs
+
+The CAW repo does not currently ship a dedicated TypeScript OpenAI adapter layer equivalent to `create_cobo_agent()`. The recommended pattern is to keep CAW inside your own tool functions so you control tool naming, retry logic, and the exact surface exposed to the model.
 
 ## Three Levels of Integration
 

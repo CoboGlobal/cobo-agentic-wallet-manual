@@ -1,0 +1,106 @@
+---
+title: "Introduction"
+sidebarTitle: "Introduction"
+description: "What Cobo Agentic Wallet offers you — full control over your AI agent's access to your crypto, with automation where you want it and human oversight where you need it."
+---
+
+Your AI agent needs crypto access to do its job. But handing it unrestricted access means trusting a software system — and any model behind it — with your funds. Cobo Agentic Wallet gives your agent the access it needs, inside the exact boundaries you set, enforced automatically by the wallet's infrastructure.
+
+You decide what the agent can do, how much it can spend, and when access ends. The wallet enforces it. Not by trusting the agent to follow rules, but by architecture.
+
+## What you get
+
+### Pact-based authorization
+
+Every task your agent takes on starts with your approval. Your agent proposes a **pact** — a structured plan with four elements:
+
+- **Intent** — what the agent wants to do ("Execute a DCA strategy on Base")
+- **Execution plan** — how it plans to do it ("Swap USDC → ETH on Uniswap every Monday at 9am")
+- **Policies** — the rules governing every transaction ("Max $200 per transaction, only Uniswap on Base")
+- **Completion conditions** — when the authorization ends ("After $3,000 total spent or 30 days elapsed")
+
+You review all four elements in the Cobo Agentic Wallet app, adjust any of them if needed, then approve or reject. Nothing moves until you approve. See [What is a pact](/products/agentic-wallet/manual/start-here/what-is-a-pact) for the full breakdown.
+
+### Owner guardrails
+
+On top of pact-level policies, you set wallet-level guardrails that apply at all times:
+
+| Control | What it does |
+|---|---|
+| Per-transaction limit | Your agent cannot send more than this amount in a single transaction |
+| Daily limit | Total your agent can spend per day across all transactions |
+| Approval threshold | Transactions above this amount pause for your review before executing |
+| Allowed addresses | Your agent can only send to addresses you have explicitly approved |
+| Allowed chains | Your agent can only transact on the chains you specify |
+
+### Approval control
+
+When your agent tries an operation above your approval threshold, it does not execute — it pauses and waits. You receive a notification in the Cobo Agentic Wallet app, review the details, and approve or reject. If you do not respond within one hour, the transaction expires automatically and your agent is notified.
+
+### Full visibility
+
+Every operation your agent attempts is recorded: completed, blocked by policy, or paused for your review. You can see timestamps, amounts, destinations, and outcomes for every action — whether it succeeded or was stopped.
+
+### Instant freeze
+
+At any time, you can freeze your agent from the Cobo Agentic Wallet app. All activity stops immediately — no delay, no grace period, no cleanup required. When you are ready to resume, unfreeze from the same place.
+
+### MPC security
+
+Your private key is never held in one place. Cobo Agentic Wallet uses Multi-Party Computation to split signing authority across multiple independent parties. No single party — including the agent, including Cobo — can move your funds alone. This is a mathematical guarantee built into the key architecture, not a software promise.
+
+### Key backup
+
+Your mobile key share is stored on your device. You can back it up to iCloud, Google Drive, or as an encrypted file export, so you do not lose access if you change devices.
+
+## Your overall flow
+
+Here is what it looks like in practice — from a task starting to access ending cleanly.
+
+<Steps>
+  <Step title="Your agent proposes a task">
+    Your agent identifies a job it wants to do and submits a pact to you. It includes its intent, a detailed execution plan, the policies it is proposing, and when access should end.
+  </Step>
+  <Step title="You review in the Cobo Agentic Wallet app">
+    You receive a notification. In the Cobo Agentic Wallet app you see the full pact: what the agent wants to do, how it plans to do it, every policy it proposed, and the completion conditions. You can read the execution plan in plain language and adjust any policy before approving — the agent operates under your revised terms, not its original proposal.
+  </Step>
+  <Step title="You approve (or adjust or reject)">
+    Approve as-is, modify the terms and approve, or reject outright. No access is granted until you explicitly approve.
+  </Step>
+  <Step title="Your agent operates within your terms">
+    Once approved, your agent starts working. Every transaction it submits is checked against the pact's policies before it executes. Transactions within limits run automatically. Anything above your threshold pauses in your Cobo Agentic Wallet app for your sign-off.
+  </Step>
+  <Step title="Access ends cleanly">
+    When the completion condition is met — time elapsed, budget hit, or the job is done — the pact ends and your agent's access revokes automatically. No zombie permissions. No lingering credentials.
+  </Step>
+</Steps>
+
+## What your agent can and cannot do (after pairing)
+
+| Your agent can | It cannot |
+|---|---|
+| Transfer tokens within your pact's budget | Exceed spending limits or modify its own rules |
+| Query your wallet balance and transaction history | Access wallets you have not connected it to |
+| Interact with protocols within your approved scope | Approve its own pact requests or over-limit transactions |
+| Request your approval for operations above your threshold | Continue operating after the pact expires or is revoked |
+| Self-correct when a policy blocks an operation | Hold or reconstruct your private keys |
+
+## Before and after pairing
+
+Pairing with the Cobo Agentic Wallet app is the step that puts you personally in control. Before pairing, your agent is the wallet owner and has no restrictions — useful for testing and early development. After pairing, your agent becomes a delegate: it can only act within the pacts and guardrails you set.
+
+| | Before pairing | After pairing |
+|---|---|---|
+| **Who sets the rules** | No rules — agent acts freely | You, through pacts and owner guardrails |
+| **Approval required** | None | New pacts and over-limit transactions |
+| **Key management** | Agent machine + Cobo | Agent machine + Cobo, plus your device + Cobo |
+| **Best for** | Testing, development | Live funds, ongoing use |
+
+<CardGroup cols={2}>
+  <Card title="Create your wallet" icon="terminal" href="/products/agentic-wallet/manual/owners/install-skill">
+    Install the skill and your agent creates the wallet — ready in minutes.
+  </Card>
+  <Card title="Pair your agent" icon="mobile" href="/products/agentic-wallet/manual/owners/connect-agent-human-app">
+    Complete pairing in the Cobo Agentic Wallet app and take control of your wallet.
+  </Card>
+</CardGroup>
