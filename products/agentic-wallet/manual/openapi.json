@@ -7397,7 +7397,7 @@
           "Telemetry"
         ],
         "summary": "Get telemetry config",
-        "description": "Return the CLI telemetry feature-flag configuration for your authenticated session.\n\nThe response includes:\n- `enabled` — whether CLI telemetry collection is active.\n- `sample_rate` — fraction of events that are sampled (0.0–1.0).\n- `upload_url` — destination URL for telemetry uploads; empty string if not configured.",
+        "description": "Return the CLI telemetry feature-flag configuration for your authenticated session.\n\nThe response includes:\n- `enabled` — whether CLI telemetry collection is active.\n- `upload_url` — destination URL for telemetry uploads; empty string if not configured.",
         "operationId": "get_telemetry_config",
         "parameters": [
           {
@@ -18420,11 +18420,6 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
-          },
-          "sample_rate": {
-            "type": "number",
-            "title": "Sample Rate",
-            "default": 1.0
           },
           "upload_url": {
             "type": "string",

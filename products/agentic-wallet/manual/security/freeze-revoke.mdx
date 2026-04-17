@@ -3,167 +3,31 @@ title: "Freeze and Revoke"
 description: "Two emergency controls for immediately suspending or permanently terminating an agent's wallet access."
 ---
 
-Even with carefully scoped pacts and policy rules in place, situations arise that require immediate intervention: a suspicious transaction pattern, a compromised agent credential, an unexpected behavior, or simply the need to pause operations while investigating. Cobo Agentic Wallet provides two distinct emergency controls for these situations: **freeze** and **revoke**.
-
-Understanding the difference is important — they have different effects, different reversibility, and are appropriate for different situations.
-
-## Freeze vs. revoke at a glance
+Cobo Agentic Wallet provides two emergency controls for stopping agent activity: **freeze** and **revoke**.
 
 | | Freeze | Revoke |
 |---|---|---|
-| **Effect** | Suspends agent access temporarily | Permanently terminates agent access |
-| **Pact status** | Remains `ACTIVE` | Moves to `REVOKED` |
-| **API key** | Rejected server-side immediately | Invalidated immediately |
-| **Reversible?** | Yes — unfreeze restores access | No — cannot be undone |
-| **Delegation** | Remains in place, flagged as frozen | Revoked and deleted |
-| **After action** | Agent resumes under same pact terms | Agent must submit a new pact |
+| **What it targets** | Agent's access to a wallet | A pact |
+| **Effect** | Suspends access temporarily | Permanently terminates the pact |
+| **Reversible?** | Yes — unfreeze restores access | No |
+| **After action** | Agent resumes under the same pact | Agent must submit a new pact |
+
+Both take effect immediately — the agent's next API call will be rejected.
 
 ## Freeze
 
-Freezing suspends a delegation without terminating it. The pact associated with the delegation remains in `ACTIVE` status — its terms and policies are all preserved. But the agent's ability to use the pact-scoped API key is blocked immediately at the server level.
+Freezing blocks an agent's access to a wallet without ending the pact. The pact and its terms remain intact. Unfreezing restores access instantly, with no need to resubmit or re-approve anything.
 
-### What freeze does
-
-- The delegation's `frozen` flag is set to `true` with an optional reason recorded.
-- Any API call from the agent using the pact-scoped key returns an authentication error (`WALLET_FROZEN`).
-- Pending operations already in the approval queue are not automatically cancelled — they remain in `pending` status for the user to act on.
-- No new operations can be submitted by the agent.
-
-### What freeze does not do
-
-- It does not complete, expire, or revoke the pact. The pact lifecycle state is unchanged.
-- It does not modify the pact's policies or completion conditions.
-- It does not remove the delegation.
-
-### Unfreeze
-
-Unfreezing restores the delegation to its active state. The agent can immediately resume submitting operations using the same pact-scoped API key. All pact terms remain exactly as they were before the freeze — there is no need to resubmit or re-approve anything.
-
-This makes freeze appropriate for investigations or temporary holds: you can pause the agent, review recent activity, and resume without disruption if the investigation is clear.
+This makes freeze the right choice for investigations or temporary holds: pause the agent, review recent activity, and resume if the investigation is clear.
 
 ## Revoke
 
-Revoking permanently terminates a pact. The pact status moves to `REVOKED`. The pact-scoped API key is invalidated immediately and cannot be reissued from that pact. The associated delegation is revoked.
-
-### What revoke does
-
-- The pact transitions from `ACTIVE` to `REVOKED`.
-- The pact-scoped API key is invalidated on the server. The next API call with that key returns an error.
-- The underlying delegation is removed.
-- The action is permanent and cannot be undone.
-
-### After revoking
-
-Once a pact is revoked, the agent must submit a new pact to regain access. The user must review and approve the new pact before any access is restored. There is no fast path to re-activate a revoked pact — this is intentional, ensuring that regaining access always goes through the approval gate.
+Revoking permanently terminates a pact. The pact moves to `revoked`, the API key is invalidated, and the agent can submit a new pact to continue operating.
 
 <Warning>
-Revoke cannot be undone. If you are uncertain whether the suspension should be permanent, use freeze instead. You can always escalate a freeze to a revoke later.
+Revoke cannot be undone.
 </Warning>
-
-## Freeze scope
-
-Freeze operations can target different scopes, allowing you to act with precision or broad scope depending on the situation:
-
-| Scope value | Effect |
-|---|---|
-| `delegation` | Freezes a single specific delegation identified by `delegation_id`. |
-| `wallet` | Freezes all active delegations on a specific wallet identified by `wallet_id`. |
-| `owner` | Freezes all delegations belonging to the specified `owner_id`. |
-
-The `wallet` and `owner` scopes are useful for incident response scenarios where you need to immediately stop all agent activity on a wallet or across your entire account while you investigate.
-
-## How to freeze
-
-Freeze is available through two interfaces:
-
-### Cobo Agentic Wallet app
-
-Open the Cobo Agentic Wallet app on your mobile device, navigate to the wallet, and use the freeze control in the wallet management section.
-
-### caw CLI
-
-The `caw delegation freeze` command accepts a `--scope` flag that controls the blast radius:
-
-```
-caw delegation freeze \
-  --scope delegation \
-  --delegation-id <uuid> \
-  --reason "Suspicious transaction pattern observed"
-```
-
-```
-caw delegation freeze \
-  --scope wallet \
-  --wallet-id <uuid> \
-  --reason "Emergency pause pending investigation"
-```
-
-```
-caw delegation freeze \
-  --scope owner \
-  --owner-id <uuid> \
-  --reason "Account-wide freeze"
-```
-
-The `--reason` flag is optional but recommended — it is stored in the audit log and helps with post-incident review.
-
-Use `--dry-run` to preview how many delegations would be affected before committing:
-
-```
-caw delegation freeze --scope wallet --wallet-id <uuid> --dry-run
-```
-
-### caw CLI — unfreeze
-
-To restore access after a freeze:
-
-```
-caw delegation unfreeze \
-  --scope delegation \
-  --delegation-id <uuid>
-```
-
-The same scope options (`delegation`, `wallet`, `owner`) are available for unfreeze. `--dry-run` is also supported.
-
-## How to revoke
-
-Revocation is available through the same two interfaces. Via the CLI:
-
-```
-caw pact revoke <pact-id>
-```
-
-The CLI will prompt for confirmation before proceeding. This is a `--confirm` guarded operation — the confirmation prompt is intentional to prevent accidental revocation.
-
-## How fast does freeze take effect?
-
-Freeze is immediate. The moment the freeze API call completes, the delegation's `frozen` flag is set on the server. The agent's next API call — even a fraction of a second later — will receive a `WALLET_FROZEN` error. There is no grace period, no in-flight request processing window, and no delay.
-
-The same applies to revoke: the pact-scoped API key is invalidated immediately on the server when revocation is confirmed.
-
-## What the agent sees when frozen
-
-When an agent's delegation is frozen, the next API call using the pact-scoped key returns:
-
-- HTTP 403
-- Error code: `WALLET_FROZEN`
-- `reason`: `wallet_frozen`
-- `details.freeze_reason`: the reason text provided when the freeze was initiated (if any)
-- `suggestion`: "Ask the wallet owner to unfreeze the wallet before retrying."
-
-Well-behaved agents should treat a `WALLET_FROZEN` response as a signal to stop all automated activity and surface the situation to their operator. Retrying in a loop against a frozen delegation will not succeed and produces unnecessary noise in the audit log.
-
-## Audit trail
-
-All freeze, unfreeze, and revoke actions are recorded in the audit log with:
-- The action type and timestamp
-- The scope and affected delegation IDs
-- The principal that performed the action
-- The reason text, if provided
-
-This provides a complete record for post-incident review and compliance purposes.
 
 ## Further reading
 
-- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — the full pact lifecycle including the REVOKED state
-- [Custodial Model](/products/agentic-wallet/manual/security/custodial-model) — how policy enforcement interacts with key security
+- [Pacts](/products/agentic-wallet/manual/security/pact-mechanism) — the full pact lifecycle including the revoked state

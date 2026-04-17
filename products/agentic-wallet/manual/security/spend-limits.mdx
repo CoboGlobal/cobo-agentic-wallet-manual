@@ -1,140 +1,39 @@
 ---
 title: "Spend Limits"
-description: "Per-transaction caps, rolling window counters, and review thresholds that bound how much an agent can move and when."
+description: "Per-transaction caps, rolling window counters, and review thresholds that bound how much an agent can move."
 ---
 
-Spend limits are the quantitative controls in the policy engine. They answer the question: even if an operation is the right type and goes to the right address, is it within the agreed financial bounds?
+Spend limits are the quantitative controls in a pact's policies. They answer the question: even if an operation is the right type and goes to the right address, is it within the agreed financial bounds?
 
-Spend limits are configured in the `policies` field of a PactSpec (at pact submission time) or directly on a delegation. They are evaluated at Stage 3 of the policy engine — after permission checks and policy rule matching — on every operation.
+Spend limits are set in the `policies` field of a PactSpec at submission time and are fixed once the pact is activated. They are evaluated after permission checks and policy rule matching on every operation.
 
-<Info>
-For an overview of where spend limits fit in the overall evaluation pipeline, see [Policy Engine](/products/agentic-wallet/manual/security/policy-engine).
-</Info>
+## Three limit types
 
-## The three limit types
+### Per-transaction cap
 
-### Per-transaction limit (`deny_if.amount_usd_gt` or `deny_if.amount_gt`)
+A hard limit on the value of any single operation. If a transfer or contract call would exceed this value, it is denied immediately — regardless of rolling window state.
 
-A per-transaction limit caps the value of any single operation. If a transfer or contract call would exceed this value, the operation is denied immediately — regardless of how many transactions have been executed or what the rolling window counters show.
+The cap can be expressed in USD (`amount_usd_gt`) or in the token's transfer unit (`amount_gt`). For USD limits, the engine converts using current market prices; if the price feed is unavailable for a token, the USD limit is not evaluated and the operation proceeds.
 
-- `amount_usd_gt`: the limit is expressed in USD. The engine converts the token amount to USD at the time of the operation using current market prices. If the price feed is unavailable for a token, USD-denominated limits are not evaluated and the operation proceeds as if no USD rule matched.
-- `amount_gt`: the limit is expressed in the token's native units (no USD conversion).
+### Rolling window counter
 
-Per-transaction limits are configured in the `deny_if` block of a policy. They work on both DENY and ALLOW effects:
+Tracks cumulative activity over a sliding time window. Available windows: 1 hour, 24 hours, 7 days, 30 days. Each window can limit cumulative USD value, cumulative token amount, or transaction count — or any combination.
 
-```json
-{
-  "effect": "deny",
-  "when": {},
-  "deny_if": {
-    "amount_usd_gt": "500"
-  }
-}
-```
+Rolling windows are not calendar-based. A 24-hour window tracks the last 24 hours backward from the moment of each operation, not from midnight. This provides consistent protection across all hours of the day.
 
-This configuration blocks any transfer with a USD value above $500. An agent submitting a $600 transfer would receive HTTP 403 with code `TRANSFER_LIMIT_EXCEEDED`.
+Multiple windows can be active at once. An operation must pass all applicable counters before it can proceed.
 
-### Rolling window counters (`deny_if.usage_limits`)
+### Review threshold
 
-Rolling window counters track cumulative activity over a sliding time window. The supported windows are:
-
-| Window key | Duration |
-|---|---|
-| `rolling_1h` | 1 hour |
-| `rolling_24h` | 24 hours |
-| `rolling_7d` | 7 days |
-| `rolling_30d` | 30 days |
-
-Each window can limit any combination of:
-- `amount_usd_gt`: cumulative USD value in the window
-- `amount_gt`: cumulative token units in the window
-- `tx_count_gt`: number of transactions in the window
-
-Multiple windows can be active simultaneously. Each window is checked independently, and the operation must pass all applicable limits.
-
-### Review threshold (`review_if.amount_usd_gt` or `review_if.amount_gt`)
-
-A review threshold is a soft escalation trigger. Instead of blocking an operation outright, it routes it to the pending approval queue when the threshold is crossed.
-
-- Operations below the threshold proceed automatically (assuming they pass other checks).
-- Operations at or above the threshold are held as a `PendingOperation`. The user is notified, reviews the details, and explicitly approves or rejects the specific operation.
-
-Review thresholds are configured in the `review_if` block of an ALLOW policy:
-
-```json
-{
-  "effect": "allow",
-  "when": {
-    "chain_in": ["ETH"]
-  },
-  "review_if": {
-    "amount_usd_gt": "1000"
-  }
-}
-```
-
-This configuration allows ETH transfers automatically for amounts up to $1,000. Transfers above $1,000 are held for user review. The agent receives HTTP 200 with `status=PENDING_APPROVAL` in the response body, along with a `pending_operation_id` it can use to poll for the approval outcome.
-
-## What "rolling" means
-
-Rolling window counters are **not** calendar-based. A `rolling_24h` counter does not reset at midnight UTC. Instead, it tracks the last 24 hours backward from the moment of any new operation.
-
-Concretely: if an agent executes a transfer at 14:00 and the `rolling_24h` limit is $10,000, the counter includes all transfers executed between 14:00 yesterday and 14:00 today. At 15:00, the window has shifted — the 14:00 yesterday transfer may still be in the window, but anything before 15:00 yesterday has rolled off.
-
-This is different from a calendar-day reset, where the counter resets to zero at midnight regardless of recent activity. Rolling windows provide more consistent protection across all hours.
+A soft escalation trigger instead of a hard block. When a transfer exceeds the threshold, the operation is held for owner review rather than denied. The agent receives a `PENDING_APPROVAL` response and can poll for the outcome. Operations below the threshold proceed automatically.
 
 ## How limits compose
 
-A single operation must pass all applicable limits before it can proceed. If a pact has both a per-transaction limit and a `rolling_24h` counter, the operation must satisfy both:
+A single operation must pass all applicable limits. A $400 transfer may be within the per-transaction cap, but if the 24-hour counter is nearly full, it can still be denied on the rolling limit. Conversely, a transfer within the rolling budget can be blocked by the per-transaction cap.
 
-- A $400 transfer is under the $500 per-transaction limit — but if the 24-hour counter is already at $9,800 of a $10,000 budget, the $400 transfer would bring the total to $10,200 and be denied.
-- Conversely, a single $600 transfer would be blocked by the per-transaction limit even if the rolling counter has plenty of remaining capacity.
-
-When the `details` field of a `PolicyDenialError` includes counter information, the agent can see exactly which limit was hit, the current counter value, the limit value, the requested increment, and when the window resets.
-
-## What happens when a limit is hit
-
-The outcome depends on which limit was exceeded:
-
-| Limit type | Outcome |
-|---|---|
-| `deny_if.amount_usd_gt` (per-transaction) | HTTP 403, code `TRANSFER_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_1h` (hourly value) | HTTP 403, code `HOURLY_VALUE_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_24h` (daily value) | HTTP 403, code `DAILY_VALUE_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_7d` (weekly value) | HTTP 403, code `WEEKLY_VALUE_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_30d` (monthly value) | HTTP 403, code `MONTHLY_VALUE_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_1h` (hourly count) | HTTP 403, code `HOURLY_COUNT_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_24h` (daily count) | HTTP 403, code `DAILY_COUNT_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_7d` (weekly count) | HTTP 403, code `WEEKLY_COUNT_LIMIT_EXCEEDED` |
-| `deny_if.usage_limits.rolling_30d` (monthly count) | HTTP 403, code `MONTHLY_COUNT_LIMIT_EXCEEDED` |
-| `review_if.amount_usd_gt` (review threshold) | HTTP 200, `status=PENDING_APPROVAL`, operation held as PendingOperation |
-
-## Setting limits via PactSpec vs delegation
-
-Spend limits can be configured in two ways:
-
-**Via PactSpec (recommended)**: the agent includes inline policies in the `policies` field of the PactSpec at submission time. The user reviews these limits as part of the approval decision. This is the primary approach for agent-driven workflows.
-
-**Via delegation**: the wallet owner can set delegation-scoped policies directly using the policy API (`POST /policies` with `scope: delegation`). This approach is used when the owner wants to impose limits that were not in the original pact, or when updating existing policies via `PATCH /pacts/{pact_id}/policies`.
-
-In both cases, policies are enforced identically by the engine. The only difference is who configured them and when.
-
-## Updating limits after activation
-
-Once a pact is active, the owner can update its policies using `PATCH /pacts/{pact_id}/policies`. The update is a full replacement — the new policy list atomically replaces the old one within a single database transaction. There is never a window during the update where no policies are active.
-
-<Note>
-The update replaces all delegation-scoped policies at once. If you want to add a new limit without changing existing ones, include the full set of desired policies (old and new) in the replacement request.
-</Note>
-
-## Counter reset behavior
-
-Rolling window counters reset continuously as the window slides. There is no global "reset time." Each counter reflects the activity in the last N hours/days at the moment it is queried.
-
-When a denial includes a `resets_at` timestamp in the `details` field, this represents the time at which the oldest transaction in the window will have aged out — making room for new activity under the same limit.
+When a limit is hit, the denial response includes the current counter value, the limit, and when the window will have enough capacity again — giving the agent enough information to decide whether to wait, reduce the amount, or surface the block to the user.
 
 ## Further reading
 
-- [Policy Engine](/products/agentic-wallet/manual/security/policy-engine) — how spend limits fit into the three-stage evaluation pipeline
-- [Address Allowlists](/products/agentic-wallet/manual/security/address-allowlists) — how to restrict which addresses an agent can send to
-- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how to declare spend limits in a PactSpec
+- [Policy engine](/products/agentic-wallet/manual/security/policy-engine) — how spend limits fit into the three-stage evaluation pipeline
+- [Address allowlists](/products/agentic-wallet/manual/security/address-allowlists) — how to restrict which addresses an agent can send to
