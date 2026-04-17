@@ -298,45 +298,18 @@
                 ]
               },
               {
-                "group": "Delegations",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/create-delegation",
-                  "products/agentic-wallet/manual/reference/list-delegations",
-                  "products/agentic-wallet/manual/reference/list-received-delegations",
-                  "products/agentic-wallet/manual/reference/get-delegation",
-                  "products/agentic-wallet/manual/reference/update-delegation",
-                  "products/agentic-wallet/manual/reference/revoke-delegation",
-                  "products/agentic-wallet/manual/reference/freeze-delegations",
-                  "products/agentic-wallet/manual/reference/unfreeze-delegations"
-                ]
-              },
-              {
                 "group": "Audit",
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-audit-logs"
                 ]
               },
               {
-                "group": "Policies",
+                "group": "Pending Operations",
                 "pages": [
-                  "products/agentic-wallet/manual/reference/create-policy",
-                  "products/agentic-wallet/manual/reference/list-policies",
-                  "products/agentic-wallet/manual/reference/get-policy",
-                  "products/agentic-wallet/manual/reference/update-policy",
-                  "products/agentic-wallet/manual/reference/deactivate-policy",
-                  "products/agentic-wallet/manual/reference/dry-run-policy",
                   "products/agentic-wallet/manual/reference/list-pending-operations",
                   "products/agentic-wallet/manual/reference/get-pending-operation",
                   "products/agentic-wallet/manual/reference/approve-pending-operation",
                   "products/agentic-wallet/manual/reference/reject-pending-operation"
-                ]
-              },
-              {
-                "group": "Approvals",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/list-approvals",
-                  "products/agentic-wallet/manual/reference/get-approval",
-                  "products/agentic-wallet/manual/reference/resolve-approval"
                 ]
               },
               {
@@ -370,25 +343,6 @@
                 ]
               },
               {
-                "group": "Webhooks",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/register-webhook",
-                  "products/agentic-wallet/manual/reference/delete-webhook-registration",
-                  "products/agentic-wallet/manual/reference/list-webhook-dlq"
-                ]
-              },
-              {
-                "group": "Key Export",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/create-export",
-                  "products/agentic-wallet/manual/reference/get-export",
-                  "products/agentic-wallet/manual/reference/resolve-export",
-                  "products/agentic-wallet/manual/reference/submit-reshare-nodes",
-                  "products/agentic-wallet/manual/reference/complete-export",
-                  "products/agentic-wallet/manual/reference/list-export-addresses"
-                ]
-              },
-              {
                 "group": "Faucet",
                 "pages": [
                   "products/agentic-wallet/manual/reference/deposit",
@@ -416,6 +370,7 @@
                   "products/agentic-wallet/manual/reference/archive-recipe",
                   "products/agentic-wallet/manual/reference/track-recipe-share",
                   "products/agentic-wallet/manual/reference/track-recipe-use",
+                  "products/agentic-wallet/manual/reference/get-recipe-search-count",
                   "products/agentic-wallet/manual/reference/submit-recipe",
                   "products/agentic-wallet/manual/reference/review-recipe-submission",
                   "products/agentic-wallet/manual/reference/search-recipes",
@@ -426,13 +381,6 @@
                 "group": "Suggestions",
                 "pages": [
                   "products/agentic-wallet/manual/reference/get-suggestion"
-                ]
-              },
-              {
-                "group": "System Config",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/list-system-configs",
-                  "products/agentic-wallet/manual/reference/upsert-system-config"
                 ]
               }
             ]
@@ -452,9 +400,6 @@
             "group": "Agentic Wallets",
             "pages": [
               "products/agentic-wallet/manual/learn/what-is-agentic-wallet",
-              "products/agentic-wallet/manual/learn/delegated-authority",
-              "products/agentic-wallet/manual/learn/policy-first-design",
-              "products/agentic-wallet/manual/learn/autonomy-spectrum",
               "products/agentic-wallet/manual/learn/ai-specific-risks"
             ]
           },

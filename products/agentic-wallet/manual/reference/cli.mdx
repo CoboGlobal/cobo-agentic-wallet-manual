@@ -158,7 +158,7 @@ caw wallet rename
 ### `pair`
 
 Initiate pairing and obtain a one-time pairing token (8-digit code) for the
-user to enter in the Cobo Cobo Agentic Wallet app. Share the code with the user through a
+user to enter in the Cobo Human App. Share the code with the user through a
 secure channel. Use caw wallet pair-status to monitor whether the user has
 completed pairing.
 
@@ -207,11 +207,11 @@ caw tx transfer <pact-id>
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--to` | Yes | — | Destination on-chain address (required) |
+| `--dst-address` | Yes | — | Destination on-chain address (required) |
 | `--amount` | Yes | — | Transfer amount as a decimal string, e.g. 1.5 (required) |
 | `--token-id` | Yes | — | Token ID, e.g. SETH, SETH_USDC (required). Use the List supported assets operation to retrieve all supported token IDs |
 | `--chain-id` | No | `ETH` | Chain ID, e.g. SETH, BASE_ETH. Resolved automatically from token ID if omitted |
-| `--src-addr` | No | — | Source address to transfer from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Source address to transfer from. If omitted, the server auto-selects the wallet address on this chain with the highest available token balance (explicit src-address takes precedence) |
 | `--request-id` | No | — | Client-supplied idempotency key. If a transfer with the same request-id already exists, the existing record is returned |
 | `--description` | No | — | Optional description for this transaction |
 | `--fee` | No | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
@@ -236,7 +236,7 @@ caw tx call <pact-id>
 | `--contract` | — | EVM contract address to call |
 | `--calldata` | — | EVM calldata as a hex-encoded string (0x-prefixed) |
 | `--value` | `0` | Native token amount to send with the call as a decimal string, e.g. 0.01 |
-| `--src-addr` | — | Source address to call from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | — | Source address to call from. If omitted, the server auto-selects the wallet address on this chain with the highest available native token balance (explicit src-address takes precedence) |
 | `--request-id` | — | Client-supplied idempotency key. If a call with the same request-id already exists, the existing record is returned |
 | `--description` | — | Optional description for this transaction |
 | `--fee` | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
@@ -296,11 +296,11 @@ caw tx estimate-transfer-fee
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--to` | Yes | — | Destination on-chain address (required) |
+| `--dst-address` | Yes | — | Destination on-chain address (required) |
 | `--amount` | Yes | — | Transfer amount as a decimal string, e.g. 1.5 (required) |
 | `--token-id` | No | — | Token ID, e.g. SETH, SETH_USDC. Use the List supported assets operation to retrieve all supported token IDs |
 | `--chain-id` | No | `ETH` | Chain ID, e.g. SETH, BASE_ETH. Resolved automatically from token ID if omitted |
-| `--src-addr` | No | — | Source address to transfer from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Source address to transfer from. If omitted, the server auto-selects the wallet address on this chain with the highest available token balance (explicit src-address takes precedence) |
 
 ### `estimate-call-fee`
 
@@ -322,7 +322,7 @@ caw tx estimate-call-fee
 | `--contract` | — | EVM contract address to call |
 | `--calldata` | — | EVM calldata as a hex-encoded string (0x-prefixed) |
 | `--value` | `0` | Native token amount to send with the call as a decimal string, e.g. 0.01 |
-| `--src-addr` | — | Source address to call from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | — | Source address to call from. If omitted, the server auto-selects the wallet address on this chain with the highest available native token balance (explicit src-address takes precedence) |
 | `--instructions` | — | Solana instructions as a JSON array of SolInstruction objects |
 | `--address-lookup-tables` | — | Solana address lookup table accounts as a JSON array |
 
@@ -330,11 +330,15 @@ caw tx estimate-call-fee
 
 Cancel a transaction that has not yet been confirmed on-chain.
 
-For EVM chains this submits a zero-value replacement transaction (RBF) to the
-same nonce with a higher fee, effectively cancelling the original.
+Pre-broadcast transactions (pending screening, authorization, or signature) are
+cancelled directly without a fee.
+
+Broadcasting transactions use Replace-By-Fee (RBF): a zero-value replacement is
+submitted to the same nonce with a higher fee. The fee is derived automatically
+from the original transaction's recorded fee bumped by --fee-multiplier (default +10%).
 
 `<transaction-uuid>` is the UUID of the transaction to cancel; obtain it from
-"caw tx list" or the submit response.
+'caw tx list' or the submit response.
 
 ```bash
 caw tx drop <transaction-uuid>
@@ -343,23 +347,28 @@ caw tx drop <transaction-uuid>
 | Option | Default | Description |
 |---|---|---|
 | `--request-id` | — | Client-supplied idempotency key for the replacement transaction |
-| `--fee` | — | Custom fee parameters for the replacement transaction as a JSON object. If omitted, a higher fee is chosen automatically |
+| `--fee-multiplier` | `0.1` | Fractional fee increase for RBF replacement (e.g. 0.1 = +10%). Only applied when the transaction is broadcasting. |
 
 ### `speedup`
 
-Resubmit a pending transaction to the same nonce with a higher fee (RBF).
+Resubmit a broadcasting transaction to the same nonce with a higher fee (RBF).
+
+The replacement fee is derived automatically from the original transaction's
+recorded fee bumped by --fee-multiplier (default +10%).
+
+Only transactions in the 'broadcasting' sub-status can be sped up.
 
 `<transaction-uuid>` is the UUID of the transaction to speed up; obtain it from
-"caw tx list" or the submit response.
+'caw tx list' or the submit response.
 
 ```bash
 caw tx speedup <transaction-uuid>
 ```
 
-| Option | Required | Default | Description |
-|---|---|---|---|
-| `--fee` | Yes | — | Higher fee parameters for the replacement transaction as a JSON object (required) |
-| `--request-id` | No | — | Client-supplied idempotency key for the replacement transaction |
+| Option | Default | Description |
+|---|---|---|
+| `--fee-multiplier` | `0.1` | Fractional fee increase for the RBF replacement (e.g. 0.1 = +10%) |
+| `--request-id` | — | Client-supplied idempotency key for the replacement transaction |
 
 ### `sign-message`
 
@@ -377,7 +386,7 @@ caw tx sign-message <pact-id>
 | `--chain-id` | Yes | — | Chain ID, e.g. SETH, BASE_ETH (required). Use the List supported chains operation to retrieve all supported chain IDs |
 | `--destination-type` | No | — | Signing scheme, e.g. eip712 for EIP-712 typed data |
 | `--eip712-typed-data` | No | — | EIP-712 typed data as a JSON object (required for eip712 destination type) |
-| `--source-address` | No | — | Address to sign with. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Address to sign with. If omitted, the server auto-selects the wallet address on this chain (explicit src-address takes precedence) |
 | `--description` | No | — | Human-readable description of what is being signed |
 | `--request-id` | No | — | Client-supplied idempotency key |
 
@@ -937,7 +946,7 @@ Exports the wallet's MPC private key through a secure MPC reshare and
 local reconstruction, writing derived private keys to a CSV file.
 
 The first invocation creates an export request and prints an authorization URL
-that the wallet owner must approve in the Cobo Cobo Agentic Wallet app. Re-run the command
+that the wallet owner must approve in the Cobo Human App. Re-run the command
 after approval; it will detect the approved state, spin up two temporary TSS
 recovery nodes, perform the reshare, reconstruct the root private key, derive
 keys for all wallet addresses, and write the result to --output-dir.
@@ -1124,61 +1133,6 @@ caw util base64 decode <base64-string>
 | `--stdin` | — | Read the base64 string from stdin instead of the positional argument |
 | `--url` | — | Use URL-safe base64 decoding |
 
-## `caw approval`
-
-Manage approval requests sent to the Cobo Agentic Wallet app for human review.
-
-Approval requests are created automatically when a wallet operation requires
-human authorization. Use the subcommands to list pending requests, inspect
-their details, or resolve them with an approve or reject action.
-
-```bash
-caw approval
-```
-
-### `list`
-
-List approval requests associated with your workspace. Results are
-paginated.
-
-```bash
-caw approval list
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `--limit` | `50` | Maximum number of results to return (1–200) |
-| `--status` | — | Filter by approval status: pending, approved, rejected, or expired |
-
-### `get`
-
-Retrieve the full details of a single approval request.
-
-`<approval-id>` is the UUID of the approval request; obtain it from the output
-of "caw approval list".
-
-```bash
-caw approval get <approval-id>
-```
-
-### `resolve`
-
-Approve or reject a pending approval request. This action is irreversible
-once submitted.
-
-`<approval-id>` is the UUID of the approval request; obtain it from "caw
-approval list".
-
-```bash
-caw approval resolve <approval-id>
-```
-
-| Option | Required | Default | Description |
-|---|---|---|---|
-| `--action` | Yes | — | Resolution action: approve or reject (required) |
-| `--rejection-reason` | No | — | Human-readable reason for rejection (used when action=reject) |
-| `--revised-pact` | No | — | PactSpec JSON string that replaces the pact specification before activation when action=approve |
-
 ## `caw pact`
 
 Manage pacts — delegated access agreements that grant an operator agent
@@ -1252,8 +1206,95 @@ caw pact events <pact-id>
 Submit a new pact request. A pact grants an agent delegated
 access to the wallet, scoped by policies (spending caps, chain/token
 filters, address constraints, approval thresholds) and completion conditions
-(transaction count, USD spent, or elapsed time) that automatically terminate
-the delegation when reached.
+(transaction count, amount spent, or elapsed time) that automatically
+terminate the delegation when reached.
+
+caw pact submit Flag Reference
+
+Translate the user's request into caw pact submit flags. Each row maps one
+aspect of the user's intent to the corresponding flag and describes how to
+derive the value.
+
+Least privilege: Default to the narrowest scope — shortest duration,
+tightest token/chain/contract allowlist, and lowest spend cap that fulfills
+the user's intent. Only widen when the user explicitly asks.
+
+| Flag | Required | Notes | How to Derive from User Input |
+|---|---|---|---|
+| --intent `<text>` | yes | Natural language description of the pact's purpose | Distill into action + asset + chain: "buy $500 ETH weekly" → "Weekly DCA: $500 ETH on Ethereum". |
+| --original-intent `<text>` | no | User's original message(s) that triggered this request | Capture raw message(s) as typed. If refined across multiple messages, concatenate chronologically. |
+| --policies `<json>` | yes | JSON array of detailed risk control policy definitions: chain/token/contract allowlists, per-tx caps, rolling limits, review thresholds. | See Policy Reference below. |
+| --completion-conditions `<json>` | yes | JSON array of completion conditions. | See Completion Conditions below. |
+| --execution-plan `<text>` | yes | Concrete on-chain steps the agent will perform post-approval. | See Execution Plan below. |
+| --context `<json>` | yes | In openclaw: \{"channel":"<>", "target":"<>", "session_id":"`<string>`"\}. Not in openclaw: \{"notification": false\}. | session_id is a string from openclaw sessions --json --agent `<agent>`. Must include all three fields when openclaw is active; use \{"notification": false\} otherwise. |
+
+Complete Example
+
+User request: "Help me transfer 1000 USDC to 0xABC...123 on Base"
+
+  caw pact submit \
+    --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
+    --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
+    --policies '[
+      \{
+        "name": "usdc-transfer",
+        "type": "transfer",
+        "rules": \{
+          "effect": "allow",
+          "when": \{
+            "chain_in": ["BASE_ETH"],
+            "token_in": [\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}],
+            "destination_address_in": [\{"chain_id":"BASE_ETH","address":"0xABC...123"\}]
+          \},
+          "deny_if": \{
+            "amount_usd_gt": "1001"
+          \}
+        \}
+      \}
+    ]' \
+    --completion-conditions '[\{"type": "tx_count", "threshold": "1"\}]' \
+    --execution-plan "# Summary\nTransfer 1000 USDC to 0xABC...123 on Base.\n\n# Operations\n- Transfer 1000 USDC to 0xABC...123 on Base\n\n# Risk Controls\n- Per-tx cap: $1001\n- One-time transfer only" \
+    --context '\{"channel": "`<channel>`", "target": "`<target>`", "session_id": "`<session-id>`"\}'
+
+Execution Plan (--execution-plan)
+
+Describe the operations the agent will run after the pact is active. Use
+these sections:
+
+- # Summary — one-line goal
+- # Operations — concrete calls/transfers (token, amount, target contract)
+- # Risk Controls — per-tx cap, daily cap, etc
+
+Example — "buy $500 ETH weekly on Base":
+
+  # Summary
+  Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
+
+  # Operations
+  - Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
+  - Swap $500 USDC → ETH via Uniswap V3 on Base
+  - Repeat weekly
+
+  # Risk Controls
+  - Per-swap cap: $550 (includes slippage buffer)
+  - Rolling 24h limit: $600
+
+Completion Conditions (--completion-conditions)
+
+JSON array defining when a pact is considered complete. Each object has
+type and threshold (required). At least one condition is required. Types
+cannot be duplicated within a pact.
+
+| Type | Threshold | Description |
+|---|---|---|
+| tx_count | string (integer) | Complete after N successful transactions (across all operation types). E.g., "5" |
+| amount_spent | string (decimal) | Complete after cumulative token amount reaches threshold. E.g., "3.5". Uses the token's transfer unit (e.g., "1.5" means 1.5 USDC or 1.5 ETH, not wei). |
+| amount_spent_usd | string (decimal) | Complete after cumulative USD spend reaches threshold. E.g., "3000". Note: transactions without price data won't increment progress. |
+| time_elapsed | string (seconds) | Complete after N seconds from pact activation. E.g., "3600" (1 hour). |
+
+Multiple conditions can be set; the pact completes when any one is satisfied
+(any-of semantics). Once complete, the pact is revoked immediately and no
+further operations can be executed under it.
 
 Policy Reference (--policies)
 
@@ -1264,7 +1305,7 @@ any operation not matching the when conditions of at least one policy is
 automatically denied — no implicit pass-through. Always define policies
 that explicitly cover every operation the agent needs to perform.
 
-Policy Structure:
+Policy Structure
 
   \{
     "name": "`<human-readable-name>`",
@@ -1278,20 +1319,15 @@ Policy Structure:
     \}
   \}
 
-  Field             Required  Description
-  name              Yes       Human-readable policy name for identification
-  type              Yes       Operation type: transfer, contract_call, or
-                              message_sign
-  rules.effect      Yes       Always set to "allow"
-  rules.when        Yes*      Allowlist conditions — which chains/tokens/
-                              contracts/domains to permit
-                              (* unless always_review=true)
-  rules.deny_if     Optional  Hard-block conditions — usage limits that
-                              trigger an automatic deny
-  rules.review_if   Optional  Soft-block conditions — thresholds that require
-                              owner approval before proceeding
-  rules.always_review Optional When true, every operation matching when
-                              requires owner approval
+| Field | Required | Description |
+|---|---|---|
+| name | Yes | Human-readable policy name for identification |
+| type | Yes | Operation type: transfer, contract_call, or message_sign |
+| rules.effect | Yes | Always set to "allow". |
+| rules.when | Yes (unless always_review=true) | Allowlist conditions — which chains/tokens/contracts/domains to permit |
+| rules.deny_if | Optional | Hard-block conditions — usage limits that trigger an automatic deny. |
+| rules.review_if | Optional | Soft-block conditions — thresholds that require owner approval before proceeding |
+| rules.always_review | Optional | When true, every operation matching when requires owner approval. Use for sensitive or high-risk tasks. |
 
 Evaluation flow:
 
@@ -1322,174 +1358,87 @@ Allowlist Conditions (when)
 
 For transfer policies:
 
-  Field                   Type              Description
-  chain_in                string[]          Restrict to specific chains
-  token_in                ChainTokenRef[]   Restrict to specific tokens,
-                                            e.g. [\{"chain_id":"BASE_ETH",
-                                            "token_id":"BASE_USDC"\}]
-  destination_address_in  ChainAddressRef[] Restrict to specific destinations
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains (e.g. ["BASE_ETH", "ETH"]) |
+| token_in | ChainTokenRef[] | Restrict to specific tokens, e.g. [\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}] |
+| destination_address_in | ChainAddressRef[] | Restrict to specific destination addresses |
 
 For contract_call policies (EVM):
 
-  Field     Type                Description
-  chain_in  string[]            Restrict to specific chains
-  target_in ContractTargetRef[] Restrict to specific contract addresses,
-                                e.g. [\{"chain_id":"BASE_ETH",
-                                "contract_addr":"0x..."\}]
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains |
+| target_in | ContractTargetRef[] | Restrict to specific contract addresses. E.g. [\{"chain_id":"BASE_ETH", "contract_addr":"0x..."\}] |
 
 For contract_call policies (Solana):
 
-  Field       Type         Description
-  chain_in    string[]     Restrict to specific chains
-  program_in  ProgramRef[] Restrict to specific program IDs
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains |
+| program_in | ProgramRef[] | Restrict to specific program IDs |
 
-Usage Limits (deny_if):
+Usage Limits (deny_if)
 
-  Field                                    Type           Applies to
-  amount_usd_gt                            string(decimal) transfer only
-    Deny if single operation USD value exceeds this
-  usage_limits.rolling_24h.amount_usd_gt   string         transfer only
-    Deny if cumulative USD value in the 24h window exceeds this
-  usage_limits.rolling_24h.tx_count_gt     integer        transfer,
-                                                          contract_call
-    Deny if transaction count in the 24h window exceeds this
+| Field | Type | Applies to | Description |
+|---|---|---|---|
+| amount_gt | string (decimal) | transfer only | Deny if single operation token amount exceeds this |
+| amount_usd_gt | string (decimal) | transfer only | Deny if single operation USD value exceeds this |
+| usage_limits.rolling_24h.amount_gt | string | transfer only | Deny if cumulative token amount in the 24h window exceeds this |
+| usage_limits.rolling_24h.amount_usd_gt | string | transfer only | Deny if cumulative USD value in the 24h window exceeds this |
+| usage_limits.rolling_24h.tx_count_gt | integer | transfer, contract_call | Deny if transaction count in the 24h window exceeds this |
 
-Review Threshold (review_if):
+Review Threshold (review_if)
 
-  Field          Type           Applies to   Description
-  amount_usd_gt  string(decimal) transfer    Require approval if USD value
-                                             exceeds this
+Matching operations require owner approval before execution.
 
-Message Sign Policies:
+| Field | Type | Applies to | Description |
+|---|---|---|---|
+| amount_gt | string (decimal) | transfer | Require approval if token amount exceeds this |
+| amount_usd_gt | string (decimal) | transfer | Require approval if USD value exceeds this |
 
-  message_sign policies control EIP-712 typed-data signing.
+Message Sign Policies
 
-  Rule               Field        Type    Description
-  when.domain_match  param_name   string  EIP-712 domain field to match,
-                                          e.g. "name", "verifyingContract"
-                     op           string  eq, neq, in, not_in
-                     value        any     Value to compare against
-  deny_if            usage_limits.rolling_24h.request_count_gt
-                                  integer Max signing requests per 24h window
-  review_if          (same fields as when)
-                                          Require owner approval for matching
-                                          signatures
+message_sign policies control EIP-712 typed-data signing.
 
-  Example — restrict Permit2 signatures to a specific contract:
+| Rule | Field | Type | Description |
+|---|---|---|---|
+| when.domain_match[] | param_name | string | EIP-712 domain field to match (e.g. "name", "verifyingContract") |
+| | op | string | eq, neq, in, not_in |
+| | value | any | Value to compare against |
+| deny_if | usage_limits.rolling_24h.request_count_gt | integer | Max signing requests per 24h window |
+| review_if | (same fields as when) | | Require owner approval for matching signatures |
 
-    \{
-      "name": "permit2-sign",
-      "type": "message_sign",
-      "rules": \{
-        "effect": "allow",
-        "when": \{
-          "domain_match": [
-            \{ "param_name": "name", "op": "eq", "value": "Permit2" \},
-            \{ "param_name": "verifyingContract", "op": "eq",
-              "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" \}
-          ]
-        \},
-        "deny_if": \{
-          "usage_limits": \{ "rolling_24h": \{ "request_count_gt": 50 \} \}
-        \}
+Example — restrict Permit2 signatures to a specific contract:
+
+  \{
+    "name": "permit2-sign",
+    "type": "message_sign",
+    "rules": \{
+      "effect": "allow",
+      "when": \{
+        "domain_match": [
+          \{ "param_name": "name", "op": "eq", "value": "Permit2" \},
+          \{ "param_name": "verifyingContract", "op": "eq", "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" \}
+        ]
+      \},
+      "deny_if": \{
+        "usage_limits": \{ "rolling_24h": \{ "request_count_gt": 50 \} \}
       \}
     \}
+  \}
 
-USD Pricing Note:
+Amount Units and USD Pricing
 
-  USD-based policy conditions (amount_usd_gt,
-  usage_limits.rolling_24h.amount_usd_gt) only apply to tokens with
-  available price data. Tokens without price data will NOT be affected by
-  USD-based policies — they will bypass these thresholds entirely. Combine
-  with explicit token_in allowlists to ensure only priced tokens are
-  permitted.
+Amount units: amount_gt values are in the token's transfer unit — the same
+unit used when submitting a transfer. For example, "1.5" means 1.5 USDC for
+USDC, or 1.5 ETH for ETH/SETH (not wei).
 
-Policy Construction Patterns:
-
-  Pattern: Allow with Inline Limits
-  "Allow Uniswap V3 swaps on Base, max 5 txs/day":
-
-    [
-      \{
-        "name": "dca-uniswap-allow",
-        "type": "contract_call",
-        "rules": \{
-          "effect": "allow",
-          "when": \{
-            "chain_in": ["BASE_ETH"],
-            "target_in": [\{ "chain_id": "BASE_ETH",
-              "contract_addr": "0x2626664c2603336E57B271c5C0b26F421741e481" \}]
-          \},
-          "deny_if": \{
-            "usage_limits": \{ "rolling_24h": \{ "tx_count_gt": 5 \} \}
-          \}
-        \}
-      \}
-    ]
-
-  Pattern: Transfer with Allowlist + Limits
-  "Allow USDC transfers on Base to a specific address, deny above
-  $1000/tx or $5000/day":
-
-    [
-      \{
-        "name": "usdc-transfer-allow",
-        "type": "transfer",
-        "rules": \{
-          "effect": "allow",
-          "when": \{
-            "chain_in": ["BASE_ETH"],
-            "token_in": [\{ "chain_id": "BASE_ETH",
-              "token_id": "BASE_USDC" \}],
-            "destination_address_in": [\{ "chain_id": "BASE_ETH",
-              "address": "0xRecipientAddress..." \}]
-          \},
-          "deny_if": \{
-            "amount_usd_gt": "1000",
-            "usage_limits": \{ "rolling_24h": \{ "amount_usd_gt": "5000" \} \}
-          \}
-        \}
-      \}
-    ]
-
-Completion Conditions (--completion-conditions)
-
-JSON array defining when a pact is considered complete. Each object has
-type and threshold (required). At least one condition is required. Types
-cannot be duplicated within a pact.
-
-  Type              Threshold         Description
-  tx_count          string (integer)  Complete after N successful
-                                      transactions (across all operation
-                                      types). E.g., "5"
-  amount_spent_usd  string (decimal)  Complete after cumulative USD spend
-                                      reaches threshold. E.g., "3000".
-                                      Note: transactions without price data
-                                      won't increment progress.
-  time_elapsed      string (seconds)  Complete after N seconds from pact
-                                      activation. E.g., "3600" (1 hour).
-
-Multiple conditions can be set; the pact completes when any one is
-satisfied (any-of semantics). Once complete, all permissions granted by
-the pact are revoked immediately.
-
-EXAMPLE
-
-  caw pact submit \
-    --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
-    --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
-    --policies '[\{"name":"usdc-transfer","type":"transfer","rules":\{"effect":"allow","when":\{"chain_in":["BASE_ETH"],"token_in":[\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}],"destination_address_in":[\{"chain_id":"BASE_ETH","address":"0xABC...123"\}]\},"deny_if":\{"amount_usd_gt":"1001"\}\}\}]' \
-    --completion-conditions '[\{"type":"tx_count","threshold":"1"\}]' \
-    --execution-plan "# Summary
-Transfer 1000 USDC to 0xABC...123 on Base.
-
-# Operations
-- Transfer 1000 USDC to 0xABC...123 on Base
-
-# Risk Controls
-- Per-tx cap: \$1001
-- One-time transfer only" \
-    --context '\{\}'
+USD Conditions: USD-based conditions (amount_usd_gt,
+usage_limits.rolling_24h.amount_usd_gt) only apply to tokens with available
+price data — tokens without price data bypass them entirely. For tokens
+without price data, use token-denominated limits (amount_gt,
+usage_limits.rolling_24h.amount_gt) instead.
 
 ```bash
 caw pact submit
@@ -1500,7 +1449,7 @@ caw pact submit
 | `--intent` | Yes | — | Natural language description of the pact's purpose, e.g. \"Weekly DCA: $500 ETH on Ethereum\" |
 | `--original-intent` | No | — | Raw user message(s) that triggered this request; concatenate chronologically for multi-turn sessions |
 | `--execution-plan` | Yes | — | Concrete on-chain steps the agent will perform after approval (markdown). Suggested sections: # Summary, # Operations, # Risk Controls |
-| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
+| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
 | `--policies` | Yes | — | JSON array of policy objects. Each has \"name\", \"type\" (transfer, contract_call, or message_sign), and \"rules\" (effect, when, deny_if, review_if) |
 
 ### `revoke`
@@ -1516,57 +1465,6 @@ caw pact revoke <pact-id>
 | Option | Default | Description |
 |---|---|---|
 | `--confirm` | — | Ask for interactive confirmation before executing |
-
-### `withdraw`
-
-Withdraw a pact that is still pending approval. Only the operator agent
-that submitted the pact can withdraw it. The linked approval request is
-also rejected. This action cannot be undone.
-
-```bash
-caw pact withdraw <pact-id>
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `--confirm` | — | Ask for interactive confirmation before executing |
-
-### `update-conditions`
-
-Update the completion conditions of an active pact.
-
-Only TX_COUNT and AMOUNT_SPENT_USD conditions may be modified. Thresholds can
-only be increased — decreasing a threshold could cause the pact to complete
-prematurely.
-
-`<pact-id>` is the ID of the active pact to update; obtain it from "caw pact
-list".
-
-```bash
-caw pact update-conditions <pact-id>
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `--conditions` | Yes | JSON array of CompletionCondition objects to set (required). Each object has 'type' (tx_count or amount_spent_usd) and 'threshold' fields |
-
-### `update-policies`
-
-Full-replace the delegation-scoped policies of an active pact.
-
-Old policies are removed and the new list is created atomically. Use this to
-update spending limits or rules without revoking and re-submitting the pact.
-
-`<pact-id>` is the ID of the active pact whose policies will be replaced; obtain
-it from "caw pact list".
-
-```bash
-caw pact update-policies <pact-id>
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `--policies` | Yes | JSON array of InlinePolicyCreate objects to replace existing policies (required). Each object has 'name', 'type', and 'rules' fields |
 
 ## `caw schema`
 

@@ -731,896 +731,6 @@
         }
       }
     },
-    "/api/v1/hire/submit": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Submit hire pact",
-        "operationId": "submit_hire_pact",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireSubmitRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire": {
-      "get": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "List hire pacts",
-        "operationId": "list_hire_pacts",
-        "parameters": [
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireListResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}": {
-      "get": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Get hire pact",
-        "operationId": "get_hire_pact",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/events": {
-      "get": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "List hire pact events",
-        "operationId": "list_hire_pact_events",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "default": 50,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireEventListResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/review": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Review hire pact",
-        "operationId": "review_hire_pact",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireReviewRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/acknowledge": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Acknowledge reviewed hire pact",
-        "operationId": "acknowledge_hire_pact",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireAcknowledgeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/fund": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Confirm hire pact funding",
-        "operationId": "fund_hire_pact",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireFundRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/deliveries": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Submit hire delivery",
-        "operationId": "submit_hire_delivery",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireDeliveryCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/delivery-reviews": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Review hire delivery",
-        "operationId": "review_hire_delivery",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireDeliveryReviewCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/cancel": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Cancel hire pact",
-        "operationId": "cancel_hire_pact",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireCancellationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/settlement-proposals": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Propose settlement for hire pact",
-        "operationId": "propose_hire_settlement",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireSettlementProposalCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/disputes": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Open hire dispute",
-        "operationId": "open_hire_dispute",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireDisputeCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/dispute-responses": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Respond to hire dispute",
-        "operationId": "respond_hire_dispute",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireDisputeResponseCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/hire/{pact_id}/arbitration-rulings": {
-      "post": {
-        "tags": [
-          "Hire"
-        ],
-        "summary": "Issue hire arbitration ruling",
-        "operationId": "rule_hire_dispute",
-        "parameters": [
-          {
-            "name": "pact_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Pact Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/HireArbitrationRulingCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_HireRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/wallets/balances": {
       "get": {
         "tags": [
@@ -2328,6 +1438,18 @@
               "title": "Include Archived"
             },
             "description": "Whether to include archived wallets in the results. `true`: include archived wallets. `false`: exclude archived wallets. Defaults to `false`."
+          },
+          {
+            "name": "main_node_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "Filter wallets by the TSS main node ID of their underlying vault. When set, only wallets whose vault's `main_node_id` matches this value are returned. Useful for finding all wallets controlled by a specific TSS node.",
+              "title": "Main Node Id",
+              "type": "string",
+              "nullable": true
+            },
+            "description": "Filter wallets by the TSS main node ID of their underlying vault. When set, only wallets whose vault's `main_node_id` matches this value are returned. Useful for finding all wallets controlled by a specific TSS node."
           },
           {
             "name": "X-API-Key",
@@ -3097,7 +2219,7 @@
           "Transactions"
         ],
         "summary": "Estimate transfer fee",
-        "description": "This operation estimates the network fee for a token transfer without submitting a transaction. You can use the returned `recommended`, `slow`, and `fast` fee options when constructing the transfer request. Policy evaluation runs before the estimate — the operation returns an error if a policy would deny the equivalent transfer.",
+        "description": "This operation estimates the network fee for a token transfer without submitting a transaction. You can use the returned `recommended`, `slow`, and `fast` fee options when constructing the transfer request.",
         "operationId": "estimate_transfer_fee",
         "parameters": [
           {
@@ -3239,7 +2361,7 @@
           "Transactions"
         ],
         "summary": "Estimate contract call fee",
-        "description": "This operation estimates the network fee for a contract call without submitting a transaction. You can use the returned `recommended`, `slow`, and `fast` fee options when constructing the contract call request. Policy evaluation runs before the estimate — the operation returns an error if a policy would deny the equivalent contract call.",
+        "description": "This operation estimates the network fee for a contract call without submitting a transaction. You can use the returned `recommended`, `slow`, and `fast` fee options when constructing the contract call request.",
         "operationId": "estimate_contract_call_fee",
         "parameters": [
           {
@@ -3727,622 +2849,6 @@
         }
       }
     },
-    "/api/v1/delegations": {
-      "post": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Create delegation",
-        "description": "This operation grants an operator access to a wallet on behalf of the authenticated principal.\n\nYou need to provide `operator_id` (the UUID of the principal receiving access), `wallet_id`, and `permissions` (at least one permission is required).\n\nValid permissions:\n- `read:wallet`: read wallet, address, balance, and transaction data.\n- `operator`: combined read and write access (equivalent to `read:wallet` + `write:transfer` + `write:contract_call`).\n- `write:transaction`: estimate transfer/contract-call fees and manage speedup/drop operations.\n- `write:transfer`: initiate token transfers.\n- `write:contract_call`: call smart contracts.\n- `write:manage`: manage delegations.\n- `write:policy`: manage delegation-scoped policies.\n\nOptionally supply `policies` to create delegation-scoped policies inline, and `expires_at` to set an expiry time.",
-        "operationId": "create_delegation",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DelegationCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationRead_"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "List delegations",
-        "description": "This operation retrieves all delegations created by the authenticated principal. You can filter results by operator, wallet, or status and use cursor-based pagination with `after`/`before`.",
-        "operationId": "list_delegations",
-        "parameters": [
-          {
-            "name": "operator_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by operator ID. The operator ID can be retrieved by calling the List all principals operation.",
-              "title": "Operator Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "Filter delegations by operator ID. The operator ID can be retrieved by calling the List all principals operation."
-          },
-          {
-            "name": "wallet_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by wallet ID. The wallet ID can be retrieved by calling the List all wallets operation.",
-              "title": "Wallet Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "Filter delegations by wallet ID. The wallet ID can be retrieved by calling the List all wallets operation."
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by status. Possible values: `active`, `revoked`, `expired`. If omitted, all statuses are returned.",
-              "title": "Status",
-              "$ref": "#/components/schemas/DelegationStatus",
-              "nullable": true
-            },
-            "description": "Filter delegations by status. Possible values: `active`, `revoked`, `expired`. If omitted, all statuses are returned."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.",
-              "title": "After",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.",
-              "title": "Before",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Deprecated. Use `after`/`before` cursors instead.",
-              "deprecated": true,
-              "title": "Offset",
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "nullable": true
-            },
-            "description": "Deprecated. Use `after`/`before` cursors instead.",
-            "deprecated": true
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 200].",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 200]."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_DelegationRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/delegations/received": {
-      "get": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "List received delegations",
-        "description": "This operation retrieves all delegations where the authenticated principal is the operator (the recipient of access). You can filter results by owner, wallet, or status and use cursor-based pagination with `after`/`before`.",
-        "operationId": "list_received_delegations",
-        "parameters": [
-          {
-            "name": "owner_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by the owner who granted them. The owner ID can be retrieved by calling the List all principals operation.",
-              "title": "Owner Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "Filter delegations by the owner who granted them. The owner ID can be retrieved by calling the List all principals operation."
-          },
-          {
-            "name": "wallet_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by wallet ID. The wallet ID can be retrieved by calling the List all wallets operation.",
-              "title": "Wallet Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "Filter delegations by wallet ID. The wallet ID can be retrieved by calling the List all wallets operation."
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter delegations by status. Possible values: `active`, `revoked`, `expired`. If omitted, all statuses are returned.",
-              "title": "Status",
-              "$ref": "#/components/schemas/DelegationStatus",
-              "nullable": true
-            },
-            "description": "Filter delegations by status. Possible values: `active`, `revoked`, `expired`. If omitted, all statuses are returned."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.",
-              "title": "After",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.",
-              "title": "Before",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Deprecated. Use `after`/`before` cursors instead.",
-              "deprecated": true,
-              "title": "Offset",
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "nullable": true
-            },
-            "description": "Deprecated. Use `after`/`before` cursors instead.",
-            "deprecated": true
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 200].",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 200]."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_DelegationRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/delegations/{delegation_id}": {
-      "get": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Get delegation",
-        "description": "This operation retrieves a specific delegation by its ID. The delegation ID can be retrieved by calling the List delegations operation.",
-        "operationId": "get_delegation",
-        "parameters": [
-          {
-            "name": "delegation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The UUID of the delegation to retrieve. Obtain this value from the `id` field returned by the List delegations operation.",
-              "title": "Delegation Id"
-            },
-            "description": "The UUID of the delegation to retrieve. Obtain this value from the `id` field returned by the List delegations operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Update delegation",
-        "description": "This operation updates the permissions or expiry time of a specific delegation. The delegation ID can be retrieved by calling the List delegations operation. All fields are optional; only provided fields are updated.\n\n<Note>Policies cannot be updated via this operation. Use the Update policy operation to modify delegation-scoped policies individually.</Note>",
-        "operationId": "update_delegation",
-        "parameters": [
-          {
-            "name": "delegation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The UUID of the delegation to update. Obtain this value from the `id` field returned by the List delegations operation.",
-              "title": "Delegation Id"
-            },
-            "description": "The UUID of the delegation to update. Obtain this value from the `id` field returned by the List delegations operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DelegationUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Revoke delegation",
-        "description": "This operation permanently revokes a specific delegation. The delegation ID can be retrieved by calling the List delegations operation. Once revoked, the operator loses all access granted by the delegation.\n\n<Warning>This action cannot be undone.</Warning>",
-        "operationId": "revoke_delegation",
-        "parameters": [
-          {
-            "name": "delegation_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The UUID of the delegation to revoke. Obtain this value from the `id` field returned by the List delegations operation.",
-              "title": "Delegation Id"
-            },
-            "description": "The UUID of the delegation to revoke. Obtain this value from the `id` field returned by the List delegations operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_dict_str__bool__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/freeze": {
-      "post": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Freeze delegations",
-        "description": "This operation suspends one or more delegations, preventing the operator from performing any actions until the delegation is unfrozen.\n\nSet `scope` to control which delegations are frozen:\n- `owner`: freeze all delegations owned by the specified `owner_id`.\n- `wallet`: freeze all delegations for the specified `wallet_id`.\n- `delegation`: freeze the specific delegation identified by `delegation_id`.\n\nThe corresponding ID field is required for each scope value. Supply `reason` to record why the delegation was frozen.",
-        "operationId": "freeze_delegations",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DelegationFreezeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationFreezeResult_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/unfreeze": {
-      "post": {
-        "tags": [
-          "Delegations"
-        ],
-        "summary": "Unfreeze delegations",
-        "description": "This operation restores one or more previously frozen delegations, allowing the operator to resume actions.\n\nSet `scope` to control which delegations are unfrozen:\n- `owner`: unfreeze all delegations owned by the specified `owner_id`.\n- `wallet`: unfreeze all delegations for the specified `wallet_id`.\n- `delegation`: unfreeze the specific delegation identified by `delegation_id`.\n\nThe corresponding ID field is required for each scope value.",
-        "operationId": "unfreeze_delegations",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DelegationFreezeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_DelegationUnfreezeResult_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/audit-logs": {
       "get": {
         "tags": [
@@ -4517,460 +3023,10 @@
         }
       }
     },
-    "/api/v1/policies": {
-      "post": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Create policy",
-        "description": "This operation creates a new policy for the authenticated principal.\n\nSet `scope` to control where the policy applies:\n- `global`: applies to all wallets owned by the principal. No `wallet_id` or `delegation_id` required.\n- `wallet`: applies to a specific wallet. `wallet_id` is required.\n- `delegation`: applies to a specific delegation. `delegation_id` is required.\n\nSet `policy_type` to control what the policy evaluates:\n- `transfer`: governs token transfer operations.\n- `contract_call`: governs smart contract call operations.\n\nThe `rules` field contains the policy rule configuration as a JSON object. Its structure depends on `policy_type`.\n\nHigher `priority` values take precedence when multiple policies match. Defaults to `0`.\n\nSet `is_active=false` to create the policy in a disabled state without affecting policy evaluation. Defaults to `true`.",
-        "operationId": "create_policy",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PolicyCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PolicyRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PolicyRead_"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "List all policies",
-        "description": "This operation retrieves all policies for the authenticated principal filtered by scope. `wallet_id` is required when `scope` is `wallet` or `delegation`. When `scope` is omitted, policies from all accessible scopes are returned. Use cursor-based pagination with `after`/`before`.",
-        "operationId": "list_policies",
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "The scope of policies to retrieve. Possible values: `global`, `wallet`, `delegation`. If omitted, all accessible scopes are returned.",
-              "title": "Scope",
-              "$ref": "#/components/schemas/PolicyScope",
-              "nullable": true
-            },
-            "description": "The scope of policies to retrieve. Possible values: `global`, `wallet`, `delegation`. If omitted, all accessible scopes are returned."
-          },
-          {
-            "name": "wallet_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "The wallet ID to filter policies by. Required when `scope` is `wallet` or `delegation`. The wallet ID can be retrieved by calling the List all wallets operation.",
-              "title": "Wallet Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "The wallet ID to filter policies by. Required when `scope` is `wallet` or `delegation`. The wallet ID can be retrieved by calling the List all wallets operation."
-          },
-          {
-            "name": "delegation_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "The delegation ID to filter policies by. Only applicable when `scope` is `delegation`. The delegation ID can be retrieved by calling the List delegations operation.",
-              "title": "Delegation Id",
-              "type": "string",
-              "format": "uuid",
-              "nullable": true
-            },
-            "description": "The delegation ID to filter policies by. Only applicable when `scope` is `delegation`. The delegation ID can be retrieved by calling the List delegations operation."
-          },
-          {
-            "name": "policy_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter policies by type. Possible values: `transfer`, `contract_call`. If omitted, all types are returned.",
-              "title": "Policy Type",
-              "$ref": "#/components/schemas/PolicyType",
-              "nullable": true
-            },
-            "description": "Filter policies by type. Possible values: `transfer`, `contract_call`. If omitted, all types are returned."
-          },
-          {
-            "name": "include_inactive",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Whether to include inactive policies in the results. `true`: include inactive policies. `false`: exclude inactive policies.",
-              "default": false,
-              "title": "Include Inactive"
-            },
-            "description": "Whether to include inactive policies in the results. `true`: include inactive policies. `false`: exclude inactive policies."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.",
-              "title": "After",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.",
-              "title": "Before",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Deprecated. Use `after`/`before` cursors instead.",
-              "deprecated": true,
-              "title": "Offset",
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "nullable": true
-            },
-            "description": "Deprecated. Use `after`/`before` cursors instead.",
-            "deprecated": true
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 200].",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 200]."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_PolicyRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/policies/{policy_id}": {
-      "get": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Get policy",
-        "description": "This operation retrieves a specific policy by its ID. The policy ID can be retrieved by calling the List all policies operation.",
-        "operationId": "get_policy",
-        "parameters": [
-          {
-            "name": "policy_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the policy to retrieve. Obtain this ID from the List all policies operation.",
-              "title": "Policy Id"
-            },
-            "description": "The unique identifier of the policy to retrieve. Obtain this ID from the List all policies operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PolicyRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Update policy",
-        "description": "This operation updates a specific policy. The policy ID can be retrieved by calling the List all policies operation. All fields are optional; only provided fields are updated. You can update `name`, `rules`, `priority`, and `is_active`.",
-        "operationId": "update_policy",
-        "parameters": [
-          {
-            "name": "policy_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the policy to update. Obtain this ID from the List all policies operation.",
-              "title": "Policy Id"
-            },
-            "description": "The unique identifier of the policy to update. Obtain this ID from the List all policies operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PolicyUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PolicyRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Deactivate policy",
-        "description": "This operation deactivates a specific policy, excluding it from policy evaluation without deleting it. The policy ID can be retrieved by calling the List all policies operation. You can reactivate the policy by calling the Update policy operation with `is_active=true`.",
-        "operationId": "deactivate_policy",
-        "parameters": [
-          {
-            "name": "policy_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The unique identifier of the policy to deactivate. Obtain this ID from the List all policies operation.",
-              "title": "Policy Id"
-            },
-            "description": "The unique identifier of the policy to deactivate. Obtain this ID from the List all policies operation."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_dict_str__bool__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/policies/dry-run": {
-      "post": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Dry-run policy",
-        "description": "This operation evaluates policies against a hypothetical operation without submitting a transaction. Use it to preview the policy decision before performing a transfer or contract call.\n\nYou need to provide `wallet_id` and `operation_type` (`transfer` or `contract_call`).\n\nFor transfers, also provide `dst_addr`, `token_id`, `chain_id`, and `amount`.\n\nFor contract calls:\n- EVM: provide `contract_addr`, `chain_id`, and optionally `calldata`.\n- Solana: provide `chain_id` and `instructions`.\n\nOptionally supply `delegation_id` to evaluate policies within a specific delegation context, or `principal_id` to override the principal used for evaluation.",
-        "operationId": "dry_run_policy",
-        "parameters": [
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PolicyDryRunRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PolicyDryRunResult_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/pending-operations": {
       "get": {
         "tags": [
-          "Policies"
+          "Pending Operations"
         ],
         "summary": "List pending operations",
         "description": "This operation retrieves pending approval operations for the authenticated principal. Human owners see all operations on their wallets. Agents see operations they initiated. Use cursor-based pagination with `after`/`before`.",
@@ -5080,7 +3136,7 @@
     "/api/v1/pending-operations/{pending_operation_id}": {
       "get": {
         "tags": [
-          "Policies"
+          "Pending Operations"
         ],
         "summary": "Get pending operation",
         "description": "This operation retrieves a specific pending approval operation by its ID. The pending operation ID is returned in the `pending_operation_id` field when a transfer, contract call, or message sign returns `status=pending_approval`. Both human owners and the agent that initiated the operation can read it.",
@@ -5136,10 +3192,10 @@
     "/api/v1/pending-operations/{pending_operation_id}/approve": {
       "post": {
         "tags": [
-          "Policies"
+          "Pending Operations"
         ],
         "summary": "Approve pending operation",
-        "description": "This operation approves a pending operation and triggers its execution. The pending operation ID can be retrieved by calling the List pending operations operation. Only the wallet owner principal can approve pending operations. For unclaimed agent-owned wallets, the same agent principal is also the wallet owner.",
+        "description": "This operation approves a pending operation and triggers its execution. The pending operation ID can be retrieved by calling the List pending operations operation. Only the wallet owner principal can approve pending operations. For unpaired agent-owned wallets, the same agent principal is also the wallet owner.",
         "operationId": "approve_pending_operation",
         "parameters": [
           {
@@ -5192,10 +3248,10 @@
     "/api/v1/pending-operations/{pending_operation_id}/reject": {
       "post": {
         "tags": [
-          "Policies"
+          "Pending Operations"
         ],
         "summary": "Reject pending operation",
-        "description": "This operation rejects a pending operation, preventing it from being executed. The pending operation ID can be retrieved by calling the List pending operations operation. Only the wallet owner principal can reject pending operations. For unclaimed agent-owned wallets, the same agent principal is also the wallet owner. Optionally supply `reason` (max 500 characters) to record why the operation was rejected.",
+        "description": "This operation rejects a pending operation, preventing it from being executed. The pending operation ID can be retrieved by calling the List pending operations operation. Only the wallet owner principal can reject pending operations. For unpaired agent-owned wallets, the same agent principal is also the wallet owner. Optionally supply `reason` (max 500 characters) to record why the operation was rejected.",
         "operationId": "reject_pending_operation",
         "parameters": [
           {
@@ -5238,246 +3294,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardResponse_PendingOperationActionResult_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/approvals/": {
-      "get": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "List approvals",
-        "description": "List approval requests visible to the authenticated principal.",
-        "operationId": "list_approvals",
-        "parameters": [
-          {
-            "name": "subject_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter by subject type.",
-              "title": "Subject Type",
-              "$ref": "#/components/schemas/ApprovalSubjectType",
-              "nullable": true
-            },
-            "description": "Filter by subject type."
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Filter by approval status.",
-              "title": "Status",
-              "$ref": "#/components/schemas/ApprovalStatus",
-              "nullable": true
-            },
-            "description": "Filter by approval status."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Cursor for forward pagination.",
-              "title": "After",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "Cursor for forward pagination."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Cursor for backward pagination.",
-              "title": "Before",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "Cursor for backward pagination."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Deprecated. Use after/before cursors instead.",
-              "deprecated": true,
-              "title": "Offset",
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "nullable": true
-            },
-            "description": "Deprecated. Use after/before cursors instead.",
-            "deprecated": true
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "Max items to return.",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "Max items to return."
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApprovalListResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/approvals/{approval_id}": {
-      "get": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "Get approval details",
-        "description": "Retrieve the full details of an approval request.",
-        "operationId": "get_approval",
-        "parameters": [
-          {
-            "name": "approval_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Approval Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApprovalRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/approvals/{approval_id}/resolve": {
-      "post": {
-        "tags": [
-          "Approvals"
-        ],
-        "summary": "Resolve approval request",
-        "description": "Approve or reject a pending approval. Only the owner can resolve.",
-        "operationId": "resolve_approval",
-        "parameters": [
-          {
-            "name": "approval_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Approval Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveApprovalRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ResolveApprovalResponse_"
                 }
               }
             }
@@ -5700,7 +3516,7 @@
           "Pacts"
         ],
         "summary": "Get wallet pact statistics",
-        "description": "Return wallet-level pact aggregate metrics for the Pact stats banner. Current implementation returns deterministic mock data while transaction tables are being refactored.",
+        "description": "Return wallet-level pact aggregate metrics for the Pact stats banner. Current implementation returns data from persisted transaction data.",
         "operationId": "get_wallet_pact_stats",
         "parameters": [
           {
@@ -5767,7 +3583,7 @@
           "Pacts"
         ],
         "summary": "Get wallet pact history",
-        "description": "Return wallet-level pact history buckets for the Pact history chart. Current implementation returns deterministic mock data while transaction tables are being refactored.",
+        "description": "Return wallet-level pact history buckets for the Pact history chart. Current implementation returns data from persisted transaction data.",
         "operationId": "get_wallet_pact_history",
         "parameters": [
           {
@@ -6272,10 +4088,11 @@
           {
             "name": "wallet_type",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "$ref": "#/components/schemas/WalletType",
-              "description": "The wallet type to retrieve chains for. Use `MPC`."
+              "description": "The wallet type to retrieve chains for. Use `MPC`.",
+              "default": "MPC"
             },
             "description": "The wallet type to retrieve chains for. Use `MPC`."
           },
@@ -6376,10 +4193,11 @@
           {
             "name": "wallet_type",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
               "$ref": "#/components/schemas/WalletType",
-              "description": "The wallet type to retrieve tokens for. Use `MPC`."
+              "description": "The wallet type to retrieve tokens for. Use `MPC`.",
+              "default": "MPC"
             },
             "description": "The wallet type to retrieve tokens for. Use `MPC`."
           },
@@ -6664,588 +4482,6 @@
         }
       }
     },
-    "/api/v1/webhooks/register": {
-      "post": {
-        "tags": [
-          "Webhooks"
-        ],
-        "summary": "Register webhook",
-        "description": "This operation registers a webhook endpoint to receive event notifications. Requires service credential authentication via `X-Service-Auth-Key`. Only one active registration is supported at a time — registering a new endpoint automatically deactivates any previously active registration.\n\nSet `event_types` to subscribe to specific event types. Leave it empty to receive all events.\n\nThe `secret` (8–1024 characters) is used to sign outgoing webhook payloads so you can verify their authenticity.",
-        "operationId": "register_webhook",
-        "parameters": [
-          {
-            "name": "X-Assistant-Service-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Assistant-Service-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WebhookRegistrationCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_WebhookRegistrationRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_WebhookRegistrationRead_"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/{registration_id}": {
-      "delete": {
-        "tags": [
-          "Webhooks"
-        ],
-        "summary": "Delete webhook registration",
-        "description": "This operation deactivates a specific webhook registration. Requires service credential authentication via `X-Service-Auth-Key`. The registration ID is returned when registering a webhook.",
-        "operationId": "delete_webhook_registration",
-        "parameters": [
-          {
-            "name": "registration_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "The UUID of the webhook registration to deactivate. Returned in the `id` field when the webhook was registered.",
-              "title": "Registration Id"
-            },
-            "description": "The UUID of the webhook registration to deactivate. Returned in the `id` field when the webhook was registered."
-          },
-          {
-            "name": "X-Assistant-Service-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Assistant-Service-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_WebhookDeleteResult_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/webhooks/dlq": {
-      "get": {
-        "tags": [
-          "Webhooks"
-        ],
-        "summary": "List webhook DLQ",
-        "description": "This operation retrieves webhook delivery failures from the dead-letter queue. Requires service credential authentication via `X-Service-Auth-Key`. Results are ordered by failure time, most recent first.",
-        "operationId": "list_webhook_dlq",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 500,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 500].",
-              "default": 100,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 500]."
-          },
-          {
-            "name": "X-Assistant-Service-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Assistant-Service-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_WebhookDLQRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports": {
-      "post": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "Create key export request",
-        "description": "Creates a new key export request for the specified wallet, or returns the existing in-flight export (pending_authorization, approved, resharing) if one already exists — idempotent POST so clients can resume without local state.",
-        "operationId": "create_export",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_CreateExportResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Already exists (idempotent). Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_CreateExportResponse_"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports/{export_id}": {
-      "get": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "Get export status",
-        "description": "Returns the current status and full details of a key export request. Poll this endpoint to track status transitions (e.g. `pending_authorization` → `approved` → `resharing` → `completed` or `rejected`). Pass the `wallet_uuid` and `export_id` returned when the export was created.",
-        "operationId": "get_export",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "export_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Export Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_KeyExportRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports/{export_id}/resolve": {
-      "post": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "Approve or reject export",
-        "description": "Called by the wallet owner (via the Cobo Agentic Wallet app) to approve or reject a pending key export request. Approving the request transitions its status to `approved`; rejecting transitions it to `rejected`. Only a human principal (the wallet owner) may call this endpoint — agent principals are not permitted.",
-        "operationId": "resolve_export",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "export_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Export Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveExportRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ResolveExportResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports/{export_id}/reshare": {
-      "post": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "Submit reshare node IDs",
-        "description": "After the wallet owner approves the export request, your agent initializes two temporary TSS nodes and submits their node IDs via this endpoint to trigger the reshare process. The export status transitions from `approved` to `resharing` upon success. Retrieve the `export_id` from the response of the Create key export request operation.",
-        "operationId": "submit_reshare_nodes",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "export_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Export Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitReshareNodesRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_SubmitReshareNodesResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports/{export_id}/complete": {
-      "post": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "Report export completed",
-        "description": "Call this endpoint after your agent has successfully completed local MPC key share reconstruction. Marks the export status as `completed` and records the completion timestamp. Only call this endpoint once the reshare process has finished and the MPC key share material has been fully reconstructed locally. Retrieve the `export_id` from the response of the Create key export request operation.",
-        "operationId": "complete_export",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "export_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Export Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_CompleteExportResponse_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/{wallet_uuid}/key/exports/{export_id}/addresses": {
-      "get": {
-        "tags": [
-          "Key Export"
-        ],
-        "summary": "List wallet addresses for key derivation",
-        "description": "Retrieves all addresses associated with the specified wallet. Call this endpoint after the reshare step completes (status is `resharing` or `completed`). Each entry includes the Cobo `chain_id` (e.g. `ETH`, `SOL`), `address`, BIP-32 derivation path, and the corresponding public key, which your agent uses to derive and verify the reconstructed MPC key shares. Retrieve the `wallet_uuid` and `export_id` from the response of the Create key export request operation.",
-        "operationId": "list_export_addresses",
-        "parameters": [
-          {
-            "name": "wallet_uuid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Wallet Uuid"
-            }
-          },
-          {
-            "name": "export_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Export Id"
-            }
-          },
-          {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_WalletAddressInfo__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/faucet/deposit": {
       "post": {
         "tags": [
@@ -7397,7 +4633,7 @@
           "Telemetry"
         ],
         "summary": "Get telemetry config",
-        "description": "Return the CLI telemetry feature-flag configuration for your authenticated session.\n\nThe response includes:\n- `enabled` — whether CLI telemetry collection is active.\n- `sample_rate` — fraction of events that are sampled (0.0–1.0).\n- `upload_url` — destination URL for telemetry uploads; empty string if not configured.",
+        "description": "Return the CLI telemetry feature-flag configuration for your authenticated session.\n\nThe response includes:\n- `enabled` — whether CLI telemetry collection is active.\n- `upload_url` — destination URL for telemetry uploads; empty string if not configured.",
         "operationId": "get_telemetry_config",
         "parameters": [
           {
@@ -8034,6 +5270,49 @@
         }
       }
     },
+    "/api/v1/recipes/library/{recipe_id}/search-count": {
+      "get": {
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "Get recipe search count",
+        "operationId": "get_recipe_search_count",
+        "parameters": [
+          {
+            "name": "recipe_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recipe Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_RecipeCounterResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/recipes/library/submit": {
       "post": {
         "tags": [
@@ -8327,164 +5606,6 @@
           }
         }
       }
-    },
-    "/api/v1/system-configs": {
-      "get": {
-        "tags": [
-          "System Config"
-        ],
-        "summary": "List system configs",
-        "description": "Retrieve system config entries with optional key filtering and pagination. Pass a comma-separated list of keys to filter specific entries.",
-        "operationId": "list_system_configs",
-        "parameters": [
-          {
-            "name": "keys",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "description": "Comma-separated config keys to filter (e.g. `caw_cli_ver,maintenance_mode`).",
-              "title": "Keys",
-              "type": "string",
-              "nullable": true
-            },
-            "description": "Comma-separated config keys to filter (e.g. `caw_cli_ver,maintenance_mode`)."
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 0,
-              "description": "The number of items to skip before returning results.",
-              "default": 0,
-              "title": "Offset"
-            },
-            "description": "The number of items to skip before returning results."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "description": "The maximum number of items to return. Range: [1, 200].",
-              "default": 50,
-              "title": "Limit"
-            },
-            "description": "The maximum number of items to return. Range: [1, 200]."
-          },
-          {
-            "name": "X-Assistant-Service-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Assistant-Service-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_SystemConfigRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "System Config"
-        ],
-        "summary": "Upsert system config",
-        "description": "Create a new system config entry or update the value of an existing entry if the key already exists. After writing, the in-memory cache for the affected key is invalidated so subsequent reads reflect the new value.",
-        "operationId": "upsert_system_config",
-        "parameters": [
-          {
-            "name": "X-Assistant-Service-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Assistant-Service-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SystemConfigUpsert"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_SystemConfigRead_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/ap2/merchants": {
-      "get": {
-        "tags": [
-          "AP2"
-        ],
-        "summary": "List AP2 merchants",
-        "description": "Retrieve all AP2 merchants available in the system. Returns a list of merchant records, each containing the merchant's identifier and display information.",
-        "operationId": "get_merchants",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_MerchantInfo__"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -8503,7 +5624,7 @@
               "temporary"
             ],
             "title": "Status",
-            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unclaimed temporary mode."
+            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unpaired temporary mode."
           },
           "owner_linked": {
             "type": "boolean",
@@ -9225,17 +6346,19 @@
             "type": "string",
             "nullable": true
           },
-          "chain_identifier": {
-            "title": "Chain Identifier",
-            "description": "The internal chain identifier used within this system, distinct from the Cobo chain ID.",
+          "chain_type": {
+            "title": "Chain Type",
+            "description": "The address standard shared across chains — chains with the same chain_type share one wallet address. E.g. ETH, BASE, ARB, OP, BSC, MATIC, AVAXC, and SETH are all chain_type: ETH, so they all use the same 0x... address.",
             "type": "string",
             "nullable": true
           },
-          "chain_type": {
-            "title": "Chain Type",
-            "description": "Alias of chain_identifier.",
-            "type": "string",
-            "nullable": true
+          "compatible_chains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Compatible Chains",
+            "description": "Supported chain IDs that share the same address under this chain_type."
           },
           "token_id": {
             "type": "string",
@@ -9316,14 +6439,10 @@
             "title": "Confirming Threshold",
             "default": 0
           },
-          "chain_identifier": {
-            "type": "string",
-            "title": "Chain Identifier"
-          },
           "chain_type": {
             "type": "string",
             "title": "Chain Type",
-            "description": "Alias of chain_identifier.",
+            "description": "The address standard shared across chains — chains with the same chain_type share one wallet address. E.g. ETH, BASE, ARB, OP, BSC, MATIC, AVAXC, and SETH are all chain_type: ETH, so they all use the same 0x... address.",
             "default": ""
           },
           "explorer_tx_url": {
@@ -9407,8 +6526,7 @@
         "required": [
           "unique_chain_id",
           "name",
-          "chain_coin",
-          "chain_identifier"
+          "chain_coin"
         ],
         "title": "ChainInfo",
         "description": "Single chain info from get_chains_by_chain_coins.\n\nAll optional fields use ``str | None`` because the upstream Blockchain API\nmay return ``null`` for any non-essential attribute."
@@ -9419,16 +6537,10 @@
             "type": "string",
             "title": "Chain Id"
           },
-          "chain_identifier": {
-            "type": "string",
-            "title": "Chain Identifier",
-            "description": "The native chain identifier used by the network (e.g. EVM chain ID as a string). May be empty for chains that do not use a numeric chain ID.",
-            "default": ""
-          },
           "chain_type": {
             "type": "string",
             "title": "Chain Type",
-            "description": "Alias of chain_identifier.",
+            "description": "The address standard shared across chains — chains with the same chain_type share one wallet address. E.g. ETH, BASE, ARB, OP, BSC, MATIC, AVAXC, and SETH are all chain_type: ETH, so they all use the same 0x... address.",
             "default": ""
           },
           "symbol": {
@@ -9585,7 +6697,7 @@
           },
           "src_addr": {
             "title": "Src Addr",
-            "description": "The source address to call from. If omitted, the wallet's most recently created address for this chain is used.",
+            "description": "The source address to call from. If omitted, the server auto-selects the wallet address on this chain with the highest available native token balance for this chain (explicit `src_addr` always takes precedence).",
             "type": "string",
             "maxLength": 255,
             "nullable": true
@@ -9663,6 +6775,12 @@
             "type": "integer",
             "title": "Status",
             "description": "The user transaction status code (`UserTransactionStatus`). Typical values: 100 (pending approval), 300 (processing), 400 (pending), 900 (success), 901 (failed), 902 (rejected), 903 (cancelled)."
+          },
+          "status_display": {
+            "type": "string",
+            "title": "Status Display",
+            "description": "The human-readable user transaction status (for example, `Initiated`, `Processing`, `Success`, `Failed`).",
+            "default": ""
           }
         },
         "type": "object",
@@ -12856,6 +9974,12 @@
             "type": "integer",
             "title": "Status"
           },
+          "status_display": {
+            "type": "string",
+            "title": "Status Display",
+            "description": "The human-readable user transaction status (for example, `Initiated`, `Processing`, `Success`, `Failed`).",
+            "default": ""
+          },
           "approval_id": {
             "title": "Approval Id",
             "description": "The Approval V2 record ID when `status=pending_approval`. Use this to track the approval via the Approvals operations.",
@@ -13784,7 +10908,7 @@
         "enum": [
           "valid",
           "expired",
-          "claimed",
+          "paired",
           "not_found"
         ],
         "title": "PairTokenStatus",
@@ -14101,7 +11225,7 @@
               }
             ],
             "title": "Operation Token",
-            "description": "The operation token for Cobo Agentic Wallet app push notifications."
+            "description": "The operation token for Human App push notifications."
           },
           "approved_by": {
             "anyOf": [
@@ -14844,7 +11968,7 @@
               "temporary"
             ],
             "title": "Status",
-            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unclaimed temporary mode."
+            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unpaired temporary mode."
           },
           "owner_id": {
             "title": "Owner Id",
@@ -14983,10 +12107,11 @@
             "title": "Tags"
           },
           "category": {
-            "title": "Category",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Category"
           },
           "example_prompts": {
             "items": {
@@ -15090,6 +12215,13 @@
             "type": "string",
             "title": "Description"
           },
+          "example_prompts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Example Prompts"
+          },
           "chains": {
             "items": {
               "type": "string"
@@ -15105,14 +12237,10 @@
             "title": "Tags"
           },
           "category": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
             "title": "Category"
           },
           "icon": {
@@ -15146,6 +12274,10 @@
             "type": "integer",
             "title": "Share Count"
           },
+          "search_count": {
+            "type": "integer",
+            "title": "Search Count"
+          },
           "locale": {
             "type": "string",
             "title": "Locale"
@@ -15173,13 +12305,6 @@
             },
             "type": "object",
             "title": "Tokens"
-          },
-          "example_prompts": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Example Prompts"
           },
           "knowledgehub_doc_id": {
             "anyOf": [
@@ -15210,6 +12335,7 @@
           "slug",
           "title",
           "description",
+          "example_prompts",
           "chains",
           "tags",
           "category",
@@ -15221,12 +12347,12 @@
           "view_count",
           "use_count",
           "share_count",
+          "search_count",
           "locale",
           "created_at",
           "updated_at",
           "content_markdown",
           "tokens",
-          "example_prompts",
           "knowledgehub_doc_id",
           "sdk_example_path"
         ],
@@ -15293,6 +12419,13 @@
             "type": "string",
             "title": "Description"
           },
+          "example_prompts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Example Prompts"
+          },
           "chains": {
             "items": {
               "type": "string"
@@ -15308,14 +12441,10 @@
             "title": "Tags"
           },
           "category": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
             "title": "Category"
           },
           "icon": {
@@ -15349,6 +12478,10 @@
             "type": "integer",
             "title": "Share Count"
           },
+          "search_count": {
+            "type": "integer",
+            "title": "Search Count"
+          },
           "locale": {
             "type": "string",
             "title": "Locale"
@@ -15370,6 +12503,7 @@
           "slug",
           "title",
           "description",
+          "example_prompts",
           "chains",
           "tags",
           "category",
@@ -15381,6 +12515,7 @@
           "view_count",
           "use_count",
           "share_count",
+          "search_count",
           "locale",
           "created_at",
           "updated_at"
@@ -15496,10 +12631,11 @@
             "title": "Tags"
           },
           "category": {
-            "title": "Category",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Category"
           },
           "example_prompts": {
             "items": {
@@ -15590,8 +12726,10 @@
           },
           "category": {
             "title": "Category",
-            "type": "string",
-            "maxLength": 64,
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
             "nullable": true
           },
           "example_prompts": {
@@ -16108,6 +13246,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16132,6 +13275,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16160,6 +13308,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16184,6 +13337,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16212,6 +13370,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16236,6 +13399,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16264,6 +13432,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16288,6 +13461,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16316,6 +13494,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16340,6 +13523,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16368,6 +13556,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16392,6 +13585,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16420,6 +13618,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16444,6 +13647,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16472,6 +13680,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16496,6 +13709,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16524,6 +13742,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16548,6 +13771,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16576,6 +13804,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16600,6 +13833,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16628,6 +13866,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16652,6 +13895,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16680,6 +13928,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16704,6 +13957,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16732,6 +13990,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16756,6 +14019,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16784,6 +14052,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16808,6 +14081,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16836,6 +14114,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16860,6 +14143,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16888,6 +14176,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16912,6 +14205,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16940,6 +14238,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -16964,6 +14267,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -16992,6 +14300,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17016,6 +14329,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17044,6 +14362,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17068,6 +14391,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17096,6 +14424,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17120,6 +14453,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17148,6 +14486,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17172,6 +14515,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17200,6 +14548,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17224,6 +14577,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17252,6 +14610,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17276,6 +14639,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17304,6 +14672,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17328,6 +14701,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17356,6 +14734,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17380,6 +14763,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17408,6 +14796,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17432,6 +14825,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17460,6 +14858,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17484,6 +14887,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17512,6 +14920,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17536,6 +14949,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17564,6 +14982,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17588,6 +15011,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17616,6 +15044,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17640,6 +15073,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17668,6 +15106,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17692,6 +15135,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17724,6 +15172,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17752,6 +15205,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17784,6 +15242,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17812,6 +15275,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17844,6 +15312,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17872,6 +15345,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17904,6 +15382,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17932,6 +15415,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -17964,6 +15452,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -17992,6 +15485,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -18024,6 +15522,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -18052,6 +15555,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -18084,6 +15592,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -18112,6 +15625,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -18144,6 +15662,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -18172,6 +15695,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -18204,6 +15732,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -18234,6 +15767,11 @@
             "title": "Suggestion",
             "default": ""
           },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
           "meta": {
             "$ref": "#/components/schemas/PaginationMeta",
             "nullable": true
@@ -18262,6 +15800,11 @@
           "suggestion": {
             "type": "string",
             "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
             "default": ""
           },
           "meta": {
@@ -18420,11 +15963,6 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
-          },
-          "sample_rate": {
-            "type": "number",
-            "title": "Sample Rate",
-            "default": 1.0
           },
           "upload_url": {
             "type": "string",
@@ -18778,6 +16316,12 @@
             "description": "The human-readable transaction status (for example, `success`, `failed`, `broadcasting`).",
             "default": ""
           },
+          "sub_status": {
+            "title": "Sub Status",
+            "description": "The fine-grained transaction sub-status (for example, `broadcasting`, `pendingscreening`). Mirrors `UserTransaction.sub_status`.",
+            "type": "string",
+            "nullable": true
+          },
           "transaction_hash": {
             "anyOf": [
               {
@@ -18907,7 +16451,7 @@
           },
           "src_addr": {
             "title": "Src Addr",
-            "description": "The source address to transfer from. If omitted, the wallet's most recently created address for this chain is used.",
+            "description": "The source address to transfer from. If omitted, the server auto-selects the wallet address on this chain with the highest available `token_id` balance (explicit `src_addr` always takes precedence).",
             "type": "string",
             "maxLength": 255,
             "nullable": true
@@ -18986,6 +16530,12 @@
             "type": "integer",
             "title": "Status",
             "description": "The user transaction status code (`UserTransactionStatus`). Typical values: 100 (pending approval), 300 (processing), 400 (pending), 900 (success), 901 (failed), 902 (rejected), 903 (cancelled)."
+          },
+          "status_display": {
+            "type": "string",
+            "title": "Status Display",
+            "description": "The human-readable user transaction status (for example, `Initiated`, `Processing`, `Success`, `Failed`).",
+            "default": ""
           }
         },
         "type": "object",
@@ -19318,16 +16868,19 @@
             "title": "Wallet Id",
             "description": "The wallet ID."
           },
-          "chain_identifier": {
-            "type": "string",
-            "title": "Chain Identifier",
-            "description": "The Cobo chain ID for this address (for example, `SETH`, `BASE_ETH`, `SOL`)."
-          },
           "chain_type": {
             "type": "string",
             "title": "Chain Type",
-            "description": "Alias of chain_identifier.",
+            "description": "The address standard shared across chains — chains with the same chain_type share one wallet address. E.g. ETH, BASE, ARB, OP, BSC, MATIC, AVAXC, and SETH are all chain_type: ETH, so they all use the same 0x... address.",
             "default": ""
+          },
+          "compatible_chains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Compatible Chains",
+            "description": "Supported chain IDs that share the same address under this chain_type."
           },
           "address": {
             "type": "string",
@@ -19350,7 +16903,6 @@
         "type": "object",
         "required": [
           "wallet_id",
-          "chain_identifier",
           "address",
           "created_at",
           "updated_at"
@@ -19837,7 +17389,7 @@
         "properties": {
           "token_status": {
             "$ref": "#/components/schemas/PairTokenStatus",
-            "description": "The status of the pairing token. Possible values: `valid`, `expired`, `claimed`, `not_found`."
+            "description": "The status of the pairing token. Possible values: `valid`, `expired`, `paired`, `not_found`."
           },
           "token": {
             "title": "Token",
@@ -19942,7 +17494,7 @@
           "pair_link": {
             "type": "string",
             "title": "Pair Link",
-            "description": "Pair page link, formatted as {PAIR_HOST}/wallet/pair?token=xxxx"
+            "description": "Pair page link in the web console, formatted as {WEB_CONSOLE_HOST}/wallet/pair?token=xxxx"
           }
         },
         "type": "object",

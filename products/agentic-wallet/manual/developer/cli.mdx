@@ -11,7 +11,7 @@ Use this path when you want the fastest way to get from download to a first work
 The `caw` CLI is a standalone binary. The CLI's environment default is `prod`.
 
 ```bash
-curl -sL https://download.agenticwallet.cobo.com/bootstrap-env.sh | bash
+curl -fsSL https://raw.githubusercontent.com/CoboGlobal/cobo-agentic-wallet/master/install.sh | bash
 ```
 
 This downloads the `caw` binary to `~/.cobo-agentic-wallet/bin/caw`. Add it to your PATH:
@@ -26,21 +26,36 @@ Verify the installation:
 caw --version
 ```
 
-## Pair with the owner wallet
+## Onboard and pair with the wallet owner
 
-Ask the wallet owner to generate a pairing code from the Cobo Agentic Wallet app. If the owner needs step-by-step pairing instructions, send them to [Connect Agent in Cobo Agentic Wallet App](/products/agentic-wallet/manual/owners/connect-agent-human-app). Once you have the code, run:
-
-```bash
-caw onboard provision --token <PAIRING_CODE>
-```
-
-This creates an API key, binds it to the owner's account, and saves config to `~/.cobo-agentic-wallet/config`.
-
-## Verify the setup
+Run the interactive onboarding wizard. You will need an invitation code from the wallet owner.
 
 ```bash
-caw onboard self-test
+caw onboard --wait --invitation-code <invitation-code>
 ```
+
+The wizard runs through several phases until wallet `status` becomes `active`.
+
+Once the wallet is active, generate a 8-digit  pairing token for the wallet owner:
+
+```bash
+caw wallet pair --code-only
+```
+
+Wallet owner need download the `Cobo Agentic Wallet` App, then enter the token to complete ownership pairing. Check pairing status with:
+
+```bash
+caw wallet pair-status
+```
+
+## Get credentials
+
+```bash
+caw wallet current --show-api-key
+```
+
+Note the `api_url`, `api_key`, and `wallet_uuid` values from the output.
+
 
 ## First hello-world flow
 
@@ -48,29 +63,24 @@ Before executing blockchain actions, submit a pact to request delegated access f
 
 ```bash
 # Submit a pact requesting transfer permissions
-caw pact submit \
-  --intent "Transfer tokens for testing" \
-  --execution-plan "Transfer small token amounts for testing purposes." \
-  --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{}}}]' \
-  --completion-conditions '[{"type":"tx_count","threshold":"100"}]'
+caw pact submit --intent "Test USDC transfer on Sepolia" --execution-plan "Transfer 1 USDC on Sepolia for testing." --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{"chain_in":["SETH"]},"deny_if":{"amount_gt":"1"}}}]' --completion-conditions '[{"type":"tx_count","threshold":"1"}]'
 
 # Once active, get the pact ID and check its status:
 caw pact status <PACT_ID>
 ```
-
-<Note>The wallet UUID is resolved from the active wallet profile set during `caw onboard provision`. Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`.</Note>
+<Note>Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`.</Note>
 
 ## Explore your wallet
 
 ```bash
 # List accessible wallets
-caw wallet list
+caw wallet get
 
 # Check balance
 caw wallet balance
 
 # Get wallet details
-caw wallet get
+caw address list
 ```
 
 ## Transfer tokens
@@ -80,10 +90,10 @@ PACT_ID=<pact-id>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed transfer
-caw tx transfer "$PACT_ID" --to "$DST" --token-id USDC --amount 2 --chain-id BASE_ETH
+caw tx transfer "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 1 --chain-id SETH'
 
 # Oversized transfer — triggers policy denial
-caw tx transfer "$PACT_ID" --to "$DST" --token-id USDC --amount 500 --chain-id BASE_ETH
+caw tx transfer "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 500 --chain-id BASE_ETH
 ```
 
 On denial, output includes `code`, `reason`, `details`, and `suggestion`.
