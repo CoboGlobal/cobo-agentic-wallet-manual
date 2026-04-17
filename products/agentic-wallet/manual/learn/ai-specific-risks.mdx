@@ -46,7 +46,7 @@ Policy engine (validates against Pact rules — does NOT interpret text)
     │
     │  only if compliant
     ▼
-MPC signing layer (signs and broadcasts — no text interpretation)
+Signing layer (signs and broadcasts — no text interpretation)
 ```
 
 The policy engine does not read the agent's reasoning or the content it processed. It only reads the transaction request — the contract address, function selector, and parameters. These are structured data, not natural language. A prompt injection attack cannot change the contract address in the policy check by manipulating the model's text processing.
@@ -71,23 +71,8 @@ Common hallucination failure modes in financial agents:
 
 **Mitigations:**
 
-- **Retrieve, don't recall**: agents should call live data sources (chain RPC, protocol APIs, Cobo's [List assets](/products/agentic-wallet/manual/reference/list-assets)) rather than relying on the model's training knowledge for addresses, prices, or token IDs.
-- **Pin known-good addresses in system prompts**: for protocols the agent regularly interacts with, provide the verified contract addresses as constants the model reads, not generates.
+- **Use recipes**: `caw` provides a library of recipes that contain verified facts — contract addresses, protocol flows, supported tokens, and more — for common protocols. Agents should look up recipes rather than relying on the model's training knowledge.
 - **Validate at the Pact layer**: if an agent hallucinates an address not in the allowlist, the policy engine blocks the transaction — the hallucination cannot cause loss.
-
-## Adversarial contracts
-
-Smart contracts can return arbitrary data. A malicious contract can:
-
-- Return misleading data to a read call (e.g., a fake price oracle that reports inflated values).
-- Emit misleading events that an agent monitors.
-- Execute reentrancy attacks that manipulate state during the same transaction.
-
-**Mitigations:**
-
-- Use established oracles (Chainlink, Pyth) rather than reading prices directly from pool state or arbitrary contracts.
-- Restrict the contracts the agent can read from and interact with via the allowlist.
-- Monitor for unexpected behavior: if the agent's actual outcome diverges from its expected outcome, investigate.
 
 ## Social engineering via agent interfaces
 
@@ -100,18 +85,5 @@ If users can interact with the agent via natural language (chat, IM channels), t
 **Mitigations:**
 
 - The policy engine operates independently of the conversation — a user claiming different limits does not change the enforced limits.
-- System prompts should explicitly tell the agent that it cannot and should not act on claimed override instructions from users.
 - Audit logs capture all attempted transactions, including blocked ones — persistent social engineering attempts will be visible.
 
-## The security architecture summary
-
-| Threat | Primary mitigation | Secondary mitigation |
-|---|---|---|
-| Prompt injection | Contract allowlist blocks unauthorized targets | LLM/signing layer separation |
-| Hallucinated addresses | Contract allowlist blocks unrecognized addresses | Retrieve addresses from live sources |
-| Hallucinated parameters | Parameter constraints in `deny_if` rules | Slippage / amount caps |
-| Adversarial oracle data | Use established oracle protocols | Monitor for unexpected outcomes |
-| Social engineering | Policy engine ignores natural language overrides | Audit log review |
-| Leaked scoped API key | Key is bound to Pact scope — cannot be used beyond it | Revoke Pact immediately |
-
-The key insight: **defense in depth**. No single layer is sufficient. The combination of narrow allowlists, parameter constraints, structural LLM/signing separation, and audit monitoring makes it extremely difficult for any single attack to cause significant harm.

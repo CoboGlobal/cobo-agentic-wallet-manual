@@ -1,123 +1,39 @@
 ---
 title: "Address Allowlists"
-description: "Restrict which destination addresses and smart contract addresses an agent can interact with."
+description: "Restrict which destination addresses and smart contracts an agent can interact with."
 ---
 
-Address allowlists are one of the most direct controls available in the policy engine. Rather than limiting how much an agent can move, they control where the agent can move funds or which contracts it can call. An agent that can only send to addresses you have explicitly approved cannot, by definition, exfiltrate funds to an unexpected destination.
+Address allowlists control where an agent can send funds and which contracts it can call. An agent restricted to a specific set of addresses cannot send funds anywhere else — even if it is compromised.
 
-Allowlists are configured as part of policy rules and are evaluated at Stage 2 of the policy engine — after the permission check and before the counter check.
-
-<Info>
-For a full description of the three-stage evaluation pipeline, see [Policy Engine](/products/agentic-wallet/manual/security/policy-engine).
-</Info>
+Allowlists are set in the `policies` field of a PactSpec at submission time and are fixed once the pact is activated.
 
 ## Two allowlist types
 
-There are two distinct allowlist mechanisms, each applying to a different operation type.
+### Destination address allowlist
 
-### Destination address allowlist (`destination_address_in`)
+Restricts which wallet addresses an agent can transfer funds to. The allowlist is per-chain — the same address on two different chains must be listed separately.
 
-The `destination_address_in` field in a transfer policy's `when` or `review_if` block restricts which wallet addresses an agent can send funds to.
+### Contract address allowlist
 
-Each entry specifies a `chain_id` and an `address`. The allowlist is per-chain — the same address on two different chains must be listed twice.
+Restricts which smart contracts an agent can call. Each entry specifies a chain and contract address. Optionally, a function selector can be included to restrict the agent to specific functions on that contract — for example, allowing only `swap()` on a DEX router while blocking any administrative functions on the same contract.
 
-If `destination_address_in` is set in the `when` block of an ALLOW policy, only transfers to the listed addresses on the listed chains will match the policy. Transfers to any other address will not be covered by the ALLOW rule and will be blocked.
-
-If `destination_address_in` is set in the `review_if` block, transfers to those specific addresses trigger approval escalation rather than proceeding automatically.
-
-### Contract address allowlist (`target_in`)
-
-The `target_in` field in a contract call policy's `when` or `review_if` block restricts which smart contracts an agent can call.
-
-Each entry specifies a `chain_id`, a `contract_addr`, and optionally a `function_id` (the function selector). If `function_id` is omitted, any function on that contract is covered by the entry.
-
-<Note>
-`target_in` is EVM-only. For Solana, the equivalent is `program_in` or `program_all_in`, which match by Solana program ID.
-</Note>
+For Solana, the equivalent restricts by program ID.
 
 ## How allowlists work
 
-Allowlists operate through the ALLOW policy mechanism. An ALLOW policy defines the conditions under which an operation is permitted. If the conditions in the `when` block include `destination_address_in` or `target_in`, the policy only covers operations that match those address restrictions.
+An allowlist is set as part of an ALLOW policy's match conditions. If `destination_address_in` or `target_in` is specified, the policy only covers operations that match those addresses. Operations to any address not in the list are not covered and will be blocked.
 
-**If an allowlist is set** (the `when` block includes `destination_address_in` or `target_in`): only operations matching the listed addresses are covered by that ALLOW policy. Operations to addresses not in the list do not match the policy — and if no other policy covers them, they are blocked.
-
-**If no allowlist is set** (the `when` block is empty or has other conditions but no address restriction): the policy covers all addresses meeting the other conditions. This is the "any address allowed" configuration.
-
-The practical effect: setting a non-empty `destination_address_in` restricts the agent to that list of destinations. Not setting it leaves destinations unrestricted (subject to other controls).
-
-## Setting allowlists in a PactSpec
-
-Allowlists are defined inline when the agent submits the pact. The agent includes a policy in the `policies` array of the PactSpec:
-
-```json
-{
-  "name": "dex-router-only",
-  "type": "contract_call",
-  "rules": {
-    "effect": "allow",
-    "when": {
-      "chain_in": ["BASE_ETH"],
-      "target_in": [
-        {
-          "chain_id": "BASE_ETH",
-          "contract_addr": "0xabc...router"
-        }
-      ]
-    }
-  }
-}
-```
-
-The user reviews the declared allowlist as part of the approval flow. They can see exactly which addresses the agent is requesting access to before approving.
-
-## Updating allowlists after activation
-
-Allowlists can be changed after a pact is active using `PATCH /pacts/{pact_id}/policies`. This endpoint performs a full replacement of the pact's delegation-scoped policies. To update an allowlist:
-
-1. Compose the full new set of policies, including the updated `destination_address_in` or `target_in` entries.
-2. Submit the full list via `PATCH /pacts/{pact_id}/policies`.
-3. The old policies are removed and the new ones are created atomically — there is no window during which no policies are active.
-
-<Warning>
-This update is a full replacement, not a merge. If you want to keep existing policies and only modify the allowlist in one of them, include all other policies in the replacement request alongside the updated one.
-</Warning>
-
-## Combining allowlists with function selectors
-
-For EVM contract call policies, each `target_in` entry can optionally specify a `function_id` — the EVM function selector (a 4-byte hex string identifying the function, e.g., `0xa9059cbb` for `transfer(address,uint256)`).
-
-When `function_id` is set:
-- Only calls to that specific function on that contract match the policy.
-- Calls to other functions on the same contract do not match this entry.
-
-When `function_id` is omitted:
-- All function calls to that contract address match the policy.
-
-This allows precise control: for example, allowing only `swap()` on a DEX router while blocking `setOwner()` or any administrative function on the same contract.
-
-For more advanced parameter-level control on EVM contracts, the `params_match` field (combined with `function_abis`) allows constraining decoded calldata parameters — for example, ensuring the `recipient` parameter of a swap always matches an expected address.
-
-## Allowlist evaluation as Stage 2
-
-When the policy engine evaluates an operation at Stage 2, it checks whether the operation matches any ALLOW policy. If the relevant ALLOW policy has a `destination_address_in` or `target_in` restriction, the engine checks the operation's destination or contract address against the list.
-
-A mismatch at Stage 2 produces a structured denial:
-
-- For a destination address not in the list: HTTP 403 with a policy denial response.
-- For a contract address not in the list: HTTP 403 with code `CONTRACT_NOT_WHITELISTED`, with `details.contract_addr` identifying the address that was blocked.
-
-The denial response includes a `suggestion` field advising the agent to ask the wallet owner to add the address to the allowlist before retrying.
+Leaving the address condition unset means all destinations are permitted (subject to other controls).
 
 ## Use cases
 
-**DCA agent restricted to a specific DEX**: configure `target_in` with the DEX router's contract address and the relevant function selectors. The agent can execute swaps on that contract but cannot call any other contract — preventing it from moving funds to an unexpected address even if the agent's logic is compromised.
+**DCA agent restricted to a specific DEX**: configure the contract allowlist with the DEX router's address and the relevant function selectors. The agent can execute swaps but cannot call any other contract.
 
-**Payroll agent restricted to known recipients**: configure `destination_address_in` with the set of approved recipient wallet addresses. The agent can execute payroll distributions but cannot send funds to any address outside the approved list.
+**Payroll agent restricted to known recipients**: configure the destination allowlist with the approved recipient addresses. The agent can execute distributions but cannot send funds anywhere else.
 
-**Multi-step DeFi strategy**: configure `target_in` with multiple protocol contracts (DEX router, lending protocol, staking contract) for the chains involved in the strategy. The agent is pre-authorized for the full execution path and blocked from interacting with any contract outside it.
+**Multi-step DeFi strategy**: configure multiple protocol contracts (DEX router, lending protocol, staking contract) across the chains involved. The agent is pre-authorized for the full execution path and blocked from interacting with anything outside it.
 
 ## Further reading
 
-- [Policy Engine](/products/agentic-wallet/manual/security/policy-engine) — how address allowlists fit into the three-stage evaluation pipeline
-- [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) — how to combine allowlists with value and count limits
-- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how to declare allowlists in a PactSpec
+- [Policy engine](/products/agentic-wallet/manual/security/policy-engine) — how address allowlists fit into the three-stage evaluation pipeline
+- [Spend limits](/products/agentic-wallet/manual/security/spend-limits) — how to combine allowlists with value and count limits

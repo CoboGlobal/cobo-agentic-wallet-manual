@@ -1,137 +1,38 @@
 ---
 title: "Policy Engine"
-description: "Every operation submitted through the API passes through a three-stage evaluation pipeline before it can execute or be co-signed."
+description: "Every operation submitted through the API passes through a three-stage evaluation pipeline before it can execute."
 ---
 
-The policy engine is the enforcement layer between an agent's request and the blockchain. Every transfer, contract call, and message signing request is evaluated by the policy engine before the transaction reaches the signing phase.
-
-This means policies are not advisory. They are enforced at the protocol level, before the transaction can be submitted to the network.
+The policy engine is the enforcement layer between an agent's request and the blockchain. Every transfer, contract call, and message signing request is evaluated before the transaction reaches the signing phase. Policies are not advisory — they are enforced at the infrastructure level.
 
 ## Three evaluation stages
 
-The policy engine evaluates every operation in three sequential stages. A denial at any stage stops further evaluation and returns an error immediately.
+Every operation passes through three sequential stages. A denial at any stage stops evaluation immediately.
 
 ### Stage 1 — Permission check
 
-The first question is whether the operation type is within the scope defined by the pact. A transfer request under a pact whose policies only cover contract calls will be denied here, before any policy rules are consulted.
+Checks whether the operation type is within the scope defined by the pact. A transfer request under a pact that only covers contract calls is denied here, before any policy rules are consulted.
 
 ### Stage 2 — Policy rule evaluation
 
-If the operation type is permitted, the engine evaluates the applicable policy rules. Policies are organized in three scopes, evaluated in order from broadest to most specific:
+Evaluates the applicable policy rules against the operation. Rules can allow, deny, or escalate to pending approval based on conditions like chain, token, destination address, contract address, or operation value.
 
-| Scope | Applies to | Who manages it |
-|---|---|---|
-| `global` | All wallets owned by the user | Wallet owner |
-| `wallet` | A specific wallet | Wallet owner |
-| `delegation` | Operations under a specific delegation/pact | Set in the PactSpec at submission time; modifiable by the owner post-activation |
-
-Each policy has a type (`transfer`, `contract_call`, or `message_sign`), an `effect` (`allow` or `deny`), and a set of match conditions (`when`) and review/deny conditions.
-
-**Allow policies** define what is permitted. For a transfer policy, the `when` block can specify:
-- `chain_in` — the operation must be on one of these chains
-- `token_in` — the operation must use one of these tokens (identified by chain and token ID)
-- `destination_address_in` — the operation's destination must be one of these addresses
-
-**Deny policies** define hard blocks. A DENY policy that matches will block the operation regardless of any ALLOW policy. DENY policies can also specify `usage_limits` (rolling window counters) in the `deny_if` block.
-
-**Review conditions** (`review_if`) on an ALLOW policy define criteria that, when met, escalate the operation to pending approval rather than allowing it automatically. These are configured with fields like `amount_usd_gt` (escalate if the USD value exceeds this threshold) alongside address and chain filters.
-
-For contract call policies, the match conditions also support:
-- `target_in` — EVM contract address (and optionally function selector) restrictions
-- `program_in` — Solana program ID restrictions
-- `params_match` — EVM calldata parameter constraints decoded from the ABI
+Policies apply at three scopes — global (all wallets), wallet (a specific wallet), and delegation (the active pact) — evaluated from broadest to most specific.
 
 ### Stage 3 — Counter check
 
-If the operation passes the rule evaluation stage, the engine checks whether executing the operation would exceed any rolling window spending counters.
+Checks whether executing the operation would exceed any rolling window spending counters configured in the pact's policies. Supported windows: 1 hour, 24 hours, 7 days, 30 days. See [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) for details.
 
-The supported rolling windows are:
-- `rolling_1h` — 1-hour rolling window
-- `rolling_24h` — 24-hour rolling window
-- `rolling_7d` — 7-day rolling window
-- `rolling_30d` — 30-day rolling window
+## Three outcomes
 
-Each window limit can track:
-- `amount_usd_gt` — cumulative USD value of transfers or contract calls in the window
-- `amount_gt` — cumulative token amount (in the token's native units)
-- `tx_count_gt` — number of transactions in the window
+**Allow** — the operation passed all three stages and proceeds to execution.
 
-If the operation would cause any tracked counter to exceed its configured limit, the engine applies the outcome defined for that policy: deny or escalate to pending approval.
+**Require approval** — a review condition was triggered. The operation is held as a pending operation and the owner is notified. The agent receives a `PENDING_APPROVAL` response with a `pending_operation_id` it can poll for the outcome. Once approved, execution proceeds automatically.
 
-<Info>
-Counter windows are rolling, not calendar-based. A `rolling_24h` counter tracks the last 24 hours from the moment of the operation — not from midnight UTC. See [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) for a detailed explanation of how rolling windows work.
-</Info>
-
-## Policy evaluation outcomes
-
-After all three stages complete, the engine produces one of three outcomes:
-
-### Allow (HTTP 200)
-
-The operation passed all three stages. It proceeds to execution — the MPC signing ceremony is initiated and the transaction is submitted to the network.
-
-### Require approval (HTTP 200)
-
-The operation passed the permission check and the rule evaluation stage, but a `review_if` condition was triggered or an `always_review` flag is set on a matching policy. The operation is held as a **PendingOperation**. The agent receives an HTTP 200 response with `status: PENDING_APPROVAL` and a `pending_operation_id` in the response body. The user is notified via the configured interface (Cobo Agentic Wallet app).
-
-The agent can poll `GET /pending-operations/{id}` to check whether the operation has been approved or rejected. Once the user approves, execution proceeds automatically.
-
-### Deny (HTTP 403)
-
-The operation was blocked. The response body contains a structured `PolicyDenialError` that agents can parse to understand exactly what was denied and why.
-
-## The PolicyDenialError structure
-
-A denial response (HTTP 403) returns an error envelope with the following top-level fields:
-
-| Field | Type | Description |
-|---|---|---|
-| `success` | boolean | Always `false` for error responses. |
-| `error` | object | Contains `code`, `reason`, and `details` (see below). |
-| `suggestion` | string | A plain-language suggestion for how the agent should respond. |
-
-The `error` object contains:
-
-| Field | Type | Description |
-|---|---|---|
-| `code` | string | A stable, machine-readable error code. Agents can use this for programmatic handling. |
-| `reason` | string | A concise human-readable description of the denial reason. |
-| `details` | object | Structured details specific to the denial type — for example, the limit value, the current counter value, how much is remaining, and when the window resets. |
-
-Example error codes include:
-
-| Code | What it means |
-|---|---|
-| `TRANSFER_LIMIT_EXCEEDED` | A single-transaction value limit was hit |
-| `HOURLY_VALUE_LIMIT_EXCEEDED` | The 1-hour rolling USD value window is full |
-| `DAILY_VALUE_LIMIT_EXCEEDED` | The 24-hour rolling USD value window is full |
-| `WEEKLY_VALUE_LIMIT_EXCEEDED` | The 7-day rolling USD value window is full |
-| `MONTHLY_VALUE_LIMIT_EXCEEDED` | The 30-day rolling USD value window is full |
-| `HOURLY_COUNT_LIMIT_EXCEEDED` | The 1-hour rolling transaction count window is full |
-| `DAILY_COUNT_LIMIT_EXCEEDED` | The 24-hour rolling transaction count window is full |
-| `WEEKLY_COUNT_LIMIT_EXCEEDED` | The 7-day rolling transaction count window is full |
-| `MONTHLY_COUNT_LIMIT_EXCEEDED` | The 30-day rolling transaction count window is full |
-| `CHAIN_RESTRICTED` | The requested chain is not in the allowlist |
-| `CONTRACT_NOT_WHITELISTED` | The requested contract address is not in the allowlist |
-| `PARAMETER_OUT_OF_BOUNDS` | A decoded calldata parameter failed a constraint check |
-| `INSUFFICIENT_PERMISSION` | The operation type is not covered by the pact's derived delegation scope |
-| `WALLET_FROZEN` | The delegation is currently frozen |
-| `DELEGATION_EXPIRED` | The delegation or pact has expired |
-
-The `details` object in a counter limit denial includes the current counter value, the limit value, the requested increment, the remaining capacity, and the UTC timestamp when the window resets — giving the agent enough information to decide whether to wait, reduce the amount, or surface the block to a human operator.
-
-## How stages interact
-
-The three stages are evaluated in order. A denial at stage 1 (permission check) does not reach stage 2. A denial at stage 2 (policy rule evaluation) does not reach stage 3 (counter check). Only if all three stages pass does the operation proceed to execution.
-
-For approval escalations triggered at stage 3 (a `review_if` threshold), the operation must have already passed stages 1 and 2. When the user later approves the pending operation, the engine re-evaluates in `approve_mode` — skipping the review conditions but still applying deny conditions — before executing.
-
-## Dry-run evaluation
-
-Agents can test whether an operation would pass the policy engine before actually submitting it using the `POST /policies/dry-run` endpoint. The dry-run response includes the full evaluation result: effect (`allow`, `deny`, `require_approval`), the policy that triggered the outcome, applicable counter limits, and per-tier evaluation details. This is useful during development and for agents that want to surface policy constraints proactively before attempting an operation.
+**Deny** — the operation was blocked. The response includes a machine-readable error code, a human-readable reason, and structured details — for example, the current counter value, the limit, and when the window resets.
 
 ## Further reading
 
-- [Spend Limits](/products/agentic-wallet/manual/security/spend-limits) — detailed explanation of rolling window counters and per-transaction limits
-- [Address Allowlists](/products/agentic-wallet/manual/security/address-allowlists) — how destination address and contract address restrictions work
-- [Pact Mechanism](/products/agentic-wallet/manual/security/pact-mechanism) — how policies and completion conditions are declared in a PactSpec
+- [Spend limits](/products/agentic-wallet/manual/security/spend-limits) — rolling window counters and per-transaction caps
+- [Address allowlists](/products/agentic-wallet/manual/security/address-allowlists) — destination address and contract address restrictions
+- [Pacts](/products/agentic-wallet/manual/security/pact-mechanism) — how policies are declared in a PactSpec

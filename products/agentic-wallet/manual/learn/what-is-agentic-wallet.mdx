@@ -1,6 +1,6 @@
 ---
 title: "What is an agentic wallet"
-description: "How agentic wallets differ from EOA wallets, multisigs, and smart contract wallets — and why AI-as-principal is a fundamentally new paradigm."
+description: "What makes agentic wallets different from other wallet types, and why existing models don't fit autonomous agents."
 ---
 
 ## The traditional wallet model
@@ -20,15 +20,6 @@ The key shift: the decision-maker is no longer a human reviewing a transaction. 
 3. Monitor what the agent did after the fact.
 4. Intervene — adjust rules or freeze the agent — if behavior deviates from intent.
 
-## Comparison with other wallet types
-
-| Wallet type | Who decides | Who signs | Can run autonomously | Owner enforces rules via |
-|---|---|---|---|---|
-| **EOA (MetaMask, hardware wallet)** | Human | Human (private key) | No | Their own judgment |
-| **Multisig (Safe, Gnosis)** | Multiple humans, M-of-N | Multiple humans | No | Signing threshold |
-| **Smart contract wallet (ERC-4337)** | Human (account abstraction) | Paymaster / bundler | Partially | On-chain contract logic |
-| **Agentic wallet (Cobo)** | AI agent | Cobo MPC (after policy check) | Yes | Off-chain policy engine + Pact scope |
-
 ## Why existing models don't fit
 
 **Giving an agent your private key** is equivalent to giving a stranger full, irrevocable access to all your funds. There is no way to scope what the agent can do, no audit trail, and no kill switch.
@@ -41,7 +32,7 @@ The key shift: the decision-maker is no longer a human reviewing a transaction. 
 
 ## What makes agentic wallets different
 
-**Scope-bounded delegation**: the agent is authorized for a specific task (e.g., "run a DCA strategy on Base") with explicit limits (e.g., "max $500/day, only Uniswap, only USDC→ETH"). Authorization lives in a [Pact](/products/agentic-wallet/manual/security/pact-mechanism) that the owner reviews and approves before the agent can act.
+**Scope-bounded delegation**: the agent is authorized for a specific task (e.g., "run a DCA strategy on Base") with explicit limits (e.g., "max $500/day, only Uniswap, only USDC→ETH"). Authorization lives in a [Pact](/products/agentic-wallet/manual/start-here/what-is-a-pact) that the owner reviews and approves before the agent can act.
 
 **Policy enforcement at the signing layer**: every transaction the agent submits is validated against the owner's rules before it is signed and broadcast. The agent cannot bypass policy — it does not have direct access to signing keys.
 
