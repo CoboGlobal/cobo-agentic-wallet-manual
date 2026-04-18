@@ -28,7 +28,7 @@
   <rect x="16" y="66" width="270" height="52" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#sh)"/>
   <circle cx="38" cy="92" r="11" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.2"/>
   <text x="38" y="96" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#3B82F6">1</text>
-  <text x="58" y="88" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Sign in to Web Console</text>
+  <text x="58" y="88" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Sign in to Cobo Agentic Wallet app</text>
   <text x="58" y="104" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#64748B">Click Connect Agent → get pairing code</text>
   <line x1="151" y1="118" x2="151" y2="133" stroke="#93C5FD" stroke-width="1.4" marker-end="url(#arrA)"/>
 
@@ -52,7 +52,7 @@
   <rect x="16" y="276" width="270" height="52" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#sh)"/>
   <circle cx="38" cy="302" r="11" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.2"/>
   <text x="38" y="306" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#3B82F6">4</text>
-  <text x="58" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Set policies in Web Console</text>
+  <text x="58" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Set policies in Cobo Agentic Wallet app</text>
   <text x="58" y="314" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#64748B">Can do in parallel with step 2–3</text>
 
   <!-- ─── divider ─── -->
@@ -66,7 +66,7 @@
   <rect x="328" y="66" width="245" height="52" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#sh)"/>
   <circle cx="350" cy="92" r="11" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1.2"/>
   <text x="350" y="96" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#22C55E">1</text>
-  <text x="370" y="88" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Create wallet in Human App</text>
+  <text x="370" y="88" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Create wallet in Cobo Agentic Wallet app</text>
   <text x="370" y="104" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#64748B">Key shares stay on your phone</text>
   <line x1="450" y1="118" x2="450" y2="133" stroke="#86EFAC" stroke-width="1.4" marker-end="url(#arrB)"/>
 
@@ -90,7 +90,7 @@
   <rect x="328" y="276" width="245" height="52" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1" filter="url(#sh)"/>
   <circle cx="350" cy="302" r="11" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1.2"/>
   <text x="350" y="306" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#22C55E">4</text>
-  <text x="370" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Delegate wallet in Human App</text>
+  <text x="370" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="600" fill="#0F172A">Delegate wallet in Cobo Agentic Wallet app</text>
   <text x="370" y="314" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#64748B">Authorize agent via chat assistant</text>
 
   <!-- ─── divider ─── -->

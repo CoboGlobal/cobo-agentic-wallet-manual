@@ -10,18 +10,17 @@ This is the canonical TypeScript path for Cobo Agentic Wallet.
 
 In one run, you will:
 
-1. Pair and provision a wallet by running `caw onboard provision`
-2. Submit a pact requesting scoped onchain permissions
-3. Wait for owner approval
-4. Execute one allowed onchain action using the pact-scoped API key
-5. Trigger one policy denial
-6. Self-correct using denial guidance
-7. Verify the result in audit logs
+1. Submit a pact requesting scoped onchain permissions
+2. Wait for owner approval
+3. Execute one allowed onchain action using the pact-scoped API key
+4. Trigger one policy denial and inspect the structured error
+5. Verify the result in audit logs
 
 ## Prerequisites
 
 - Node.js 18+
-- A wallet already provisioned via `caw onboard provision` (see [CLI quickstart](/products/agentic-wallet/manual/developer/cli))
+- A wallet already onboarded and paired via `caw onboard` (see [CLI quickstart](/products/agentic-wallet/manual/developer/cli))
+- Testnet tokens on your wallet address (use `caw faucet deposit` to request Sepolia ETH)
 - Your runtime API key and wallet UUID set as environment variables
 
 ## Step 1: Install SDK
@@ -50,19 +49,36 @@ import {
   TransactionsApi,
 } from '@cobo/agentic-wallet';
 
-const CHAIN_ID = 'BASE_ETH';
-const TOKEN_ID = 'USDC';
+const CHAIN_ID = 'SETH';
+const TOKEN_ID = 'SETH';
 const DESTINATION = '0x1111111111111111111111111111111111111111';
+const ALLOWED_AMOUNT = '0.001';
+const DENIED_AMOUNT = '0.005';
+const DENY_THRESHOLD = '0.002';
+
+interface ApiErrorPayload {
+  error?: { code?: string; reason?: string };
+  suggestion?: string;
+}
+
+function parseApiError(error: unknown): { http: number | string; payload: ApiErrorPayload } {
+  const response = (error as { response?: { status?: number; data?: unknown } })?.response;
+  const http = response?.status ?? '-';
+  const data = response?.data;
+  const payload: ApiErrorPayload =
+    data && typeof data === 'object' ? (data as ApiErrorPayload) : {};
+  return { http, payload };
+}
 
 async function main(): Promise<void> {
-  const basePath =
-    process.env.AGENT_WALLET_API_URL!;
+  const basePath = process.env.AGENT_WALLET_API_URL!;
   const apiKey = process.env.AGENT_WALLET_API_KEY!;
   const walletId = process.env.AGENT_WALLET_WALLET_ID!;
 
   const ownerConfig = new Configuration({ apiKey, basePath });
   const pactsApi = new PactsApi(ownerConfig);
 
+  // Step 1: Submit a pact requesting transfer permissions for 24 hours.
   const pactResp = await pactsApi.submitPact({
     wallet_id: walletId,
     intent: 'Transfer tokens for integration testing',
@@ -73,21 +89,20 @@ async function main(): Promise<void> {
           type: 'transfer',
           rules: {
             effect: 'allow',
-            when: {},
-            deny_if: { amount_usd_gt: '100' },
+            when: { chain_in: [CHAIN_ID], token_in: [{ chain_id: CHAIN_ID, token_id: TOKEN_ID }] },
+            deny_if: { amount_gt: DENY_THRESHOLD },
           },
         },
       ],
-      completion_conditions: [
-        { type: 'time_elapsed', threshold: '86400' },
-      ],
+      completion_conditions: [{ type: 'time_elapsed', threshold: '86400' }],
     },
   });
 
   const pactId = pactResp.data.result.pact_id;
   console.log(`PACT SUBMITTED: ${pactId}`);
 
-  console.log('Waiting for owner approval in Human App...');
+  // Step 2: Poll until the owner approves the pact.
+  console.log('Waiting for owner approval in Cobo Agentic Wallet app...');
   let pactApiKey: string | undefined;
 
   while (true) {
@@ -112,45 +127,40 @@ async function main(): Promise<void> {
 
   console.log('PACT ACTIVE');
 
+  // Step 3: Use the pact-scoped API key for all subsequent calls.
   const pactConfig = new Configuration({ apiKey: pactApiKey, basePath });
   const txApi = new TransactionsApi(pactConfig);
   const auditApi = new AuditApi(ownerConfig);
 
-  const allowed = await txApi.transferTokens(walletId, {
-    wallet_id: walletId,
-    chain_id: CHAIN_ID,
-    dst_addr: DESTINATION,
-    token_id: TOKEN_ID,
-    amount: '50',
-  });
-  console.log('ALLOWED:', allowed.data.result.status);
+  // Step 4: Execute an allowed transfer (within the deny threshold).
+  const allowed = (
+    await txApi.transferTokens(walletId, {
+      chain_id: CHAIN_ID,
+      dst_addr: DESTINATION,
+      token_id: TOKEN_ID,
+      amount: ALLOWED_AMOUNT,
+    })
+  ).data.result;
+  console.log('ALLOWED:', allowed.status);
 
+  // Step 5: Trigger a policy denial (amount exceeds the deny threshold).
   try {
     await txApi.transferTokens(walletId, {
-      wallet_id: walletId,
       chain_id: CHAIN_ID,
       dst_addr: DESTINATION,
       token_id: TOKEN_ID,
-      amount: '200',
+      amount: DENIED_AMOUNT,
     });
   } catch (error) {
-    const response = (error as { response?: { data?: { error?: { code?: string; suggestion?: string; details?: Record<string, string> } } } }).response;
-    const denial = response?.data?.error;
-    const retryAmount = denial?.details?.limit_value ?? '100';
-
-    console.log('DENIED:', denial?.code ?? 'POLICY_DENIED');
-    console.log('SUGGESTION:', denial?.suggestion ?? 'Retry with a compliant amount');
-
-    const retried = await txApi.transferTokens(walletId, {
-      wallet_id: walletId,
-      chain_id: CHAIN_ID,
-      dst_addr: DESTINATION,
-      token_id: TOKEN_ID,
-      amount: retryAmount,
-    });
-    console.log('RETRIED:', retried.data.result.status);
+    const { http, payload } = parseApiError(error);
+    const err = payload.error ?? {};
+    console.log(`DENIED: http=${http} code=${err.code ?? '-'} reason=${err.reason ?? '-'}`);
+    if (payload.suggestion) {
+      console.log(`SUGGESTION: ${payload.suggestion}`);
+    }
   }
 
+  // Step 6: Verify allowed and denied events in audit logs.
   const logs = await auditApi.listAuditLogs(walletId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 20);
   const items = logs.data.result.items ?? [];
   const allowedCount = items.filter(item => item.result === 'allowed').length;
@@ -171,9 +181,8 @@ You should see:
 - `PACT SUBMITTED: <pact-id>`
 - `PACT ACTIVE`
 - `ALLOWED: ...`
-- `DENIED: ...`
+- `DENIED: http=... code=... reason=...`
 - `SUGGESTION: ...`
-- `RETRIED: ...`
 - `AUDIT: allowed=..., denied=...`
 
 ## Broaden beyond transfers

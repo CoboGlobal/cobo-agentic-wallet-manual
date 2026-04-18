@@ -13,15 +13,15 @@
 
   <rect width="860" height="820" fill="#F8FAFC"/>
 
-  <!-- Box 1L: Web Console entry -->
+  <!-- Box 1L: Cobo Agentic Wallet app entry -->
   <rect x="50" y="20" width="340" height="82" rx="10" fill="white" stroke="#93C5FD" stroke-width="1.5" filter="url(#s)"/>
-  <text font-family="system-ui,-apple-system,sans-serif" x="230" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#1E293B">Web Console</text>
+  <text font-family="system-ui,-apple-system,sans-serif" x="230" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#1E293B">Cobo Agentic Wallet app</text>
 
   <text font-family="system-ui,-apple-system,sans-serif" x="230" y="72" text-anchor="middle" font-size="11" fill="#3B82F6">Agent's machine holds key · auto-signing</text>
 
-  <!-- Box 1R: Human App entry -->
+  <!-- Box 1R: Cobo Agentic Wallet app entry -->
   <rect x="470" y="20" width="340" height="96" rx="10" fill="white" stroke="#86EFAC" stroke-width="1.5" filter="url(#s)"/>
-  <text font-family="system-ui,-apple-system,sans-serif" x="640" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#1E293B">Human App</text>
+  <text font-family="system-ui,-apple-system,sans-serif" x="640" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="#1E293B">Cobo Agentic Wallet app</text>
   <text font-family="system-ui,-apple-system,sans-serif" x="640" y="72" text-anchor="middle" font-size="11" fill="#16A34A">Your device holds key · manual signing</text>
   <text font-family="system-ui,-apple-system,sans-serif" x="640" y="100" text-anchor="middle" font-size="11" fill="#15803D" font-weight="500">✓ Wallet created in app · ready to use</text>
 
@@ -102,9 +102,9 @@
   <!-- Optional boxes -->
   <rect x="200" y="763" width="200" height="45" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="5,3"/>
   <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="300" y="782" font-size="12" font-weight="600" fill="#64748B">Bind IM channel</text>
-  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="300" y="798" font-size="10.5" fill="#94A3B8">Human App · optional</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="300" y="798" font-size="10.5" fill="#94A3B8">Cobo Agentic Wallet app · optional</text>
 
   <rect x="460" y="763" width="200" height="45" rx="10" fill="white" stroke="#E2E8F0" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="560" y="782" font-size="12" font-weight="600" fill="#64748B">Install Human App</text>
-  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="560" y="798" font-size="10.5" fill="#94A3B8">if started from Web Console · optional</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="560" y="782" font-size="12" font-weight="600" fill="#64748B">Install Cobo Agentic Wallet app</text>
+  <text font-family="system-ui,-apple-system,sans-serif" text-anchor="middle" x="560" y="798" font-size="10.5" fill="#94A3B8">if started from Cobo Agentic Wallet app · optional</text>
 </svg>

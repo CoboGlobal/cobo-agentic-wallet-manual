@@ -18,8 +18,8 @@
   <rect x="44" y="54" width="242" height="100" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5" filter="url(#shadow)"/>
   <text x="165" y="78" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="600" fill="#15803D">You (the owner)</text>
   <line x1="64" y1="87" x2="266" y2="87" stroke="#BBF7D0" stroke-width="1"/>
-  <text x="165" y="112" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#166534">Web Console · Human App</text>
-  <text x="165" y="132" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#4ADE80" font-style="italic">AI assistant in Human App</text>
+  <text x="165" y="112" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#166534">Cobo Agentic Wallet app</text>
+  <text x="165" y="132" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#4ADE80" font-style="italic">AI assistant in Cobo Agentic Wallet app</text>
 
   <!-- ── Agent box ── -->
   <rect x="434" y="54" width="242" height="100" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5" filter="url(#shadow)"/>

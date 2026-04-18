@@ -49,11 +49,27 @@ Once you have finished using the exported key:
 
 Each address in the exported CSV has its own private key. Import is done at the address level — select the specific address key you want to import. EVM and Solana keys are separate and not interchangeable; make sure to import each key into a wallet that supports its chain type.
 
+### EVM chains
+
 Import steps vary by wallet provider. In general:
 
 1. Select the address key you want to import from the exported CSV
 2. Import it into a non-custodial wallet that supports the corresponding chain
 3. Verify the imported address matches your original
 
+### Solana
+
+Solana uses a different key derivation standard from EVM chains. The private key exported for Solana addresses is a raw Ed25519 scalar — it is not in the standard seed format expected by most Solana wallets (such as Phantom or Solflare), so direct import into those wallets is not supported.
+
+To move funds from an exported Solana key, use the open-source `sol-rescue` tool, which signs Solana transactions directly from the scalar.
+
+**Steps**
+
+1. Export your private key via `caw export-key` or the Cobo Agentic Wallet app. The exported CSV contains a `private_key` column with the scalar in hex for each Solana address.
+2. Run `sol-rescue`:
+   ```bash
+   sol-rescue --key <scalar_hex> --to <destination_wallet_address> --amount <SOL_amount>
+   ```
+3. The tool outputs the transaction hash once submitted.
 
 Your Cobo wallet continues to work normally after export — both wallets control the same funds, so transactions in one affect the balance in both.

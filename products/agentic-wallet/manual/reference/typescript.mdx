@@ -12,12 +12,6 @@ sidebarTitle: "TypeScript SDK"
 
 The TypeScript SDK provides typed API classes for every domain in the Cobo Agentic Wallet REST API. It is built on `axios` and works in Node.js and edge runtimes.
 
-## Installation
-
-```bash
-npm install @cobo/agentic-wallet
-```
-
 ## Basic usage
 
 ```typescript
@@ -92,7 +86,7 @@ const wallet = await walletsApi.getWallet(walletUuid);
 
 // Create a wallet
 const newWallet = await walletsApi.createWallet({
-  wallet_type: 'MPC-UCW',
+  wallet_type: 'MPC',
   name: 'My Agent Wallet',
   main_node_id: 'tss-node-id',
 });
@@ -381,27 +375,23 @@ import { ApprovalsApi } from '@cobo/agentic-wallet';
 
 const approvalsApi = new ApprovalsApi(config);
 
-// Create an approval request
-const approval = await approvalsApi.createApproval({
-  wallet_id: walletUuid,
-  approval_type: 'pact',
-  payload: JSON.stringify({ ... }),
-});
-
 // Get approval status — poll until status === 'approved'
 const status = await approvalsApi.getApproval(approvalId);
 
 // List approvals
 const approvals = await approvalsApi.listApprovals(
+  undefined, // subject_type filter (e.g. 'transaction', 'pact')
   'pending', // status filter
-  0,
-  50,
+  undefined, // after cursor
+  undefined, // before cursor
+  undefined, // offset (deprecated — use after/before instead)
+  50,        // limit
 );
 
 // Resolve an approval (approve or reject) — owner only
 await approvalsApi.resolveApproval(approvalId, {
   action: 'approve',
-  approval_result: '<opaque-result>',
+  response: '<opaque-result>',
 });
 ```
 
@@ -418,13 +408,6 @@ const provisioned = await identityApi.provisionAgent({ token: 'pairing-code' });
 // Agent-first provisioning — no token
 const agentFirst = await identityApi.provisionAgent({});
 // agentFirst.data.result.activation_secret — share with the human
-
-// Complete agent-first provisioning
-await identityApi.activateAgent({
-  agent_id: 'agent-uuid',
-  owner_id: 'owner-principal-id',
-  activation_secret: 'secret-from-provision',
-});
 
 // Get agent provisioning status
 const agentStatus = await identityApi.getAgentStatus(agentId);
@@ -482,10 +465,10 @@ import { MetadataApi } from '@cobo/agentic-wallet';
 const metaApi = new MetadataApi(config);
 
 // List supported chains
-const chains = await metaApi.listChains('MPC-UCW');
+const chains = await metaApi.listChains('MPC');
 
 // List supported tokens
-const tokens = await metaApi.listAssets('MPC-UCW', 'BASE_ETH,SETH');
+const tokens = await metaApi.listAssets('MPC', 'BASE_ETH,SETH');
 
 // Get chain info by chain ID
 const chain = await metaApi.getChainInfoByChainId('BASE_ETH');
