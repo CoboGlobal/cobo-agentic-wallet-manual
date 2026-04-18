@@ -116,11 +116,11 @@ Add this to your Claude Desktop `claude_desktop_config.json`:
 
 | Variable | Default | Description |
 |---|---|---|
-| `AGENT_WALLET_API_URL` | `'http://localhost:8000'` | API base URL. For production, set `https://api.agenticwallet.cobo.com`. |
+| `AGENT_WALLET_API_URL` | `'http://localhost:8000'` | API base URL |
 | `AGENT_WALLET_API_KEY` | — | API key (required) |
 | `AGENT_WALLET_TIMEOUT` | `30.0` | Request timeout in seconds |
-| `AGENT_WALLET_INCLUDE_TOOLS` | — | Comma-separated allowlist of canonical tool names to expose, in the same order provided |
-| `AGENT_WALLET_EXCLUDE_TOOLS` | — | Comma-separated denylist of canonical tool names to remove from the exposed surface |
+| `AGENT_WALLET_INCLUDE_TOOLS` | — | include_tools |
+| `AGENT_WALLET_EXCLUDE_TOOLS` | `()` | exclude_tools |
 
 Example:
 

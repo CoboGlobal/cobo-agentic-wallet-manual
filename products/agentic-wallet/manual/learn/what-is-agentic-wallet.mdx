@@ -22,13 +22,9 @@ The key shift: the decision-maker is no longer a human reviewing a transaction. 
 
 ## Why existing models don't fit
 
-**Giving an agent your private key** is equivalent to giving a stranger full, irrevocable access to all your funds. There is no way to scope what the agent can do, no audit trail, and no kill switch.
+**Giving an agent your private key** is equivalent to giving a stranger full, unrestricted access to all your funds. There is no way to scope what the agent can do — no spending limits, no contract allowlists, no time windows enforceable at the protocol level. Any transaction the agent has already executed is irreversible, and from the blockchain's perspective, all activity looks identical regardless of whether a human or the agent initiated it.
 
-**Giving an agent a hot wallet** (a new EOA you fund for the agent) is slightly better — the blast radius is limited to what you put in that wallet. But there is still no policy enforcement: the agent can drain the wallet in one transaction, send to any address, or call any contract.
-
-**Multisig** requires human co-signers for every transaction. This defeats the purpose of autonomous operation — if a human has to approve every transaction, the agent cannot act without human latency.
-
-**ERC-4337 account abstraction** moves validation logic on-chain, which is powerful for programmable conditions. But it requires deploying and managing custom contracts, and its security model is complex to configure correctly.
+**Giving an agent a hot wallet** (a new EOA you fund for the agent) limits the blast radius to what you put in that wallet. But the same structural problem remains: an agent holding that key can drain the wallet in a single transaction, send to any address, and call any contract. There is no mechanism to enforce per-transaction limits, allowlisted destinations, or rate limits at the protocol level.
 
 ## What makes agentic wallets different
 

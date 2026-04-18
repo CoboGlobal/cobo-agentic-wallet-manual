@@ -14,19 +14,6 @@ The LangChain integration has two practical paths:
 
 Policy denials should be returned as readable tool output so the agent can self-correct.
 
-## Installation
-
-<CodeGroup>
-
-```bash pip
-pip install "cobo-agentic-wallet[langchain]"
-```
-
-```bash uv
-uv sync --extra langchain
-```
-
-</CodeGroup>
 
 ## Quick Start
 
@@ -124,8 +111,9 @@ The LLM reads this output and can retry with compliant parameters.
 - **Other API errors** — raised as `ToolException` (tool fails, agent can retry)
 
 <Accordion title="Advanced: Custom error handling">
-  You can override how denials are surfaced by subclassing `CoboAgentWalletToolkit`
-  and implementing a custom `_format_denial` method.
+  You can override how denials are surfaced by subclassing `AgentWalletToolkit`
+  and overriding the `_format_denial` static method, then passing the custom toolkit
+  to `CoboAgentWalletToolkit`.
 </Accordion>
 
 <Card title="Source Code" icon="github" href="https://github.com/CoboGlobal/cobo-agentic-wallet">

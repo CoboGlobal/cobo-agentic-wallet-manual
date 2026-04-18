@@ -7,12 +7,6 @@ sidebarTitle: "CLI"
 
 The `caw` CLI lets you manage wallets, addresses, transactions, delegations, policies, and agents from the terminal.
 
-## Installation
-
-```bash
-npx skills add CoboGlobal/cobo-agentic-wallet --skill cobo-agentic-wallet --yes --global
-```
-
 ## Global options
 
 These options are available on every command.
@@ -54,13 +48,11 @@ Policy denials are written to stderr with structured context and a non-zero exit
 
 ## `caw update`
 
-Download and install a caw CLI binary.
+Download and install a caw CLI binary from the official download server.
 
-Fetches the binary from the official download server, verifies the checksum,
-and replaces the current binary in-place.
-
-  - --version: Target version to install (e.g. v0.2.30); omit to install the latest release.
-  - --check: Check for a newer version without installing.
+Fetches the binary, verifies its checksum, and replaces the current binary
+in-place. Omit --version to install the latest release. Use --check to check
+for a newer version without installing.
 
 ```bash
 caw update
@@ -105,20 +97,22 @@ caw wallet list
 
 ### `current`
 
-With no arguments: shows the currently active wallet.
-With a wallet UUID argument: switches the active wallet to the given one (same
-as the old 'wallet use' command). `<wallet-uuid>` is the UUID of the wallet to
-switch to; obtain it from "caw wallet list".
+Without --wallet-id: shows the currently active wallet.
+With --wallet-id: switches the active wallet to the given one.
+--wallet-id is the UUID of the wallet to switch to; obtain it from "caw wallet list".
 
 ```bash
-caw wallet current [wallet-uuid]
+caw wallet current
 ```
+
+| Option | Default | Description |
+|---|---|---|
+| `--wallet-id` | — | UUID of the wallet to switch to; if omitted, shows the currently active wallet |
+| `--show-api-key` | — | Include the API key in the output (sensitive; omitted by default) |
 
 ### `get`
 
 Get details for the active wallet on the Cobo platform.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw wallet get
@@ -127,8 +121,6 @@ caw wallet get
 ### `balance`
 
 List token balances for the active wallet on the Cobo platform.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw wallet balance
@@ -145,8 +137,6 @@ caw wallet balance
 
 Rename the active wallet on the Cobo platform.
 
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
-
 ```bash
 caw wallet rename
 ```
@@ -158,22 +148,22 @@ caw wallet rename
 ### `pair`
 
 Initiate pairing and obtain a one-time pairing token (8-digit code) for the
-user to enter in the Cobo Cobo Agentic Wallet app. Share the code with the user through a
+user to enter in the Cobo Agentic Wallet app. Share the code with the user through a
 secure channel. Use caw wallet pair-status to monitor whether the user has
 completed pairing.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw wallet pair
 ```
 
+| Option | Default | Description |
+|---|---|---|
+| `--code-only` | — | Print only the pairing token (plain text) |
+
 ### `pair-status`
 
 Check whether the user has completed the wallet ownership pairing initiated
 by caw wallet pair.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw wallet pair-status
@@ -202,19 +192,20 @@ denial details to stderr. If a policy requires manual approval, the transfer is
 queued as a pending operation.
 
 ```bash
-caw tx transfer <pact-id>
+caw tx transfer
 ```
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--to` | Yes | — | Destination on-chain address (required) |
+| `--dst-address` | Yes | — | Destination on-chain address (required) |
 | `--amount` | Yes | — | Transfer amount as a decimal string, e.g. 1.5 (required) |
 | `--token-id` | Yes | — | Token ID, e.g. SETH, SETH_USDC (required). Use the List supported assets operation to retrieve all supported token IDs |
 | `--chain-id` | No | `ETH` | Chain ID, e.g. SETH, BASE_ETH. Resolved automatically from token ID if omitted |
-| `--src-addr` | No | — | Source address to transfer from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Source address to transfer from. If omitted, the server auto-selects the wallet address on this chain with the highest available token balance (explicit src-address takes precedence) |
 | `--request-id` | No | — | Client-supplied idempotency key. If a transfer with the same request-id already exists, the existing record is returned |
 | `--description` | No | — | Optional description for this transaction |
 | `--fee` | No | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
+| `--pact-id` | Yes | — | Pact UUID [required] |
 
 ### `call`
 
@@ -227,27 +218,26 @@ objects and optionally --address-lookup-tables.
 The call is evaluated against active policies before submission.
 
 ```bash
-caw tx call <pact-id>
+caw tx call
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--chain-id` | `ETH` | Chain ID, e.g. SETH, BASE_ETH, SOL. Defaults to ETH. Use the List supported chains operation to retrieve all supported chain IDs |
-| `--contract` | — | EVM contract address to call |
-| `--calldata` | — | EVM calldata as a hex-encoded string (0x-prefixed) |
-| `--value` | `0` | Native token amount to send with the call as a decimal string, e.g. 0.01 |
-| `--src-addr` | — | Source address to call from. Defaults to the wallet's most recently created address for the chain |
-| `--request-id` | — | Client-supplied idempotency key. If a call with the same request-id already exists, the existing record is returned |
-| `--description` | — | Optional description for this transaction |
-| `--fee` | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
-| `--instructions` | — | Solana instructions as a JSON array of SolInstruction objects |
-| `--address-lookup-tables` | — | Solana address lookup table accounts as a JSON array |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--chain-id` | No | `ETH` | Chain ID, e.g. SETH, BASE_ETH, SOL. Defaults to ETH. Use the List supported chains operation to retrieve all supported chain IDs |
+| `--contract` | No | — | EVM contract address to call |
+| `--calldata` | No | — | EVM calldata as a hex-encoded string (0x-prefixed) |
+| `--value` | No | `0` | Native token amount to send with the call as a decimal string, e.g. 0.01 |
+| `--src-address` | No | — | Source address to call from. If omitted, the server auto-selects the wallet address on this chain with the highest available native token balance (explicit src-address takes precedence) |
+| `--request-id` | No | — | Client-supplied idempotency key. If a call with the same request-id already exists, the existing record is returned |
+| `--description` | No | — | Optional description for this transaction |
+| `--fee` | No | — | Custom fee parameters as a JSON object (EIP-1559 or SOL). If omitted, the network default is used |
+| `--pact-id` | Yes | — | Pact UUID [required] |
+| `--instructions` | No | — | Solana instructions as a JSON array of SolInstruction objects |
+| `--address-lookup-tables` | No | — | Solana address lookup table accounts as a JSON array |
 
 ### `list`
 
 List transaction records for the active wallet, newest first.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw tx list
@@ -288,19 +278,17 @@ Estimate the network fee for a token transfer without submitting it.
 Provide the same flags you intend to use for caw tx transfer. The response
 includes the estimated fee amount and the token used to pay it.
 
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
-
 ```bash
 caw tx estimate-transfer-fee
 ```
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--to` | Yes | — | Destination on-chain address (required) |
+| `--dst-address` | Yes | — | Destination on-chain address (required) |
 | `--amount` | Yes | — | Transfer amount as a decimal string, e.g. 1.5 (required) |
 | `--token-id` | No | — | Token ID, e.g. SETH, SETH_USDC. Use the List supported assets operation to retrieve all supported token IDs |
 | `--chain-id` | No | `ETH` | Chain ID, e.g. SETH, BASE_ETH. Resolved automatically from token ID if omitted |
-| `--src-addr` | No | — | Source address to transfer from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Source address to transfer from. If omitted, the server auto-selects the wallet address on this chain with the highest available token balance (explicit src-address takes precedence) |
 
 ### `estimate-call-fee`
 
@@ -309,8 +297,6 @@ Estimate the network fee for a contract call without submitting it.
 Provide the same flags you intend to use for caw tx call. --context,
 --request-id, --description, and --gasless are not applicable for estimation.
 The response includes the estimated fee and the native token used to pay it.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw tx estimate-call-fee
@@ -322,7 +308,7 @@ caw tx estimate-call-fee
 | `--contract` | — | EVM contract address to call |
 | `--calldata` | — | EVM calldata as a hex-encoded string (0x-prefixed) |
 | `--value` | `0` | Native token amount to send with the call as a decimal string, e.g. 0.01 |
-| `--src-addr` | — | Source address to call from. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | — | Source address to call from. If omitted, the server auto-selects the wallet address on this chain with the highest available native token balance (explicit src-address takes precedence) |
 | `--instructions` | — | Solana instructions as a JSON array of SolInstruction objects |
 | `--address-lookup-tables` | — | Solana address lookup table accounts as a JSON array |
 
@@ -330,46 +316,57 @@ caw tx estimate-call-fee
 
 Cancel a transaction that has not yet been confirmed on-chain.
 
-For EVM chains this submits a zero-value replacement transaction (RBF) to the
-same nonce with a higher fee, effectively cancelling the original.
+Pre-broadcast transactions (pending screening, authorization, or signature) are
+cancelled directly without a fee.
 
-`<transaction-uuid>` is the UUID of the transaction to cancel; obtain it from
-"caw tx list" or the submit response.
+Broadcasting transactions use Replace-By-Fee (RBF): a zero-value replacement is
+submitted to the same nonce with a higher fee. The fee is derived automatically
+from the original transaction's recorded fee bumped by --fee-multiplier (default +15%).
 
-```bash
-caw tx drop <transaction-uuid>
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `--request-id` | — | Client-supplied idempotency key for the replacement transaction |
-| `--fee` | — | Custom fee parameters for the replacement transaction as a JSON object. If omitted, a higher fee is chosen automatically |
-
-### `speedup`
-
-Resubmit a pending transaction to the same nonce with a higher fee (RBF).
-
-`<transaction-uuid>` is the UUID of the transaction to speed up; obtain it from
-"caw tx list" or the submit response.
+--tx-id is the UUID of the transaction to cancel; obtain it from
+'caw tx list' or the submit response.
 
 ```bash
-caw tx speedup <transaction-uuid>
+caw tx drop
 ```
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--fee` | Yes | — | Higher fee parameters for the replacement transaction as a JSON object (required) |
+| `--tx-id` | Yes | — | Transaction record UUID [required] |
+| `--request-id` | No | — | Client-supplied idempotency key for the replacement transaction |
+| `--fee-multiplier` | No | `0.15` | Fractional fee increase for RBF replacement (e.g. 0.15 = +15%). Only applied when the transaction is broadcasting. |
+
+### `speedup`
+
+Resubmit a broadcasting transaction to the same nonce with a higher fee (RBF).
+
+The replacement fee is derived automatically from the original transaction's
+recorded fee bumped by --fee-multiplier (default +15%).
+
+Only transactions in the 'broadcasting' sub-status can be sped up.
+
+--tx-id is the UUID of the transaction to speed up; obtain it from
+'caw tx list' or the submit response.
+
+```bash
+caw tx speedup
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--tx-id` | Yes | — | Transaction record UUID [required] |
+| `--fee-multiplier` | No | `0.15` | Fractional fee increase for the RBF replacement (e.g. 0.15 = +15%) |
 | `--request-id` | No | — | Client-supplied idempotency key for the replacement transaction |
 
 ### `sign-message`
 
 Sign a message using a wallet address.
 
-`<pact-id>` is the pact that scopes the signing key and wallet; obtain it from
+--pact-id is the pact that scopes the signing key and wallet; obtain it from
 "caw pact list" or a pact submit response.
 
 ```bash
-caw tx sign-message <pact-id>
+caw tx sign-message
 ```
 
 | Option | Required | Default | Description |
@@ -377,9 +374,10 @@ caw tx sign-message <pact-id>
 | `--chain-id` | Yes | — | Chain ID, e.g. SETH, BASE_ETH (required). Use the List supported chains operation to retrieve all supported chain IDs |
 | `--destination-type` | No | — | Signing scheme, e.g. eip712 for EIP-712 typed data |
 | `--eip712-typed-data` | No | — | EIP-712 typed data as a JSON object (required for eip712 destination type) |
-| `--source-address` | No | — | Address to sign with. Defaults to the wallet's most recently created address for the chain |
+| `--src-address` | No | — | Address to sign with. If omitted, the server auto-selects the wallet address on this chain (explicit src-address takes precedence) |
 | `--description` | No | — | Human-readable description of what is being signed |
 | `--request-id` | No | — | Client-supplied idempotency key |
+| `--pact-id` | Yes | — | Pact UUID [required] |
 
 ## `caw address`
 
@@ -394,9 +392,8 @@ caw address
 
 ### `list`
 
-List all on-chain addresses associated with the active wallet.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
+List all on-chain addresses associated with the active wallet. Use
+"caw wallet current" to check which wallet is active.
 
 ```bash
 caw address list
@@ -405,8 +402,6 @@ caw address list
 ### `create`
 
 Generate a new on-chain address for the active wallet and chain.
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
 
 ```bash
 caw address create
@@ -453,12 +448,16 @@ caw meta chains
 
 Retrieve detailed information about a specific blockchain by its chain ID.
 
-`<chain-id>` is the Cobo chain identifier, e.g. SETH or BASE_ETH. Use
+--chain-id is the Cobo chain identifier, e.g. SETH or BASE_ETH. Use
 "caw meta chains" to list all supported chain IDs.
 
 ```bash
-caw meta chain-info <chain-id>
+caw meta chain-info
 ```
+
+| Option | Required | Description |
+|---|---|---|
+| `--chain-id` | Yes | Cobo chain ID, e.g. SETH, BASE_ETH [required] |
 
 ### `tokens`
 
@@ -495,16 +494,17 @@ caw meta search-tokens
 
 Get current market prices for one or more Cobo asset coins.
 
-`<asset-coins>` is a comma-separated list of Cobo asset coin IDs, e.g. BTC,ETH.
+--asset-coins is a comma-separated list of Cobo asset coin IDs, e.g. BTC,ETH.
 Use "caw meta tokens" to discover supported IDs.
 
 ```bash
-caw meta prices <asset-coins>
+caw meta prices
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--currency` | `USD` | ISO 4217 currency code for price output, e.g. USD, EUR |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--asset-coins` | Yes | — | Comma-separated Cobo asset coin IDs, e.g. BTC,ETH [required] |
+| `--currency` | No | `USD` | ISO 4217 currency code for price output, e.g. USD, EUR |
 
 ## `caw faucet`
 
@@ -576,12 +576,16 @@ Retrieve full details of a single pending operation. The response includes
 the operation type, current status, policy context, and any available result
 payload.
 
-`<operation-id>` is the ID of the pending operation to retrieve; obtain IDs from
+--operation-id is the ID of the pending operation to retrieve; obtain IDs from
 "caw pending list".
 
 ```bash
-caw pending get <operation-id>
+caw pending get
 ```
+
+| Option | Required | Description |
+|---|---|---|
+| `--operation-id` | Yes | Pending operation ID [required] |
 
 ### `approve`
 
@@ -589,33 +593,35 @@ Approve a pending operation, allowing it to proceed to execution. This
 action is irreversible — once approved, the operation will begin executing
 immediately if all other policy conditions are satisfied.
 
-`<operation-id>` is the ID of the pending operation to approve; obtain IDs from
+--operation-id is the ID of the pending operation to approve; obtain IDs from
 "caw pending list".
 
 ```bash
-caw pending approve <operation-id>
+caw pending approve
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--confirm` | — | Ask for interactive confirmation before executing |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--operation-id` | Yes | — | Pending operation ID [required] |
+| `--confirm` | No | — | Ask for interactive confirmation before executing |
 
 ### `reject`
 
 Reject a pending operation, preventing it from executing. This action is
 irreversible.
 
-`<operation-id>` is the ID of the pending operation to reject; obtain IDs from
+--operation-id is the ID of the pending operation to reject; obtain IDs from
 "caw pending list".
 
 ```bash
-caw pending reject <operation-id>
+caw pending reject
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--reason` | — | Human-readable reason for the rejection |
-| `--confirm` | — | Ask for interactive confirmation before executing |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--operation-id` | Yes | — | Pending operation ID [required] |
+| `--reason` | No | — | Human-readable reason for the rejection |
+| `--confirm` | No | — | Ask for interactive confirmation before executing |
 
 ## `caw node`
 
@@ -632,16 +638,18 @@ caw node
 
 Show TSS Node status.
 
-Without arguments, returns both local process info and remote API status.
+Without --scope, returns both local process info and remote API status.
 
-  - local: show only the local process state (PID, running, binary path)
-  - remote: query only the remote API for the node's online status
-
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
+  --scope local:  show only the local process state (PID, running, binary path)
+  --scope remote: query only the remote API for the node's online status
 
 ```bash
-caw node status [local|remote]
+caw node status
 ```
+
+| Option | Default | Description |
+|---|---|---|
+| `--scope` | — | Show only local or remote status; omit for both (local, remote) |
 
 ### `info`
 
@@ -740,6 +748,7 @@ caw onboard
 | `--agent-name` | — | Optional display name for the agent (provision) and, when set, names the wallet \"`<name>`'s Wallet\" |
 | `--session-id` | — | Interactive onboarding session id. If omitted or not found, a new session is created |
 | `--answers` | — | JSON object merged into collected answers, e.g. \{\"invitation_code\":\"X\",\"risk_ack\":true\} |
+| `--wait` | — | Block until the wallet reaches active status (default: return immediately with current phase) |
 
 ### `bootstrap`
 
@@ -794,31 +803,32 @@ caw onboard self-test
 Perform an HTTP request and automatically handle 402 Payment Required
 responses using the x402 or MPP machine-payment protocols.
 
-`<url>` is the endpoint to fetch. When a 402 is received, caw detects the
+--url is the endpoint to fetch. When a 402 is received, caw detects the
 payment protocol from the response headers (unless overridden), pays using the
 configured wallet, and retries the request with the payment headers.
 
 Example:
-  caw fetch https://api.example.com/data --wallet-id `<uuid>` --network eip155:8453
+  caw fetch --url https://api.example.com/data --wallet-id `<uuid>` --network eip155:8453
 
 ```bash
-caw fetch <url>
+caw fetch
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--method` / `-X` | `GET` | HTTP method to use for the request (e.g. GET, POST, PUT) |
-| `--header` / `-H` | `nil` | HTTP request header in Key: Value format; may be repeated |
-| `--data` / `-d` | — | Raw HTTP request body to send with the request |
-| `--output` / `-o` | `body` | Output mode: body prints the response body only, full includes status code and headers |
-| `--wallet-id` / `-w` | — | Wallet UUID to charge for payment; falls back to wallet_uuid in the active wallet (see caw wallet list) |
-| `--protocol` / `-p` | `auto` | Payment protocol to use: auto detects from response headers, x402 forces x402, mpp forces MPP |
-| `--network` | — | CAIP-2 network filter that excludes payment options on other networks (e.g. eip155:8453); x402 only |
-| `--json` | — | Send JSON data (sets Content-Type/Accept to application/json, defaults method to POST) |
-| `--asset` | — | Token contract address filter that excludes payment options for other tokens (case-insensitive); x402 only |
-| `--max-amount` | — | Maximum acceptable raw token amount; payment options requiring more than this amount are excluded; x402 only |
-| `--deposit` | — | Session deposit amount in raw token units; defaults to per_request_amount multiplied by 10; MPP session intent only |
-| `--dry-run` | — | Print the payment challenge received in the 402 response and exit without calling the payment API |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--method` / `-X` | No | `GET` | HTTP method to use for the request (e.g. GET, POST, PUT) |
+| `--header` / `-H` | No | `nil` | HTTP request header in Key: Value format; may be repeated |
+| `--data` / `-d` | No | — | Raw HTTP request body to send with the request |
+| `--output` / `-o` | No | `body` | Output mode: body prints the response body only, full includes status code and headers |
+| `--wallet-id` / `-w` | No | — | Wallet UUID to charge for payment; falls back to wallet_uuid in the active wallet (see caw wallet list) |
+| `--protocol` / `-p` | No | `auto` | Payment protocol to use: auto detects from response headers, x402 forces x402, mpp forces MPP |
+| `--network` | No | — | CAIP-2 network filter that excludes payment options on other networks (e.g. eip155:8453); x402 only |
+| `--url` | Yes | — | URL to fetch [required] |
+| `--json` | No | — | Send JSON data (sets Content-Type/Accept to application/json, defaults method to POST) |
+| `--asset` | No | — | Token contract address filter that excludes payment options for other tokens (case-insensitive); x402 only |
+| `--max-amount` | No | — | Maximum acceptable raw token amount; payment options requiring more than this amount are excluded; x402 only |
+| `--deposit` | No | — | Session deposit amount in raw token units; defaults to per_request_amount multiplied by 10; MPP session intent only |
+| `--dry-run` | No | — | Print the payment challenge received in the 402 response and exit without calling the payment API |
 
 ## `caw payment`
 
@@ -937,7 +947,7 @@ Exports the wallet's MPC private key through a secure MPC reshare and
 local reconstruction, writing derived private keys to a CSV file.
 
 The first invocation creates an export request and prints an authorization URL
-that the wallet owner must approve in the Cobo Cobo Agentic Wallet app. Re-run the command
+that the wallet owner must approve in the Cobo Agentic Wallet app. Re-run the command
 after approval; it will detect the approved state, spin up two temporary TSS
 recovery nodes, perform the reshare, reconstruct the root private key, derive
 keys for all wallet addresses, and write the result to --output-dir.
@@ -966,8 +976,6 @@ Returns three fields: healthy (whether the backend API is reachable),
 wallet_status (the current wallet lifecycle state such as active or pending),
 and wallet_paired (whether the wallet ownership pairing has been completed).
 
-The wallet UUID is resolved from the active profile (use "caw wallet current" to check).
-
 ```bash
 caw status
 ```
@@ -994,7 +1002,6 @@ Subcommands:
 
   - encode: Encode a function call into hex calldata.
   - decode: Decode hex calldata back into function name and arguments.
-  - selector: Compute the 4-byte function selector for a function signature.
 
 ```bash
 caw util abi
@@ -1012,9 +1019,8 @@ Examples:
   caw abi encode --method "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))" \
     --args '[["0xTokenIn","0xTokenOut",3000,"0xRecipient","1000000","0","0"]]'
 
-  # Using ABI JSON file
-  caw abi encode --abi '[\{"name":"transfer","type":"function","inputs":[\{"name":"to","type":"address"\},\{"name":"amount","type":"uint256"\}]\}]' \
-    --method transfer --args '["0x1234...", "1000000"]'
+  # Zero-argument function
+  caw abi encode --method "totalSupply()"
 
 ```bash
 caw util abi encode
@@ -1022,23 +1028,21 @@ caw util abi encode
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--method` | Yes | — | Function signature or name, e.g. transfer(address,uint256) (required) |
+| `--method` | Yes | — | Function signature, e.g. transfer(address,uint256) (required) |
 | `--args` | No | — | Function arguments as a JSON array, e.g. [\"0x1234...\", \"1000000\"] |
-| `--abi` | No | — | ABI JSON array for name-based lookup (optional; use instead of a full signature) |
 
 #### `decode`
 
-Decode hex calldata back into function name and arguments.
+Decode hex calldata back into function name and arguments, or decode
+an eth_call return value using --output-types.
 
 Examples:
-  # Decode with function signature
-  caw abi decode --method "transfer(address,uint256)" --calldata 0xa9059cbb000000...
+  # Decode input calldata (validates selector)
+  caw util abi decode --method "transfer(address,uint256)" --calldata 0xa9059cbb000000...
 
-  # Decode with ABI JSON
-  caw abi decode --abi '[\{"name":"transfer","type":"function","inputs":[...]\}]' --calldata 0xa9059cbb000000...
-
-  # Decode selector only (no ABI needed)
-  caw abi decode --calldata 0xa9059cbb000000...
+  # Decode eth_call return value (no selector check)
+  caw util abi decode --output-types '["string"]' --calldata 0x000000...
+  caw util abi decode --output-types '["uint256","address"]' --calldata 0x000000...
 
 ```bash
 caw util abi decode
@@ -1046,22 +1050,50 @@ caw util abi decode
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--calldata` | Yes | — | Hex calldata to decode, e.g. 0xa9059cbb... (required) |
-| `--method` | No | — | Function signature for decoding, e.g. transfer(address,uint256) |
-| `--abi` | No | — | ABI JSON array for decoding (alternative to --method) |
+| `--calldata` | Yes | — | Hex calldata or return value to decode (required) |
+| `--method` | No | — | Function signature, e.g. transfer(address,uint256) |
+| `--output-types` | No | — | JSON array of Solidity types for decoding return values, e.g. '[\"string\"]' |
+| `--abi` | No | — | ABI JSON array; combined with --method to auto-extract output types and decode return values |
 
 #### `selector`
 
 Compute the 4-byte function selector from a function signature.
 
 Examples:
-  caw abi selector "transfer(address,uint256)"
-  caw abi selector "approve(address,uint256)"
-  caw abi selector "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))"
+  caw abi selector --signature "transfer(address,uint256)"
+  caw abi selector --signature "approve(address,uint256)"
+  caw abi selector --signature "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))"
 
 ```bash
-caw util abi selector <signature>
+caw util abi selector
 ```
+
+| Option | Required | Description |
+|---|---|---|
+| `--signature` | Yes | Function signature, e.g. transfer(address,uint256) [required] |
+
+#### `call`
+
+Send a raw eth_call to an EVM contract and return the hex result.
+
+Use this when you already have ABI-encoded calldata. For a higher-level
+command that handles encoding and decoding automatically, use "caw util eth-call".
+
+Example:
+  CALLDATA=$(caw util abi encode --method "balanceOf(address)" --args '["0xYourAddress"]' | jq -r .calldata)
+  caw util abi call --chain-id SETH --to 0xContractAddress --data "$CALLDATA"
+
+```bash
+caw util abi call
+```
+
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--chain-id` | Yes | — | Cobo chain ID (e.g. SETH, BASE_ETH) [required] |
+| `--to` | Yes | — | Contract address to call [required] |
+| `--data` | Yes | — | ABI-encoded calldata as hex (use 'caw util abi encode' to build) [required] |
+| `--from` | No | — | msg.sender override (optional) |
+| `--block` | No | `latest` | Block tag or hex number (default: latest) |
 
 ### `base64`
 
@@ -1082,22 +1114,23 @@ Encode hex, raw string, or stdin to base64.
 
 Examples:
   # Encode hex bytes (auto-detected by 0x prefix)
-  caw util base64 encode 0x02000000008078120000000000
+  caw util base64 encode --data 0x02000000008078120000000000
 
   # Encode raw string
-  caw util base64 encode --raw "DCA_ROUND_1_USDC_SOL"
+  caw util base64 encode --data "DCA_ROUND_1_USDC_SOL" --raw
 
   # Encode from stdin
   echo -n "hello" | caw util base64 encode --stdin
 
 ```bash
-caw util base64 encode [data]
+caw util base64 encode
 ```
 
 | Option | Default | Description |
 |---|---|---|
+| `--data` | — | Data to encode: hex (0x-prefixed) or raw string |
 | `--raw` | — | Treat the input as a raw string instead of hex (0x-prefixed input is treated as hex by default) |
-| `--stdin` | — | Read input from stdin instead of the positional argument |
+| `--stdin` | — | Read input from stdin instead of --data |
 | `--url` | — | Use URL-safe base64 encoding (replaces + with - and / with _) |
 
 #### `decode`
@@ -1106,78 +1139,53 @@ Decode a base64 string and output as hex or raw.
 
 Examples:
   # Decode to hex (default)
-  caw util base64 decode "AgAAAACAehIAAAAAAA=="
+  caw util base64 decode --data "AgAAAACAehIAAAAAAA=="
 
   # Decode to raw string
-  caw util base64 decode --raw "RENBX1JPVU5EXzFfVVNEQ19TT0w="
+  caw util base64 decode --data "RENBX1JPVU5EXzFfVVNEQ19TT0w=" --raw
 
   # Decode from stdin
   echo "AgAAAACAehIAAAAAAA==" | caw util base64 decode --stdin
 
 ```bash
-caw util base64 decode <base64-string>
+caw util base64 decode
 ```
 
 | Option | Default | Description |
 |---|---|---|
+| `--data` | — | Base64 string to decode |
 | `--raw` | — | Include the decoded bytes as a raw UTF-8 string in the output |
-| `--stdin` | — | Read the base64 string from stdin instead of the positional argument |
+| `--stdin` | — | Read the base64 string from stdin instead of --data |
 | `--url` | — | Use URL-safe base64 decoding |
 
-## `caw approval`
+### `eth-call`
 
-Manage approval requests sent to the Cobo Agentic Wallet app for human review.
+Encode calldata from an ABI, call the contract via eth_call, and decode
+the return value — all in one command.
 
-Approval requests are created automatically when a wallet operation requires
-human authorization. Use the subcommands to list pending requests, inspect
-their details, or resolve them with an approve or reject action.
+For raw eth_call without encoding/decoding, use "caw util abi call".
 
-```bash
-caw approval
-```
+Examples:
+  caw util eth-call --chain-id SETH --to 0x1c7D... \
+    --abi '[\{"name":"name","type":"function","inputs":[],"outputs":[\{"name":"","type":"string"\}]\}]' \
+    --method name
 
-### `list`
-
-List approval requests associated with your workspace. Results are
-paginated.
+  caw util eth-call --chain-id SETH --to 0x1c7D... \
+    --abi erc20 --method balanceOf --args '["0xYourAddress"]'
 
 ```bash
-caw approval list
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `--limit` | `50` | Maximum number of results to return (1–200) |
-| `--status` | — | Filter by approval status: pending, approved, rejected, or expired |
-
-### `get`
-
-Retrieve the full details of a single approval request.
-
-`<approval-id>` is the UUID of the approval request; obtain it from the output
-of "caw approval list".
-
-```bash
-caw approval get <approval-id>
-```
-
-### `resolve`
-
-Approve or reject a pending approval request. This action is irreversible
-once submitted.
-
-`<approval-id>` is the UUID of the approval request; obtain it from "caw
-approval list".
-
-```bash
-caw approval resolve <approval-id>
+caw util eth-call
 ```
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--action` | Yes | — | Resolution action: approve or reject (required) |
-| `--rejection-reason` | No | — | Human-readable reason for rejection (used when action=reject) |
-| `--revised-pact` | No | — | PactSpec JSON string that replaces the pact specification before activation when action=approve |
+| `--chain-id` | Yes | — | Cobo chain ID (e.g. SETH, BASE_ETH) [required] |
+| `--to` | Yes | — | Contract address to call [required] |
+| `--abi` | Yes | — | ABI JSON array [required] |
+| `--method` | Yes | — | Function name or signature (e.g. balanceOf or balanceOf(address)) [required] |
+| `--args` | No | — | Function arguments as a JSON array, e.g. '[\"0x1234...\"]' |
+| `--from` | No | — | msg.sender override (optional) |
+| `--block` | No | `latest` | Block tag or hex number (default: latest) |
 
 ## `caw pact`
 
@@ -1211,24 +1219,32 @@ caw pact list
 Fetch the current status of a pact by its ID, triggering lazy activation
 if the pact is ready to become active.
 
-`<pact-id>` is returned when you run "caw pact submit", or found via "caw pact
+--pact-id is returned when you run "caw pact submit", or found via "caw pact
 list".
 
 ```bash
-caw pact status <pact-id>
+caw pact status
 ```
+
+| Option | Required | Description |
+|---|---|---|
+| `--pact-id` | Yes | Pact UUID [required] |
 
 ### `show`
 
 Show the full detail of a pact, including its spec, status, policies, and
 completion conditions.
 
-`<pact-id>` is returned when you run "caw pact submit", or found via "caw pact
+--pact-id is returned when you run "caw pact submit", or found via "caw pact
 list".
 
 ```bash
-caw pact show <pact-id>
+caw pact show
 ```
+
+| Option | Required | Description |
+|---|---|---|
+| `--pact-id` | Yes | Pact UUID [required] |
 
 ### `events`
 
@@ -1236,24 +1252,109 @@ List all lifecycle events recorded for a pact in chronological order.
 Events capture state transitions such as submission, approval, activation,
 and revocation.
 
-`<pact-id>` is returned when you run "caw pact submit", or found via "caw pact
+--pact-id is returned when you run "caw pact submit", or found via "caw pact
 list".
 
 ```bash
-caw pact events <pact-id>
+caw pact events
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--limit` | `50` | Maximum number of results to return (1–200) |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--pact-id` | Yes | — | Pact UUID [required] |
+| `--limit` | No | `50` | Maximum number of results to return (1–200) |
 
 ### `submit`
 
 Submit a new pact request. A pact grants an agent delegated
 access to the wallet, scoped by policies (spending caps, chain/token
 filters, address constraints, approval thresholds) and completion conditions
-(transaction count, USD spent, or elapsed time) that automatically terminate
-the delegation when reached.
+(transaction count, amount spent, or elapsed time) that automatically
+terminate the delegation when reached.
+
+caw pact submit Flag Reference
+
+Translate the user's request into caw pact submit flags. Each row maps one
+aspect of the user's intent to the corresponding flag and describes how to
+derive the value.
+
+Least privilege: Default to the narrowest scope — shortest duration,
+tightest token/chain/contract allowlist, and lowest spend cap that fulfills
+the user's intent. Only widen when the user explicitly asks.
+
+| Flag | Required | Notes | How to Derive from User Input |
+|---|---|---|---|
+| --intent `<text>` | yes | Natural language description of the pact's purpose | Distill into action + asset + chain: "buy $500 ETH weekly" → "Weekly DCA: $500 ETH on Ethereum". |
+| --original-intent `<text>` | no | User's original message(s) that triggered this request | Capture raw message(s) as typed. If refined across multiple messages, concatenate chronologically. |
+| --policies `<json>` | yes | JSON array of detailed risk control policy definitions: chain/token/contract allowlists, per-tx caps, rolling limits, review thresholds. | See Policy Reference below. |
+| --completion-conditions `<json>` | yes | JSON array of completion conditions. | See Completion Conditions below. |
+| --execution-plan `<text>` | yes | Concrete on-chain steps the agent will perform post-approval. | See Execution Plan below. |
+Complete Example
+
+User request: "Help me transfer 1000 USDC to 0xABC...123 on Base"
+
+  caw pact submit \
+    --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
+    --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
+    --policies '[
+      \{
+        "name": "usdc-transfer",
+        "type": "transfer",
+        "rules": \{
+          "effect": "allow",
+          "when": \{
+            "chain_in": ["BASE_ETH"],
+            "token_in": [\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}],
+            "destination_address_in": [\{"chain_id":"BASE_ETH","address":"0xABC...123"\}]
+          \},
+          "deny_if": \{
+            "amount_usd_gt": "1001"
+          \}
+        \}
+      \}
+    ]' \
+    --completion-conditions '[\{"type": "tx_count", "threshold": "1"\}]' \
+    --execution-plan "# Summary\nTransfer 1000 USDC to 0xABC...123 on Base.\n\n# Operations\n- Transfer 1000 USDC to 0xABC...123 on Base\n\n# Risk Controls\n- Per-tx cap: $1001\n- One-time transfer only"
+
+Execution Plan (--execution-plan)
+
+Describe the operations the agent will run after the pact is active. Use
+these sections:
+
+- # Summary — one-line goal
+- # Operations — concrete calls/transfers (token, amount, target contract)
+- # Risk Controls — per-tx cap, daily cap, etc
+
+Example — "buy $500 ETH weekly on Base":
+
+  # Summary
+  Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
+
+  # Operations
+  - Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
+  - Swap $500 USDC → ETH via Uniswap V3 on Base
+  - Repeat weekly
+
+  # Risk Controls
+  - Per-swap cap: $550 (includes slippage buffer)
+  - Rolling 24h limit: $600
+
+Completion Conditions (--completion-conditions)
+
+JSON array defining when a pact is considered complete. Each object has
+type and threshold (required). At least one condition is required. Types
+cannot be duplicated within a pact.
+
+| Type | Threshold | Description |
+|---|---|---|
+| tx_count | string (integer) | Complete after N successful transactions (across all operation types). E.g., "5" |
+| amount_spent | string (decimal) | Complete after cumulative token amount reaches threshold. E.g., "3.5". Uses the token's transfer unit (e.g., "1.5" means 1.5 USDC or 1.5 ETH, not wei). |
+| amount_spent_usd | string (decimal) | Complete after cumulative USD spend reaches threshold. E.g., "3000". Note: transactions without price data won't increment progress. |
+| time_elapsed | string (seconds) | Complete after N seconds from pact activation. E.g., "3600" (1 hour). |
+
+Multiple conditions can be set; the pact completes when any one is satisfied
+(any-of semantics). Once complete, the pact is revoked immediately and no
+further operations can be executed under it.
 
 Policy Reference (--policies)
 
@@ -1264,7 +1365,7 @@ any operation not matching the when conditions of at least one policy is
 automatically denied — no implicit pass-through. Always define policies
 that explicitly cover every operation the agent needs to perform.
 
-Policy Structure:
+Policy Structure
 
   \{
     "name": "`<human-readable-name>`",
@@ -1278,20 +1379,15 @@ Policy Structure:
     \}
   \}
 
-  Field             Required  Description
-  name              Yes       Human-readable policy name for identification
-  type              Yes       Operation type: transfer, contract_call, or
-                              message_sign
-  rules.effect      Yes       Always set to "allow"
-  rules.when        Yes*      Allowlist conditions — which chains/tokens/
-                              contracts/domains to permit
-                              (* unless always_review=true)
-  rules.deny_if     Optional  Hard-block conditions — usage limits that
-                              trigger an automatic deny
-  rules.review_if   Optional  Soft-block conditions — thresholds that require
-                              owner approval before proceeding
-  rules.always_review Optional When true, every operation matching when
-                              requires owner approval
+| Field | Required | Description |
+|---|---|---|
+| name | Yes | Human-readable policy name for identification |
+| type | Yes | Operation type: transfer, contract_call, or message_sign |
+| rules.effect | Yes | Always set to "allow". |
+| rules.when | Yes (unless always_review=true) | Allowlist conditions — which chains/tokens/contracts/domains to permit |
+| rules.deny_if | Optional | Hard-block conditions — usage limits that trigger an automatic deny. |
+| rules.review_if | Optional | Soft-block conditions — thresholds that require owner approval before proceeding |
+| rules.always_review | Optional | When true, every operation matching when requires owner approval. Use for sensitive or high-risk tasks. |
 
 Evaluation flow:
 
@@ -1322,174 +1418,87 @@ Allowlist Conditions (when)
 
 For transfer policies:
 
-  Field                   Type              Description
-  chain_in                string[]          Restrict to specific chains
-  token_in                ChainTokenRef[]   Restrict to specific tokens,
-                                            e.g. [\{"chain_id":"BASE_ETH",
-                                            "token_id":"BASE_USDC"\}]
-  destination_address_in  ChainAddressRef[] Restrict to specific destinations
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains (e.g. ["BASE_ETH", "ETH"]) |
+| token_in | ChainTokenRef[] | Restrict to specific tokens, e.g. [\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}] |
+| destination_address_in | ChainAddressRef[] | Restrict to specific destination addresses |
 
 For contract_call policies (EVM):
 
-  Field     Type                Description
-  chain_in  string[]            Restrict to specific chains
-  target_in ContractTargetRef[] Restrict to specific contract addresses,
-                                e.g. [\{"chain_id":"BASE_ETH",
-                                "contract_addr":"0x..."\}]
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains |
+| target_in | ContractTargetRef[] | Restrict to specific contract addresses. E.g. [\{"chain_id":"BASE_ETH", "contract_addr":"0x..."\}] |
 
 For contract_call policies (Solana):
 
-  Field       Type         Description
-  chain_in    string[]     Restrict to specific chains
-  program_in  ProgramRef[] Restrict to specific program IDs
+| Field | Type | Description |
+|---|---|---|
+| chain_in | string[] | Restrict to specific chains |
+| program_in | ProgramRef[] | Restrict to specific program IDs |
 
-Usage Limits (deny_if):
+Usage Limits (deny_if)
 
-  Field                                    Type           Applies to
-  amount_usd_gt                            string(decimal) transfer only
-    Deny if single operation USD value exceeds this
-  usage_limits.rolling_24h.amount_usd_gt   string         transfer only
-    Deny if cumulative USD value in the 24h window exceeds this
-  usage_limits.rolling_24h.tx_count_gt     integer        transfer,
-                                                          contract_call
-    Deny if transaction count in the 24h window exceeds this
+| Field | Type | Applies to | Description |
+|---|---|---|---|
+| amount_gt | string (decimal) | transfer only | Deny if single operation token amount exceeds this |
+| amount_usd_gt | string (decimal) | transfer only | Deny if single operation USD value exceeds this |
+| usage_limits.rolling_24h.amount_gt | string | transfer only | Deny if cumulative token amount in the 24h window exceeds this |
+| usage_limits.rolling_24h.amount_usd_gt | string | transfer only | Deny if cumulative USD value in the 24h window exceeds this |
+| usage_limits.rolling_24h.tx_count_gt | integer | transfer, contract_call | Deny if transaction count in the 24h window exceeds this |
 
-Review Threshold (review_if):
+Review Threshold (review_if)
 
-  Field          Type           Applies to   Description
-  amount_usd_gt  string(decimal) transfer    Require approval if USD value
-                                             exceeds this
+Matching operations require owner approval before execution.
 
-Message Sign Policies:
+| Field | Type | Applies to | Description |
+|---|---|---|---|
+| amount_gt | string (decimal) | transfer | Require approval if token amount exceeds this |
+| amount_usd_gt | string (decimal) | transfer | Require approval if USD value exceeds this |
 
-  message_sign policies control EIP-712 typed-data signing.
+Message Sign Policies
 
-  Rule               Field        Type    Description
-  when.domain_match  param_name   string  EIP-712 domain field to match,
-                                          e.g. "name", "verifyingContract"
-                     op           string  eq, neq, in, not_in
-                     value        any     Value to compare against
-  deny_if            usage_limits.rolling_24h.request_count_gt
-                                  integer Max signing requests per 24h window
-  review_if          (same fields as when)
-                                          Require owner approval for matching
-                                          signatures
+message_sign policies control EIP-712 typed-data signing.
 
-  Example — restrict Permit2 signatures to a specific contract:
+| Rule | Field | Type | Description |
+|---|---|---|---|
+| when.domain_match[] | param_name | string | EIP-712 domain field to match (e.g. "name", "verifyingContract") |
+| | op | string | eq, neq, in, not_in |
+| | value | any | Value to compare against |
+| deny_if | usage_limits.rolling_24h.request_count_gt | integer | Max signing requests per 24h window |
+| review_if | (same fields as when) | | Require owner approval for matching signatures |
 
-    \{
-      "name": "permit2-sign",
-      "type": "message_sign",
-      "rules": \{
-        "effect": "allow",
-        "when": \{
-          "domain_match": [
-            \{ "param_name": "name", "op": "eq", "value": "Permit2" \},
-            \{ "param_name": "verifyingContract", "op": "eq",
-              "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" \}
-          ]
-        \},
-        "deny_if": \{
-          "usage_limits": \{ "rolling_24h": \{ "request_count_gt": 50 \} \}
-        \}
+Example — restrict Permit2 signatures to a specific contract:
+
+  \{
+    "name": "permit2-sign",
+    "type": "message_sign",
+    "rules": \{
+      "effect": "allow",
+      "when": \{
+        "domain_match": [
+          \{ "param_name": "name", "op": "eq", "value": "Permit2" \},
+          \{ "param_name": "verifyingContract", "op": "eq", "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" \}
+        ]
+      \},
+      "deny_if": \{
+        "usage_limits": \{ "rolling_24h": \{ "request_count_gt": 50 \} \}
       \}
     \}
+  \}
 
-USD Pricing Note:
+Amount Units and USD Pricing
 
-  USD-based policy conditions (amount_usd_gt,
-  usage_limits.rolling_24h.amount_usd_gt) only apply to tokens with
-  available price data. Tokens without price data will NOT be affected by
-  USD-based policies — they will bypass these thresholds entirely. Combine
-  with explicit token_in allowlists to ensure only priced tokens are
-  permitted.
+Amount units: amount_gt values are in the token's transfer unit — the same
+unit used when submitting a transfer. For example, "1.5" means 1.5 USDC for
+USDC, or 1.5 ETH for ETH/SETH (not wei).
 
-Policy Construction Patterns:
-
-  Pattern: Allow with Inline Limits
-  "Allow Uniswap V3 swaps on Base, max 5 txs/day":
-
-    [
-      \{
-        "name": "dca-uniswap-allow",
-        "type": "contract_call",
-        "rules": \{
-          "effect": "allow",
-          "when": \{
-            "chain_in": ["BASE_ETH"],
-            "target_in": [\{ "chain_id": "BASE_ETH",
-              "contract_addr": "0x2626664c2603336E57B271c5C0b26F421741e481" \}]
-          \},
-          "deny_if": \{
-            "usage_limits": \{ "rolling_24h": \{ "tx_count_gt": 5 \} \}
-          \}
-        \}
-      \}
-    ]
-
-  Pattern: Transfer with Allowlist + Limits
-  "Allow USDC transfers on Base to a specific address, deny above
-  $1000/tx or $5000/day":
-
-    [
-      \{
-        "name": "usdc-transfer-allow",
-        "type": "transfer",
-        "rules": \{
-          "effect": "allow",
-          "when": \{
-            "chain_in": ["BASE_ETH"],
-            "token_in": [\{ "chain_id": "BASE_ETH",
-              "token_id": "BASE_USDC" \}],
-            "destination_address_in": [\{ "chain_id": "BASE_ETH",
-              "address": "0xRecipientAddress..." \}]
-          \},
-          "deny_if": \{
-            "amount_usd_gt": "1000",
-            "usage_limits": \{ "rolling_24h": \{ "amount_usd_gt": "5000" \} \}
-          \}
-        \}
-      \}
-    ]
-
-Completion Conditions (--completion-conditions)
-
-JSON array defining when a pact is considered complete. Each object has
-type and threshold (required). At least one condition is required. Types
-cannot be duplicated within a pact.
-
-  Type              Threshold         Description
-  tx_count          string (integer)  Complete after N successful
-                                      transactions (across all operation
-                                      types). E.g., "5"
-  amount_spent_usd  string (decimal)  Complete after cumulative USD spend
-                                      reaches threshold. E.g., "3000".
-                                      Note: transactions without price data
-                                      won't increment progress.
-  time_elapsed      string (seconds)  Complete after N seconds from pact
-                                      activation. E.g., "3600" (1 hour).
-
-Multiple conditions can be set; the pact completes when any one is
-satisfied (any-of semantics). Once complete, all permissions granted by
-the pact are revoked immediately.
-
-EXAMPLE
-
-  caw pact submit \
-    --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
-    --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
-    --policies '[\{"name":"usdc-transfer","type":"transfer","rules":\{"effect":"allow","when":\{"chain_in":["BASE_ETH"],"token_in":[\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}],"destination_address_in":[\{"chain_id":"BASE_ETH","address":"0xABC...123"\}]\},"deny_if":\{"amount_usd_gt":"1001"\}\}\}]' \
-    --completion-conditions '[\{"type":"tx_count","threshold":"1"\}]' \
-    --execution-plan "# Summary
-Transfer 1000 USDC to 0xABC...123 on Base.
-
-# Operations
-- Transfer 1000 USDC to 0xABC...123 on Base
-
-# Risk Controls
-- Per-tx cap: \$1001
-- One-time transfer only" \
-    --context '\{\}'
+USD Conditions: USD-based conditions (amount_usd_gt,
+usage_limits.rolling_24h.amount_usd_gt) only apply to tokens with available
+price data — tokens without price data bypass them entirely. For tokens
+without price data, use token-denominated limits (amount_gt,
+usage_limits.rolling_24h.amount_gt) instead.
 
 ```bash
 caw pact submit
@@ -1500,7 +1509,7 @@ caw pact submit
 | `--intent` | Yes | — | Natural language description of the pact's purpose, e.g. \"Weekly DCA: $500 ETH on Ethereum\" |
 | `--original-intent` | No | — | Raw user message(s) that triggered this request; concatenate chronologically for multi-turn sessions |
 | `--execution-plan` | Yes | — | Concrete on-chain steps the agent will perform after approval (markdown). Suggested sections: # Summary, # Operations, # Risk Controls |
-| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
+| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
 | `--policies` | Yes | — | JSON array of policy objects. Each has \"name\", \"type\" (transfer, contract_call, or message_sign), and \"rules\" (effect, when, deny_if, review_if) |
 
 ### `revoke`
@@ -1510,63 +1519,13 @@ Revoking removes the associated delegation and invalidates the
 pact-scoped API key. This action cannot be undone.
 
 ```bash
-caw pact revoke <pact-id>
+caw pact revoke
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--confirm` | — | Ask for interactive confirmation before executing |
-
-### `withdraw`
-
-Withdraw a pact that is still pending approval. Only the operator agent
-that submitted the pact can withdraw it. The linked approval request is
-also rejected. This action cannot be undone.
-
-```bash
-caw pact withdraw <pact-id>
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `--confirm` | — | Ask for interactive confirmation before executing |
-
-### `update-conditions`
-
-Update the completion conditions of an active pact.
-
-Only TX_COUNT and AMOUNT_SPENT_USD conditions may be modified. Thresholds can
-only be increased — decreasing a threshold could cause the pact to complete
-prematurely.
-
-`<pact-id>` is the ID of the active pact to update; obtain it from "caw pact
-list".
-
-```bash
-caw pact update-conditions <pact-id>
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `--conditions` | Yes | JSON array of CompletionCondition objects to set (required). Each object has 'type' (tx_count or amount_spent_usd) and 'threshold' fields |
-
-### `update-policies`
-
-Full-replace the delegation-scoped policies of an active pact.
-
-Old policies are removed and the new list is created atomically. Use this to
-update spending limits or rules without revoking and re-submitting the pact.
-
-`<pact-id>` is the ID of the active pact whose policies will be replaced; obtain
-it from "caw pact list".
-
-```bash
-caw pact update-policies <pact-id>
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `--policies` | Yes | JSON array of InlinePolicyCreate objects to replace existing policies (required). Each object has 'name', 'type', and 'rules' fields |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--pact-id` | Yes | — | Pact UUID [required] |
+| `--confirm` | No | — | Ask for interactive confirmation before executing |
 
 ## `caw schema`
 
@@ -1616,36 +1575,27 @@ caw recipe
 
 ### `search`
 
-Search the recipe knowledge base using a natural language query.
-
-  - --source: document source — graph or knowledge (default: both)
-  - --mode: search mode — local, global, or mix (default: mix)
-  - --top-k: number of entities or relationships to retrieve
-  - --chunk-top-k: number of text chunks to retrieve
-  - --max-entity-tokens: token budget for entity context
-  - --max-relation-tokens: token budget for relation context
-  - --max-total-tokens: overall token ceiling
-  - --limit: max results for knowledge search
-  - --chain: filter by chain symbol (e.g. ethereum, solana)
-  - --token: filter by token symbol (e.g. ETH, USDT)
-  - --keywords: comma-separated keywords for filtering (knowledge search)
-  - --search-type: search type — vector, keyword, or hybrid (knowledge search)
+Search the recipe knowledge base using a natural language query via
+LightRAG. Returns relevant recipe documents, knowledge graph entities, and
+relationships that match the query. Results can be filtered by chain or
+token symbol and tuned via search mode and token budgets.
 
 ```bash
-caw recipe search <query>
+caw recipe search
 ```
 
-| Option | Default | Description |
-|---|---|---|
-| `--source` | — | Document source: graph or knowledge |
-| `--mode` | — | Search mode: local, global, or mix (default: mix) |
-| `--top-k` | `0` | Number of entities/relationships to retrieve |
-| `--chunk-top-k` | `0` | Number of text chunks to retrieve |
-| `--max-entity-tokens` | `0` | Token budget for entity context |
-| `--max-relation-tokens` | `0` | Token budget for relation context |
-| `--max-total-tokens` | `0` | Overall token ceiling |
-| `--limit` | `0` | Max results for knowledge search |
-| `--chain` | — | Filter by chain symbol (e.g. ethereum, solana, bitcoin) |
-| `--token` | — | Filter by token symbol (e.g. ETH, USDT, BTC) |
-| `--keywords` | `nil` | Keywords for filtering documents (knowledge search) |
-| `--search-type` | — | Search type: vector, keyword, or hybrid (knowledge search) |
+| Option | Required | Default | Description |
+|---|---|---|---|
+| `--query` | Yes | — | Natural language search query [required] |
+| `--source` | No | — | Document source: graph or knowledge |
+| `--mode` | No | — | Search mode: local, global, or mix (default: mix) |
+| `--top-k` | No | `0` | Number of entities/relationships to retrieve |
+| `--chunk-top-k` | No | `0` | Number of text chunks to retrieve |
+| `--max-entity-tokens` | No | `0` | Token budget for entity context |
+| `--max-relation-tokens` | No | `0` | Token budget for relation context |
+| `--max-total-tokens` | No | `0` | Overall token ceiling |
+| `--limit` | No | `0` | Max results for knowledge search |
+| `--chain` | No | — | Filter by chain symbol (e.g. ethereum, solana, bitcoin) |
+| `--token` | No | — | Filter by token symbol (e.g. ETH, USDT, BTC) |
+| `--keywords` | No | `nil` | Keywords for filtering documents (knowledge search) |
+| `--search-type` | No | — | Search type: vector, keyword, or hybrid (knowledge search) |

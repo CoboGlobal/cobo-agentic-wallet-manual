@@ -36,7 +36,7 @@ caw onboard --wait --invitation-code <invitation-code>
 
 The wizard runs through several phases until wallet `status` becomes `active`.
 
-Once the wallet is active, generate a 8-digit  pairing token for the wallet owner:
+Once the wallet is active, generate an 8-digit pairing token for the wallet owner:
 
 ```bash
 caw wallet pair --code-only
@@ -47,6 +47,20 @@ Wallet owner need download the `Cobo Agentic Wallet` App, then enter the token t
 ```bash
 caw wallet pair-status
 ```
+
+## Claim testnet tokens
+
+The examples below run on Sepolia testnet and use native `SETH`. Request it from the built-in faucet:
+
+```bash
+# List or generate a Sepolia address for your wallet
+caw address list
+
+# Request native Sepolia ETH
+caw faucet deposit --token-id SETH --address <your-seth-address>
+```
+
+Check the balance with `caw wallet balance`. Continue once the tokens arrive.
 
 ## Get credentials
 
@@ -61,12 +75,14 @@ Note the `api_url`, `api_key`, and `wallet_uuid` values from the output.
 
 Before executing blockchain actions, submit a pact to request delegated access from the wallet owner. The owner approves the pact in the Cobo Agentic Wallet app.
 
+- Submit a pact requesting transfer permissions
 ```bash
-# Submit a pact requesting transfer permissions
-caw pact submit --intent "Test USDC transfer on Sepolia" --execution-plan "Transfer 1 USDC on Sepolia for testing." --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{"chain_in":["SETH"]},"deny_if":{"amount_gt":"1"}}}]' --completion-conditions '[{"type":"tx_count","threshold":"1"}]'
+caw pact submit --intent "Test USDC transfer on Sepolia" --execution-plan "Transfer 1 USDC on Sepolia for testing." --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{"chain_in":["SETH"],"token_in":[{"chain_id": "SETH", "token_id": "SETH_USDC"}]},"deny_if":{"amount_gt":"1"}}}]' --completion-conditions '[{"type":"tx_count","threshold":"1"}]'
+```
 
-# Once active, get the pact ID and check its status:
-caw pact status <PACT_ID>
+- Once active, get the pact ID and check its status:
+```bash
+caw pact status --pact-id <PACT_ID>
 ```
 <Note>Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`.</Note>
 
@@ -90,10 +106,10 @@ PACT_ID=<pact-id>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed transfer
-caw tx transfer "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 1 --chain-id SETH'
+caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 1 --chain-id SETH
 
 # Oversized transfer — triggers policy denial
-caw tx transfer "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 500 --chain-id BASE_ETH
+caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 500 --chain-id SETH
 ```
 
 On denial, output includes `code`, `reason`, `details`, and `suggestion`.
@@ -105,6 +121,10 @@ Audit logs are accessible via the Python SDK. See [Audit and Activity Logs](/pro
 ```python
 from cobo_agentic_wallet import WalletAPIClient
 import asyncio
+
+API_URL = "<api_url>"
+API_KEY = "<api_key>"
+WALLET_UUID = "<wallet_uuid>"
 
 async def main():
     client = WalletAPIClient(base_url=API_URL, api_key=API_KEY)

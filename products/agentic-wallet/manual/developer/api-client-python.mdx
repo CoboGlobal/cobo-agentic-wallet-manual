@@ -10,18 +10,17 @@ This is the canonical developer path for Cobo Agentic Wallet.
 
 In one run, you will:
 
-1. Onboard and get a wallet (from running `caw onboard provision`)
-2. Submit a pact requesting scoped onchain permissions
-3. Wait for owner approval
-4. Execute one allowed onchain action using the pact-scoped API key
-5. Trigger one policy denial
-6. Self-correct using denial guidance
-7. Verify in audit logs
+1. Submit a pact requesting scoped onchain permissions
+2. Wait for owner approval
+3. Execute one allowed onchain action using the pact-scoped API key
+4. Trigger one policy denial and inspect the structured error
+5. Verify in audit logs
 
 ## Prerequisites
 
 - Python 3.11+
-- A wallet already provisioned via `caw onboard provision` (see [CLI quickstart](/products/agentic-wallet/manual/developer/cli))
+- A wallet already onboarded and paired via `caw onboard` (see [CLI quickstart](/products/agentic-wallet/manual/developer/cli))
+- Testnet tokens on your wallet address (use `caw faucet deposit` to request Sepolia ETH)
 - Your agent's API key and wallet UUID set as environment variables
 
 ## Step 1: Install SDK
@@ -43,17 +42,29 @@ export AGENT_WALLET_WALLET_ID=your-wallet-uuid
 ## Step 3: Run the end-to-end script
 
 ```python title="quickstart.py"
-from __future__ import annotations
-
 import asyncio
+import json
 import os
 
 from cobo_agentic_wallet.client import WalletAPIClient
-from cobo_agentic_wallet.errors import PolicyDeniedError
 
-CHAIN_ID = "BASE_ETH"
-TOKEN_ID = "USDC"
+CHAIN_ID = "SETH"
+TOKEN_ID = "SETH"
 DESTINATION = "0x1111111111111111111111111111111111111111"
+ALLOWED_AMOUNT = "0.001"
+DENIED_AMOUNT = "0.005"
+DENY_THRESHOLD = "0.002"
+
+
+def parse_api_error(exc: Exception) -> dict:
+    body = getattr(exc, "body", None)
+    if not body:
+        return {}
+    try:
+        payload = json.loads(body)
+    except (TypeError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 async def main() -> None:
@@ -75,8 +86,8 @@ async def main() -> None:
                         "type": "transfer",
                         "rules": {
                             "effect": "allow",
-                            "when": {},
-                            "deny_if": {"amount_usd_gt": "100"},
+                            "when": {"chain_in": [CHAIN_ID], "token_in": [{"chain_id": CHAIN_ID, "token_id": TOKEN_ID}]},
+                            "deny_if": {"amount_gt": DENY_THRESHOLD},
                         },
                     }
                 ],
@@ -107,45 +118,37 @@ async def main() -> None:
         pact_client = WalletAPIClient(base_url=api_url, api_key=pact_api_key)
 
         try:
-            # Step 4: Execute an allowed transfer (within the 100 USD limit).
+            # Step 4: Execute an allowed transfer (within the deny threshold).
             allowed = await pact_client.transfer_tokens(
                 wallet_id,
                 chain_id=CHAIN_ID,
                 dst_addr=DESTINATION,
                 token_id=TOKEN_ID,
-                amount="50",
+                amount=ALLOWED_AMOUNT,
             )
             print("ALLOWED:", allowed.get("status", "unknown"))
 
-            # Step 5: Trigger a policy denial (amount exceeds 100 USD limit).
+            # Step 5: Trigger a policy denial (amount exceeds the deny threshold).
             try:
                 await pact_client.transfer_tokens(
                     wallet_id,
                     chain_id=CHAIN_ID,
                     dst_addr=DESTINATION,
                     token_id=TOKEN_ID,
-                    amount="200",
+                    amount=DENIED_AMOUNT,
                 )
-            except PolicyDeniedError as exc:
-                suggestion = exc.denial.suggestion or "Retry with amount <= 100"
-                retry_amount = str(exc.denial.details.get("limit_value", "100"))
-                print("DENIED:", exc.denial.code)
-                print("SUGGESTION:", suggestion)
-
-                # Step 6: Self-correct using the denial guidance.
-                retried = await pact_client.transfer_tokens(
-                    wallet_id,
-                    chain_id=CHAIN_ID,
-                    dst_addr=DESTINATION,
-                    token_id=TOKEN_ID,
-                    amount=retry_amount,
-                )
-                print("RETRIED:", retried.get("status", "unknown"))
+            except Exception as exc:
+                payload = parse_api_error(exc)
+                err = payload.get("error") or {}
+                print(f"DENIED: code={err.get('code', '-')} reason={err.get('reason', '-')}")
+                suggestion = payload.get("suggestion")
+                if suggestion:
+                    print(f"SUGGESTION: {suggestion}")
 
         finally:
             await pact_client.close()
 
-        # Step 7: Verify allowed and denied events in audit logs.
+        # Step 6: Verify allowed and denied events in audit logs.
         logs = await client.list_audit_logs(wallet_id=wallet_id, limit=20)
         items = logs.get("items", []) if isinstance(logs, dict) else []
         allowed_count = sum(1 for item in items if item.get("result") == "allowed")
@@ -167,9 +170,8 @@ You should see:
 - `PACT SUBMITTED: <pact-id>`
 - `PACT ACTIVE`
 - `ALLOWED: ...`
-- `DENIED: TRANSFER_LIMIT_EXCEEDED` (or equivalent policy code)
+- `DENIED: code=... reason=...`
 - `SUGGESTION: ...`
-- `RETRIED: ...`
 - `AUDIT: allowed=..., denied=...`
 
 ## Broaden beyond transfers

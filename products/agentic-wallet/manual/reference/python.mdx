@@ -8,12 +8,6 @@ sidebarTitle: "Python SDK"
 
 `WalletAPIClient` is an async Python client built on a generated OpenAPI SDK. It handles authentication, request routing, and response unwrapping across all API domains.
 
-## Installation
-
-```bash
-pip install cobo-agentic-wallet
-```
-
 ## Basic usage
 
 ```python
@@ -116,19 +110,16 @@ Get detailed information about a specific wallet by its ID.
 Create a new wallet. Wallet provisioning is asynchronous — the initial response returns `status=preparing`; the wallet transitions to `status=active` once key generation completes.
 
 <ParamField path="wallet_type" type="str" required>
-  The wallet type. Use `MPC-UCW`.
+  The wallet type. Use `MPC`.
 </ParamField>
 <ParamField path="name" type="str" required>
   The wallet name. Max 255 characters.
 </ParamField>
 <ParamField path="group_type" type="str | None" default="None">
-  The MPC key share scheme. `agent` (2-of-2): agent TSS node + Cobo. `human` (2-of-3): agent TSS node + backup node + Cobo. Defaults to `agent`.
+  The MPC key share scheme. `AGENT` (2-of-2): agent TSS node + Cobo, suitable for automated wallets. `HUMAN` (2-of-2): mobile TSS node + Cobo, suitable for human-controlled wallets. Defaults to `AGENT`.
 </ParamField>
 <ParamField path="main_node_id" type="str | None" default="None">
-  The TSS node ID of the agent's main device. Required when `wallet_type=MPC-UCW`.
-</ParamField>
-<ParamField path="backup_node_id" type="str | None" default="None">
-  The TSS node ID of the backup device. Required when `group_type=human`.
+  The TSS node ID of the agent's main device. Required when `wallet_type=MPC`.
 </ParamField>
 <ParamField path="metadata" type="dict | None" default="None">
   Arbitrary key-value metadata to associate with the wallet.
@@ -177,7 +168,7 @@ Get the online status of the TSS node associated with a specific wallet.
 
 ### `initiate_wallet_pair()`
 
-Initiate wallet ownership pairing and obtain a one-time pairing token for the user to enter in the Cobo Cobo Agentic Wallet app.
+Initiate wallet ownership pairing and obtain a one-time pairing token for the user to enter in the Cobo Agentic Wallet app.
 
 <ParamField path="wallet_pair_initiate" type="Any" required>
   The wallet pair initiation payload. Must include the wallet UUID.
@@ -299,6 +290,12 @@ Initiate a token transfer from the specified wallet. Gas fees are covered automa
 <ParamField path="sponsor" type="bool | None" default="None">
   Whether to use Cobo Gasless (Fee Station) to cover gas fees. Defaults to `True` for human-owned wallets, `False` for agent-owned wallets.
 </ParamField>
+<ParamField path="gas_provider" type="str | None" default="None">
+  Optional gas provider identifier when sponsored gas is supported.
+</ParamField>
+<ParamField path="description" type="str | None" default="None">
+  A human-readable description of the transfer.
+</ParamField>
 
 ### `estimate_transfer_fee()`
 
@@ -360,6 +357,12 @@ Submit a smart contract call from the specified wallet. For EVM chains, provide 
 <ParamField path="sponsor" type="bool | None" default="None">
   Whether to use Cobo Gasless to cover gas fees. Defaults to `True` for human-owned wallets, `False` for agent-owned wallets.
 </ParamField>
+<ParamField path="gas_provider" type="str | None" default="None">
+  Optional gas provider identifier when sponsored gas is supported.
+</ParamField>
+<ParamField path="description" type="str | None" default="None">
+  Optional human-readable description for auditability.
+</ParamField>
 
 ### `estimate_contract_call_fee()`
 
@@ -395,7 +398,7 @@ Speed up a pending transaction by rebroadcasting it with a higher fee.
 <ParamField path="transaction_uuid" type="str" required>
   The transaction UUID to speed up.
 </ParamField>
-<ParamField path="fee" type="Any" required>
+<ParamField path="fee" type="Any | None" default="None">
   The new fee to use. Must be higher than the original.
 </ParamField>
 <ParamField path="request_id" type="str | None" default="None">
@@ -491,6 +494,12 @@ List on-chain transaction records including transfers, contract calls, and depos
 <ParamField path="wallet_uuid" type="str | None" default="None">
   Filter records by wallet ID. When omitted, records from all wallets are returned.
 </ParamField>
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
 <ParamField path="offset" type="int | None" default="0">
   The number of items to skip before returning results. Range: [0, 100000].
 </ParamField>
@@ -512,6 +521,9 @@ List on-chain transaction records including transfers, contract calls, and depos
 <ParamField path="address_id" type="str | None" default="None">
   Filter by on-chain address.
 </ParamField>
+<ParamField path="ext" type="bool | None" default="None">
+  When `True`, includes extended fields in the response.
+</ParamField>
 
 ### `get_transaction_record()`
 
@@ -523,6 +535,9 @@ Get a specific on-chain transaction record by its ID.
 <ParamField path="record_uuid" type="str" required>
   The transaction record UUID. Retrieve it by calling `list_transaction_records()`.
 </ParamField>
+<ParamField path="ext" type="bool | None" default="None">
+  When `True`, includes extended fields in the response.
+</ParamField>
 
 ### `get_transaction_record_by_request_id()`
 
@@ -533,6 +548,9 @@ Get a specific on-chain transaction record by client request ID.
 </ParamField>
 <ParamField path="request_id" type="str" required>
   The client-supplied request ID used when submitting the transaction.
+</ParamField>
+<ParamField path="ext" type="bool | None" default="None">
+  When `True`, includes extended fields in the response.
 </ParamField>
 
 ## Delegation methods
@@ -577,6 +595,12 @@ List delegations created by the authenticated principal.
 </ParamField>
 <ParamField path="status" type="Any | None" default="None">
   Filter by status. Possible values: `active`, `revoked`, `expired`.
+</ParamField>
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
 </ParamField>
 <ParamField path="offset" type="int | None" default="0">
   The number of items to skip.
@@ -737,6 +761,12 @@ List pending operations awaiting human approval.
 <ParamField path="status" type="Any | None" default="None">
   Filter by pending operation status.
 </ParamField>
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
 <ParamField path="offset" type="int | None" default="0">
   The number of items to skip.
 </ParamField>
@@ -748,9 +778,17 @@ List pending operations awaiting human approval.
 
 Get details of a specific pending operation.
 
+<ParamField path="pending_operation_id" type="str" required>
+  The pending operation ID.
+</ParamField>
+
 ### `approve_pending_operation()`
 
 Approve a pending operation, allowing it to proceed.
+
+<ParamField path="pending_operation_id" type="str" required>
+  The pending operation ID.
+</ParamField>
 
 ### `reject_pending_operation()`
 
@@ -769,18 +807,31 @@ Reject a pending operation.
 
 Get the current status and details of an approval request. Poll this to check for `status=approved` and retrieve the `approval_result`.
 
+<ParamField path="approval_id" type="str" required>
+  The approval ID. Retrieve it by calling `list_approvals()`.
+</ParamField>
+
 ### `list_approvals()`
 
 List approval requests for the authenticated human principal.
 
+<ParamField path="subject_type" type="Any | None" default="None">
+  Filter approvals by subject type (for example, `transaction`, `pact`). If omitted, all types are returned.
+</ParamField>
 <ParamField path="status" type="Any | None" default="None">
-  Filter by approval status. Possible values: `pending`, `approved`, `rejected`, `expired`.
+  Filter approvals by status. If omitted, all statuses are returned.
 </ParamField>
-<ParamField path="offset" type="int | None" default="0">
-  The number of items to skip.
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.
 </ParamField>
-<ParamField path="limit" type="int | None" default="50">
-  The maximum number of items to return.
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.
+</ParamField>
+<ParamField path="offset" type="int | None" default="None">
+  **Deprecated.** Use `after`/`before` cursors instead.
+</ParamField>
+<ParamField path="limit" type="int" default="50">
+  The maximum number of items to return. Range: [1, 200].
 </ParamField>
 
 ### `resolve_approval()`
@@ -856,11 +907,20 @@ List pacts visible to the authenticated principal. Agents see pacts they submitt
 <ParamField path="wallet_id" type="str | None" default="None">
   Filter by wallet ID.
 </ParamField>
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
 <ParamField path="offset" type="int | None" default="0">
   The number of items to skip before returning results.
 </ParamField>
 <ParamField path="limit" type="int | None" default="50">
   The maximum number of items to return.
+</ParamField>
+<ParamField path="include_default" type="bool | None" default="None">
+  When `True`, includes the default pact in results.
 </ParamField>
 
 ### `list_pact_events()`
@@ -869,6 +929,12 @@ Get the lifecycle event history for a pact (for example, submitted, approved, ac
 
 <ParamField path="pact_id" type="str" required>
   The pact ID. Retrieve it by calling `submit_pact()` or `list_pacts()`.
+</ParamField>
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
 </ParamField>
 <ParamField path="offset" type="int | None" default="None">
   The number of items to skip before returning results.
@@ -902,7 +968,7 @@ Update the policies attached to an active pact.
 <ParamField path="pact_id" type="str" required>
   The pact ID.
 </ParamField>
-<ParamField path="policies" type="list | None" required>
+<ParamField path="policies" type="list | None" default="None">
   The new list of policy objects to apply.
 </ParamField>
 
@@ -913,7 +979,7 @@ Update the completion conditions for an active pact.
 <ParamField path="pact_id" type="str" required>
   The pact ID.
 </ParamField>
-<ParamField path="completion_conditions" type="list | None" required>
+<ParamField path="completion_conditions" type="list | None" default="None">
   The new list of completion condition objects.
 </ParamField>
 
@@ -943,6 +1009,19 @@ Get the provisioning and activation status of a specific agent. Accepts either t
 
 List all agent principals owned by the authenticated principal.
 
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
+<ParamField path="offset" type="int | None" default="None">
+  The number of items to skip.
+</ParamField>
+<ParamField path="limit" type="int | None" default="None">
+  The maximum number of items to return.
+</ParamField>
+
 ### `create_principal()`
 
 Create a new principal (human or agent identity). Requires service credential authentication. If a principal with the same `external_id` already exists, the existing record is returned.
@@ -964,6 +1043,18 @@ Create a new principal (human or agent identity). Requires service credential au
 
 List all principals. Requires service credential authentication.
 
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
+<ParamField path="offset" type="int | None" default="None">
+  The number of items to skip.
+</ParamField>
+<ParamField path="limit" type="int | None" default="None">
+  The maximum number of items to return.
+</ParamField>
 <ParamField path="principal_type" type="Any | None" default="None">
   Filter by type. Possible values: `human`, `agent`.
 </ParamField>
@@ -1004,9 +1095,26 @@ When called with a principal API key, the key is created for the authenticated p
 
 List all API keys for the authenticated principal.
 
+<ParamField path="after" type="str | None" default="None">
+  A cursor for forward pagination.
+</ParamField>
+<ParamField path="before" type="str | None" default="None">
+  A cursor for backward pagination.
+</ParamField>
+<ParamField path="offset" type="int | None" default="None">
+  The number of items to skip.
+</ParamField>
+<ParamField path="limit" type="int | None" default="None">
+  The maximum number of items to return.
+</ParamField>
+
 ### `revoke_api_key()`
 
 Permanently revoke an API key. Once revoked, the key cannot be used for authentication.
+
+<ParamField path="api_key_id" type="str" required>
+  The API key ID to revoke.
+</ParamField>
 
 <Warning>This action cannot be undone.</Warning>
 
@@ -1048,19 +1156,19 @@ Retrieve audit logs for the authenticated principal. Uses cursor-based paginatio
 List supported chains. Uses cursor-based pagination.
 
 <ParamField path="wallet_type" type="Any" required>
-  The wallet type. Use `MPC-UCW`.
+  The wallet type. Use `MPC`.
 </ParamField>
 <ParamField path="chain_ids" type="str | None" default="None">
-  A comma-separated list of Cobo chain IDs to filter by (for example, `SETH,BASE_ETH`).
+  A comma-separated list of Cobo chain IDs to filter by (for example, `SETH,BASE_ETH`). If omitted, all chains are returned.
 </ParamField>
 <ParamField path="limit" type="int | None" default="None">
   The maximum number of items to return. Range: [1, 500].
 </ParamField>
 <ParamField path="before" type="str | None" default="None">
-  A cursor for backward pagination.
+  A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.
 </ParamField>
 <ParamField path="after" type="str | None" default="None">
-  A cursor for forward pagination.
+  A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.
 </ParamField>
 
 ### `list_assets()`
@@ -1068,22 +1176,22 @@ List supported chains. Uses cursor-based pagination.
 List supported tokens (assets). Uses cursor-based pagination.
 
 <ParamField path="wallet_type" type="Any" required>
-  The wallet type. Use `MPC-UCW`.
+  The wallet type. Use `MPC`.
 </ParamField>
 <ParamField path="chain_ids" type="str | None" default="None">
-  A comma-separated list of Cobo chain IDs to filter by.
+  A comma-separated list of Cobo chain IDs to filter by (for example, `SETH,BASE_ETH`). If omitted, tokens for all chains are returned.
 </ParamField>
 <ParamField path="token_ids" type="str | None" default="None">
-  A comma-separated list of token IDs to filter by (for example, `SETH,SETH_USDC`).
+  A comma-separated list of token IDs to filter by (for example, `SETH,SETH_USDC`). If omitted, all tokens are returned.
 </ParamField>
 <ParamField path="limit" type="int | None" default="None">
   The maximum number of items to return. Range: [1, 500].
 </ParamField>
 <ParamField path="before" type="str | None" default="None">
-  A cursor for backward pagination.
+  A cursor for backward pagination. Pass the `before` value from a previous response to retrieve the preceding page.
 </ParamField>
 <ParamField path="after" type="str | None" default="None">
-  A cursor for forward pagination.
+  A cursor for forward pagination. Pass the `after` value from a previous response to retrieve the next page.
 </ParamField>
 
 ### `get_chain_info_by_chain_id()`

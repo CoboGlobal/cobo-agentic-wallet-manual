@@ -72,32 +72,23 @@ Because Cobo holds only one key share, it has bounded authority over your wallet
 - Bypass your policies — every transaction must pass the policy engine before Cobo co-signs
 - Access your device's key share — your device share never leaves your phone
 
-## How Cobo's key shares are protected: MPC + TEE
-
-Cobo's MPC nodes combine two independent layers of protection for key shares.
+## How Cobo's key shares are protected
 
 **MPC: cryptographic separation**
 
 The private key is never generated as a whole. Each MPC node independently creates its own random key share, and the full key only "exists" in the logical sense — as the sum of all contributions — but is never assembled at any point. Signing requires every participating node to compute a partial signature from its own share; the partial signatures are then combined into a valid on-chain signature without the key ever being reconstructed.
 
-**TEE: hardware-level isolation**
-
-For Cobo-operated nodes, key shares are protected at the hardware level by Trusted Execution Environments (TEEs). TEEs provide isolated execution environments where key material is processed in memory that is inaccessible to the host operating system, privileged software, and even Cobo's own administrators.
-
-Specifically:
-- Key shares are never stored on disk in plaintext — they are encrypted using AES and can only be decrypted within the TEE
-- The encryption key protecting the key shares is itself held inside the TEE hardware boundary
-- MPC nodes require a manual startup passphrase that is never stored in the system — this prevents unauthorized startup or reuse of a captured node image
+Key shares are stored encrypted at rest. MPC nodes require a manual startup passphrase that is never stored in the system — this prevents unauthorized startup or reuse of a captured node image.
 
 ```mermaid
 flowchart LR
     subgraph cobo ["Cobo Node"]
         direction TB
-        TEE["TEE: key share encrypted at rest,<br/>decrypted only inside hardware boundary"]
+        CS1["Key share encrypted at rest"]
     end
     subgraph customer ["Agent Node / Your Device"]
         direction TB
-        CS["Key share stored locally"]
+        CS2["Key share stored locally"]
     end
     SIG["Signing protocol:<br/>partial signatures combined,<br/>private key never assembled"]
     cobo -->|"Partial signature σ₁"| SIG
@@ -128,7 +119,7 @@ When a transaction is submitted and clears the policy engine, a TSS signing cere
 
 If an attacker compromises a single key share — even with full access to the file system and private memory of one party — they cannot move funds. They hold a fragment that is useless without the cooperation of the other party.
 
-For the Agent Group (2/2), an attacker would need to simultaneously compromise Cobo's TEE-protected HSM infrastructure and the agent machine — independent systems with separate security controls.
+For the Agent Group (2/2), an attacker would need to simultaneously compromise Cobo's infrastructure and the agent machine — independent systems with separate security controls.
 
 
 ## Further reading

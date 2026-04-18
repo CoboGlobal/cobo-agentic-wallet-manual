@@ -35,7 +35,7 @@ On top of pact-level policies, you set wallet-level guardrails that apply at all
 
 ### Approval control
 
-When your agent tries an operation above your approval threshold, it does not execute — it pauses and waits. You receive a notification in the Cobo Agentic Wallet app, review the details, and approve or reject. If you do not respond within one hour, the transaction expires automatically and your agent is notified.
+When your agent tries an operation above your approval threshold, it does not execute — it pauses and waits. You receive a notification in the Cobo Agentic Wallet app, review the details, and approve or reject. If you do not respond within the approval timeout, the transaction expires automatically and your agent is notified.
 
 ### Full visibility
 
@@ -47,7 +47,7 @@ At any time, you can freeze your agent from the Cobo Agentic Wallet app. All act
 
 ### MPC security
 
-Your private key is never held in one place. Cobo Agentic Wallet uses Multi-Party Computation to split signing authority across multiple independent parties. No single party — including the agent, including Cobo — can move your funds alone. This is a mathematical guarantee built into the key architecture, not a software promise.
+The agent never holds the full private key. Cobo Agentic Wallet uses Multi-Party Computation to split signing authority across multiple independent parties — a mathematical guarantee built into the key architecture, not a software promise.
 
 ### Key backup
 
