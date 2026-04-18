@@ -61,14 +61,18 @@ Import steps vary by wallet provider. In general:
 
 Solana uses a different key derivation standard from EVM chains. The private key exported for Solana addresses is a raw Ed25519 scalar — it is not in the standard seed format expected by most Solana wallets (such as Phantom or Solflare), so direct import into those wallets is not supported.
 
-To move funds from an exported Solana key, use the open-source `sol-rescue` tool, which signs Solana transactions directly from the scalar.
+To move funds from an MPC-exported Solana address, use the open-source [ucw-eddsa-signing](https://github.com/CoboGlobal/ucw-eddsa-signing) tool, which signs Solana transactions directly from the scalar.
 
 **Steps**
 
 1. Export your private key via `caw export-key` or the Cobo Agentic Wallet app. The exported CSV contains a `private_key` column with the scalar in hex for each Solana address.
-2. Run `sol-rescue`:
+2. Run the tool. To sign a message:
    ```bash
-   sol-rescue --key <scalar_hex> --to <destination_wallet_address> --amount <SOL_amount>
+   ./ucw-eddsa-signing sign --key <scalar_hex> --message <message_hex>
+   ```
+   To transfer all SOL to another address:
+   ```bash
+   ./ucw-eddsa-signing transfer --key <scalar_hex> --to <address> --all
    ```
 3. The tool outputs the transaction hash once submitted.
 

@@ -25,12 +25,17 @@
     "light": "#1F32D6",
     "dark": "#1F32D6"
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "assistant",
+      "claude",
+      "mcp"
+    ]
+  },
   "navbar": {
     "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/CoboGlobal/cobo-agentic-wallet"
-      },
       {
         "label": "PyPI",
         "href": "https://pypi.org/project/cobo-agentic-wallet/"
