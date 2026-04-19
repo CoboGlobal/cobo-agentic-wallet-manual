@@ -49,57 +49,72 @@ export OPENAI_API_KEY=your-openai-api-key
 import asyncio
 import os
 
-from agents import Runner
-
-from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.openai import create_cobo_agent, create_cobo_agent_context
 
 
-def main() -> None:
-    client = WalletAPIClient(
-        base_url=os.environ["AGENT_WALLET_API_URL"],
-        api_key=os.environ["AGENT_WALLET_API_KEY"],
-    )
-    agent = create_cobo_agent(client=client, model="gpt-4.1-mini")
-    context = create_cobo_agent_context()
-
-    wallet_uuid = "your-wallet-uuid"
-    destination = "0x1111111111111111111111111111111111111111"
-
-    prompt = (
-        f"Use wallet {wallet_uuid}. "
-        "First, submit a pact with intent 'Transfer tokens for testing', permissions "
-        "write:transfer, max_tx 100, and duration 86400. Wait until the pact status is active. "
-        f"Then transfer 50 USDC to {destination} on BASE. "
-        "Then attempt 200 USDC. If denied, read the suggestion and retry with a compliant amount. "
-        f"After retry, query audit logs for wallet {wallet_uuid}."
+async def main() -> None:
+    api_url = os.environ["AGENT_WALLET_API_URL"]
+    api_key = os.environ["AGENT_WALLET_API_KEY"]
+    wallet_uuid = os.environ["AGENT_WALLET_WALLET_ID"]
+    destination = os.environ.get(
+        "CAW_DESTINATION",
+        "0x1111111111111111111111111111111111111111",
     )
 
-    result = Runner.run_sync(agent, prompt, context=context, max_turns=10)
-    print(result.final_output)
+    async with WalletAPIClient(base_url=api_url, api_key=api_key) as client:
+        agent = create_cobo_agent(
+            client=client,
+            model="gpt-4.1-mini",
+            include_tools=[
+                "submit_pact",
+                "get_pact",
+                "transfer_tokens",
+                "estimate_transfer_fee",
+                "get_transaction_record_by_request_id",
+                "get_audit_logs",
+            ],
+        )
+        try:
+            print("Registered Cobo OpenAI tools:")
+            for tool in agent.tools:
+                name = getattr(tool, "name", tool.__class__.__name__)
+                description = getattr(tool, "description", "")
+                print(f"  - {name}: {description}")
 
-    asyncio.run(client.close())
+            if not os.getenv("OPENAI_API_KEY"):
+                print("\nSet OPENAI_API_KEY to run a full OpenAI agent demo prompt.")
+                return
+
+            try:
+                from agents import Runner
+            except ImportError as exc:
+                raise RuntimeError(
+                    "openai-agents is required for this example. "
+                    "Install with: pip install 'cobo-agentic-wallet[openai]'"
+                ) from exc
+
+            prompt = (
+                f"Use wallet {wallet_uuid}. "
+                "Submit a pact for a controlled transfer task and wait until it is active. "
+                f"Using the newly created pact, transfer 0.001 SETH to {destination} on SETH. "
+                "Next, using the same pact, attempt 0.005 SETH. If denied, follow the denial "
+                "guidance and retry with a compliant amount. "
+                "Track the result by request_id and summarize what happened."
+            )
+            context = create_cobo_agent_context()
+            result = await Runner.run(agent, prompt, context=context, max_turns=20)
+            print("\nAgent result:", result.final_output)
+        finally:
+            # Release any pact-scoped aiohttp sessions the toolkit spun up
+            # during the run; the owner client is closed by the outer async-with.
+            toolkit = getattr(agent, "_caw_toolkit", None)
+            if toolkit is not None:
+                await toolkit.aclose()
 
 
 if __name__ == "__main__":
-    main()
-```
-
-For a smaller first integration, you can expose only the tools your runtime actually needs:
-
-```python
-agent = create_cobo_agent(
-    client=client,
-    model="gpt-4.1-mini",
-    include_tools=[
-        "submit_pact",
-        "get_pact",
-        "transfer_tokens",
-        "estimate_transfer_fee",
-        "get_transaction_record_by_request_id",
-        "get_audit_logs",
-    ],
-)
+    asyncio.run(main())
 ```
 </Tab>
 <Tab title="TypeScript">
@@ -107,30 +122,66 @@ agent = create_cobo_agent(
 import { Agent, run, tool } from '@openai/agents';
 import { z } from 'zod';
 import {
+  AuditApi,
   Configuration,
   PactsApi,
   TransactionRecordsApi,
   TransactionsApi,
 } from '@cobo/agentic-wallet';
 
-const config = new Configuration({
-  apiKey: process.env.AGENT_WALLET_API_KEY!,
-  basePath: process.env.AGENT_WALLET_API_URL!,
-});
+const CHAIN_ID = 'SETH';
+const TOKEN_ID = 'SETH';
 
-const pactsApi = new PactsApi(config);
-const txApi = new TransactionsApi(config);
-const recordsApi = new TransactionRecordsApi(config);
+const basePath = process.env.AGENT_WALLET_API_URL!;
+const ownerKey = process.env.AGENT_WALLET_API_KEY!;
+const ownerConfig = new Configuration({ apiKey: ownerKey, basePath });
 
-async function returnPolicyDenial<T>(work: () => Promise<T>) {
+const pactsApi = new PactsApi(ownerConfig);
+const txApi = new TransactionsApi(ownerConfig);
+const recordsApi = new TransactionRecordsApi(ownerConfig);
+const auditApi = new AuditApi(ownerConfig);
+
+// pact_id -> pact-scoped api_key, populated by submit_pact / get_pact tool calls
+const pactSessions = new Map<string, string>();
+// pact_id -> lazily-built TransactionsApi using the scoped api_key
+const pactTxApiCache = new Map<string, TransactionsApi>();
+
+function capturePactSession(response: unknown): void {
+  if (!response || typeof response !== 'object') return;
+  const r = response as Record<string, unknown>;
+  const pactId = (r.pact_id ?? r.id) as string | undefined;
+  const apiKey = r.api_key as string | undefined;
+  if (typeof pactId === 'string' && typeof apiKey === 'string' && apiKey) {
+    pactSessions.set(pactId, apiKey);
+  }
+}
+
+function txApiFor(pactId?: string): TransactionsApi {
+  if (!pactId) return txApi;
+  const cached = pactTxApiCache.get(pactId);
+  if (cached) return cached;
+  const apiKey = pactSessions.get(pactId);
+  if (!apiKey) {
+    throw new Error(
+      `Unknown pact_id ${pactId}. Call submit_pact or get_pact first so the pact-scoped api_key can be cached, then retry.`,
+    );
+  }
+  const scoped = new TransactionsApi(new Configuration({ apiKey, basePath }));
+  pactTxApiCache.set(pactId, scoped);
+  return scoped;
+}
+
+async function returnPolicyDenial<T>(work: () => Promise<T>): Promise<T | Record<string, unknown>> {
   try {
     return await work();
   } catch (error) {
-    const denial = (error as {
-      response?: { data?: { error?: Record<string, unknown> } };
-    }).response?.data?.error;
-    if (denial) return denial;
-    throw error;
+    const response = (error as { response?: { data?: { error?: Record<string, unknown>; suggestion?: string } } })
+      .response;
+    const data = response?.data;
+    if (data?.error) {
+      return { error: data.error, suggestion: data.suggestion };
+    }
+    return { error: 'UNKNOWN_ERROR' };
   }
 }
 
@@ -146,29 +197,106 @@ const submitPact = tool({
       wallet_id,
       intent,
       spec: {
+        policies: [
+          {
+            name: 'max-tx-limit',
+            type: 'transfer',
+            rules: {
+              effect: 'allow',
+              when: {
+                chain_in: [CHAIN_ID],
+                token_in: [{ chain_id: CHAIN_ID, token_id: TOKEN_ID }],
+              },
+              deny_if: { amount_gt: '0.002' },
+            },
+          },
+        ],
         completion_conditions: [{ type: 'time_elapsed', threshold: '86400' }],
       },
+    });
+    const result = response.data.result;
+    capturePactSession(result);
+    // Auto-activated pacts may carry status=active without api_key — fetch it now
+    if (result && typeof result === 'object') {
+      const r = result as unknown as Record<string, unknown>;
+      const id = (r.pact_id ?? r.id) as string | undefined;
+      if (r.status === 'active' && typeof id === 'string' && !pactSessions.has(id)) {
+        try {
+          const full = (await pactsApi.getPact(id)).data.result;
+          capturePactSession(full);
+        } catch {
+          // Best-effort capture; agent can call get_pact explicitly to retry.
+        }
+      }
+    }
+    return result;
+  },
+});
+
+const getPact = tool({
+  name: 'get_pact',
+  description: 'Fetch the current state of a pact, including its status and api_key once active.',
+  parameters: z.object({
+    pact_id: z.string(),
+  }),
+  async execute({ pact_id }) {
+    const response = await pactsApi.getPact(pact_id);
+    capturePactSession(response.data.result);
+    return response.data.result;
+  },
+});
+
+const estimateTransferFee = tool({
+  name: 'estimate_transfer_fee',
+  description: 'Estimate fees for a token transfer before submitting it.',
+  parameters: z.object({
+    wallet_uuid: z.string(),
+    dst_addr: z.string(),
+    token_id: z.string(),
+    amount: z.string(),
+    pact_id: z
+      .string()
+      .nullable()
+      .describe(
+        'Pact id from submit_pact / get_pact. Pass it to estimate under pact-scoped permissions.',
+      ),
+  }),
+  async execute({ wallet_uuid, dst_addr, token_id, amount, pact_id }) {
+    const api = txApiFor(pact_id ?? undefined);
+    const response = await api.estimateTransferFee(wallet_uuid, {
+      chain_id: CHAIN_ID,
+      dst_addr,
+      token_id,
+      amount,
     });
     return response.data.result;
   },
 });
 
-const contractCall = tool({
-  name: 'contract_call',
-  description: 'Execute a policy-enforced contract call.',
+const transferTokens = tool({
+  name: 'transfer_tokens',
+  description: 'Execute a policy-enforced transfer.',
   parameters: z.object({
     wallet_uuid: z.string(),
-    contract_addr: z.string(),
-    calldata: z.string(),
+    dst_addr: z.string(),
+    token_id: z.string(),
+    amount: z.string(),
     request_id: z.string(),
+    pact_id: z
+      .string()
+      .nullable()
+      .describe(
+        'Pact id from submit_pact / get_pact. REQUIRED to invoke under pact-scoped policy permissions.',
+      ),
   }),
-  async execute({ wallet_uuid, contract_addr, calldata, request_id }) {
+  async execute({ wallet_uuid, dst_addr, token_id, amount, request_id, pact_id }) {
     return await returnPolicyDenial(async () => {
-      const response = await txApi.contractCall(wallet_uuid, {
-        chain_id: 'BASE_ETH',
-        contract_addr,
-        calldata,
-        value: '0',
+      const api = txApiFor(pact_id ?? undefined);
+      const response = await api.transferTokens(wallet_uuid, {
+        chain_id: CHAIN_ID,
+        dst_addr,
+        token_id,
+        amount,
         request_id,
       });
       return response.data.result;
@@ -184,25 +312,77 @@ const getTransactionRecordByRequestId = tool({
     request_id: z.string(),
   }),
   async execute({ wallet_uuid, request_id }) {
-    const response = await recordsApi.getTransactionRecordByRequestId(wallet_uuid, request_id);
+    const response = await recordsApi.getUserTransactionByRequestId(wallet_uuid, request_id);
     return response.data.result;
   },
 });
+
+const getAuditLogs = tool({
+  name: 'get_audit_logs',
+  description: 'List recent audit log entries for the wallet.',
+  parameters: z.object({
+    wallet_id: z.string(),
+    limit: z.number().int().positive().nullable(),
+  }),
+  async execute({ wallet_id, limit }) {
+    const response = await auditApi.listAuditLogs(
+      wallet_id,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      limit ?? 20,
+    );
+    return response.data.result;
+  },
+});
+
+const tools = [
+  submitPact,
+  getPact,
+  transferTokens,
+  estimateTransferFee,
+  getTransactionRecordByRequestId,
+  getAuditLogs,
+];
+
+console.log('Registered Cobo OpenAI tools:');
+for (const t of tools) {
+  console.log(`  - ${t.name}: ${t.description}`);
+}
+
+if (!process.env.OPENAI_API_KEY) {
+  console.log('\nSet OPENAI_API_KEY to run a full OpenAI agent demo prompt.');
+  process.exit(0);
+}
 
 const agent = new Agent({
   name: 'cobo-operator',
   model: 'gpt-4.1-mini',
   instructions:
-    'Before executing blockchain actions, submit a pact and wait until it is active. If a tool returns a policy denial, read the suggestion and retry with compliant params. After submission, track the result by request_id.',
-  tools: [submitPact, contractCall, getTransactionRecordByRequestId],
+    'Submit a pact before execution, wait until it is active, execute a compliant blockchain action, and if a tool returns a policy denial then follow the suggestion and retry.',
+  tools,
 });
 
-const result = await run(
-  agent,
-  'Submit a pact, execute a contract call with request_id swap-2026-001, adapt if denied, then look up the transaction record.',
-);
+const walletId = process.env.AGENT_WALLET_WALLET_ID!;
+const destination =
+  process.env.CAW_DESTINATION ?? '0x1111111111111111111111111111111111111111';
 
-console.log(result.finalOutput);
+const prompt =
+  `Use wallet ${walletId}. ` +
+  `Submit a pact for a controlled transfer task and wait until it is active. ` +
+  `Using the newly created pact, transfer 0.001 ${TOKEN_ID} to ${destination} on ${CHAIN_ID}. ` +
+  `Next, using the same pact, attempt 0.005 ${TOKEN_ID}. If denied, follow the denial ` +
+  `guidance and retry with a compliant amount. ` +
+  `Track the result by request_id and summarize what happened.`;
+
+const result = await run(agent, prompt, { maxTurns: 20 });
+
+console.log('\nAgent result:', result.finalOutput);
 ```
 
 Add `get_audit_logs` as a fourth tool when you want the model to summarize operator activity on its own. Keep it out of the first example so the core authorization and execution loop stays obvious.
