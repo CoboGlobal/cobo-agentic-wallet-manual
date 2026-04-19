@@ -113,11 +113,7 @@
             "pages": [
               "products/agentic-wallet/manual/developer/mcp",
               "products/agentic-wallet/manual/developer/langchain",
-              "products/agentic-wallet/manual/developer/openai",
-              "products/agentic-wallet/manual/developer/vercel-ai-sdk",
-              "products/agentic-wallet/manual/developer/mastra",
-              "products/agentic-wallet/manual/developer/agno",
-              "products/agentic-wallet/manual/developer/crewai"
+              "products/agentic-wallet/manual/developer/openai"
             ]
           },
           {
