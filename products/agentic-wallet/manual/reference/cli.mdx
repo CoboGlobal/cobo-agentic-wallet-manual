@@ -417,11 +417,13 @@ Query metadata about supported blockchains, tokens, and current
 market prices.
 
 Subcommands:
-  chains        List all chains supported for a given wallet type
-  chain-info    Get detailed information for a specific chain by ID
-  tokens        List supported token IDs and their metadata
-  search-tokens Search token candidates by symbol
-  prices        Get current market prices for one or more asset coins
+```
+chains        List all chains supported for a given wallet type
+chain-info    Get detailed information for a specific chain by ID
+tokens        List supported token IDs and their metadata
+search-tokens Search token candidates by symbol
+prices        Get current market prices for one or more asset coins
+```
 
 ```bash
 caw meta
@@ -533,7 +535,9 @@ caw faucet tokens
 Request a testnet token deposit from the Cobo faucet to an on-chain address.
 
 Example:
-  caw faucet deposit --address `<on-chain-address>` --token-id SOLDEV_SOL_USDC
+```bash
+caw faucet deposit --address `<on-chain-address>` --token-id SOLDEV_SOL_USDC
+```
 
 ```bash
 caw faucet deposit
@@ -808,7 +812,9 @@ payment protocol from the response headers (unless overridden), pays using the
 configured wallet, and retries the request with the payment headers.
 
 Example:
-  caw fetch --url https://api.example.com/data --wallet-id `<uuid>` --network eip155:8453
+```bash
+caw fetch --url https://api.example.com/data --wallet-id `<uuid>` --network eip155:8453
+```
 
 ```bash
 caw fetch
@@ -924,7 +930,9 @@ intercepts HTTPS traffic by acting as a transparent TLS terminator; a CA
 certificate is generated on first run and must be trusted by the HTTP client.
 
 Example:
-  caw gateway --wallet-id `<uuid>` --mode mitm --protocol x402
+```bash
+caw gateway --wallet-id `<uuid>` --mode mitm --protocol x402
+```
 
 ```bash
 caw payment gateway
@@ -958,7 +966,9 @@ keys for all wallet addresses, and write the result to --output-dir.
 The export session is resumable: re-running at any intermediate stage continues from where it left off.
 
 Example:
-  caw export-key --wallet 4b2e...f1a0 --output-dir ~/exports
+```bash
+caw export-key --wallet 4b2e...f1a0 --output-dir ~/exports
+```
 
 ```bash
 caw export-key
@@ -1012,15 +1022,17 @@ caw util abi
 Encode a function call into hex calldata for use with caw tx call --calldata.
 
 Examples:
-  \# ERC-20 approve(address, uint256)
-  caw abi encode --method "approve(address,uint256)" --args '["0x1234...", "115792089237316195423570985008687907853269984665640564039457584007913129639935"]'
+```bash
+# ERC-20 approve(address, uint256)
+caw abi encode --method "approve(address,uint256)" --args '["0x1234...", "115792089237316195423570985008687907853269984665640564039457584007913129639935"]'
 
-  \# Uniswap V3 exactInputSingle (tuple)
-  caw abi encode --method "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))" \
-    --args '[["0xTokenIn","0xTokenOut",3000,"0xRecipient","1000000","0","0"]]'
+# Uniswap V3 exactInputSingle (tuple)
+caw abi encode --method "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))" \
+  --args '[["0xTokenIn","0xTokenOut",3000,"0xRecipient","1000000","0","0"]]'
 
-  \# Zero-argument function
-  caw abi encode --method "totalSupply()"
+# Zero-argument function
+caw abi encode --method "totalSupply()"
+```
 
 ```bash
 caw util abi encode
@@ -1037,12 +1049,14 @@ Decode hex calldata back into function name and arguments, or decode
 an eth_call return value using --output-types.
 
 Examples:
-  \# Decode input calldata (validates selector)
-  caw util abi decode --method "transfer(address,uint256)" --calldata 0xa9059cbb000000...
+```bash
+# Decode input calldata (validates selector)
+caw util abi decode --method "transfer(address,uint256)" --calldata 0xa9059cbb000000...
 
-  \# Decode eth_call return value (no selector check)
-  caw util abi decode --output-types '["string"]' --calldata 0x000000...
-  caw util abi decode --output-types '["uint256","address"]' --calldata 0x000000...
+# Decode eth_call return value (no selector check)
+caw util abi decode --output-types '["string"]' --calldata 0x000000...
+caw util abi decode --output-types '["uint256","address"]' --calldata 0x000000...
+```
 
 ```bash
 caw util abi decode
@@ -1060,9 +1074,11 @@ caw util abi decode
 Compute the 4-byte function selector from a function signature.
 
 Examples:
-  caw abi selector --signature "transfer(address,uint256)"
-  caw abi selector --signature "approve(address,uint256)"
-  caw abi selector --signature "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))"
+```bash
+caw abi selector --signature "transfer(address,uint256)"
+caw abi selector --signature "approve(address,uint256)"
+caw abi selector --signature "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))"
+```
 
 ```bash
 caw util abi selector
@@ -1080,8 +1096,10 @@ Use this when you already have ABI-encoded calldata. For a higher-level
 command that handles encoding and decoding automatically, use "caw util eth-call".
 
 Example:
-  CALLDATA=$(caw util abi encode --method "balanceOf(address)" --args '["0xYourAddress"]' | jq -r .calldata)
-  caw util abi call --chain-id SETH --to 0xContractAddress --data "$CALLDATA"
+```bash
+CALLDATA=$(caw util abi encode --method "balanceOf(address)" --args '["0xYourAddress"]' | jq -r .calldata)
+caw util abi call --chain-id SETH --to 0xContractAddress --data "$CALLDATA"
+```
 
 ```bash
 caw util abi call
@@ -1113,14 +1131,16 @@ caw util base64
 Encode hex, raw string, or stdin to base64.
 
 Examples:
-  \# Encode hex bytes (auto-detected by 0x prefix)
-  caw util base64 encode --data 0x02000000008078120000000000
+```bash
+# Encode hex bytes (auto-detected by 0x prefix)
+caw util base64 encode --data 0x02000000008078120000000000
 
-  \# Encode raw string
-  caw util base64 encode --data "DCA_ROUND_1_USDC_SOL" --raw
+# Encode raw string
+caw util base64 encode --data "DCA_ROUND_1_USDC_SOL" --raw
 
-  \# Encode from stdin
-  echo -n "hello" | caw util base64 encode --stdin
+# Encode from stdin
+echo -n "hello" | caw util base64 encode --stdin
+```
 
 ```bash
 caw util base64 encode
@@ -1138,14 +1158,16 @@ caw util base64 encode
 Decode a base64 string and output as hex or raw.
 
 Examples:
-  \# Decode to hex (default)
-  caw util base64 decode --data "AgAAAACAehIAAAAAAA=="
+```bash
+# Decode to hex (default)
+caw util base64 decode --data "AgAAAACAehIAAAAAAA=="
 
-  \# Decode to raw string
-  caw util base64 decode --data "RENBX1JPVU5EXzFfVVNEQ19TT0w=" --raw
+# Decode to raw string
+caw util base64 decode --data "RENBX1JPVU5EXzFfVVNEQ19TT0w=" --raw
 
-  \# Decode from stdin
-  echo "AgAAAACAehIAAAAAAA==" | caw util base64 decode --stdin
+# Decode from stdin
+echo "AgAAAACAehIAAAAAAA==" | caw util base64 decode --stdin
+```
 
 ```bash
 caw util base64 decode
@@ -1166,12 +1188,14 @@ the return value — all in one command.
 For raw eth_call without encoding/decoding, use "caw util abi call".
 
 Examples:
-  caw util eth-call --chain-id SETH --to 0x1c7D... \
-    --abi '[\{"name":"name","type":"function","inputs":[],"outputs":[\{"name":"","type":"string"\}]\}]' \
-    --method name
+```bash
+caw util eth-call --chain-id SETH --to 0x1c7D... \
+  --abi '[{"name":"name","type":"function","inputs":[],"outputs":[{"name":"","type":"string"}]}]' \
+  --method name
 
-  caw util eth-call --chain-id SETH --to 0x1c7D... \
-    --abi erc20 --method balanceOf --args '["0xYourAddress"]'
+caw util eth-call --chain-id SETH --to 0x1c7D... \
+  --abi erc20 --method balanceOf --args '["0xYourAddress"]'
+```
 
 ```bash
 caw util eth-call
@@ -1293,28 +1317,30 @@ Complete Example
 
 User request: "Help me transfer 1000 USDC to 0xABC...123 on Base"
 
-  caw pact submit \
-    --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
-    --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
-    --policies '[
-      \{
-        "name": "usdc-transfer",
-        "type": "transfer",
-        "rules": \{
-          "effect": "allow",
-          "when": \{
-            "chain_in": ["BASE_ETH"],
-            "token_in": [\{"chain_id":"BASE_ETH","token_id":"BASE_USDC"\}],
-            "destination_address_in": [\{"chain_id":"BASE_ETH","address":"0xABC...123"\}]
-          \},
-          "deny_if": \{
-            "amount_usd_gt": "1001"
-          \}
-        \}
-      \}
-    ]' \
-    --completion-conditions '[\{"type": "tx_count", "threshold": "1"\}]' \
-    --execution-plan "# Summary\nTransfer 1000 USDC to 0xABC...123 on Base.\n\n# Operations\n- Transfer 1000 USDC to 0xABC...123 on Base\n\n# Risk Controls\n- Per-tx cap: $1001\n- One-time transfer only"
+```bash
+caw pact submit \
+  --intent "Transfer 1000 USDC to 0xABC...123 on Base" \
+  --original-intent "Help me transfer 1000 USDC to 0xABC...123 on Base" \
+  --policies '[
+    {
+      "name": "usdc-transfer",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "token_in": [{"chain_id":"BASE_ETH","token_id":"BASE_USDC"}],
+          "destination_address_in": [{"chain_id":"BASE_ETH","address":"0xABC...123"}]
+        },
+        "deny_if": {
+          "amount_usd_gt": "1001"
+        }
+      }
+    }
+  ]' \
+  --completion-conditions '[{"type": "tx_count", "threshold": "1"}]' \
+  --execution-plan "# Summary\nTransfer 1000 USDC to 0xABC...123 on Base.\n\n# Operations\n- Transfer 1000 USDC to 0xABC...123 on Base\n\n# Risk Controls\n- Per-tx cap: $1001\n- One-time transfer only"
+```
 
 Execution Plan (--execution-plan)
 
@@ -1327,17 +1353,19 @@ these sections:
 
 Example — "buy $500 ETH weekly on Base":
 
-  \# Summary
-  Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
+```markdown
+# Summary
+Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
 
-  \# Operations
-  - Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
-  - Swap $500 USDC → ETH via Uniswap V3 on Base
-  - Repeat weekly
+# Operations
+- Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
+- Swap $500 USDC → ETH via Uniswap V3 on Base
+- Repeat weekly
 
-  \# Risk Controls
-  - Per-swap cap: $550 (includes slippage buffer)
-  - Rolling 24h limit: $600
+# Risk Controls
+- Per-swap cap: $550 (includes slippage buffer)
+- Rolling 24h limit: $600
+```
 
 Completion Conditions (--completion-conditions)
 
@@ -1367,17 +1395,19 @@ that explicitly cover every operation the agent needs to perform.
 
 Policy Structure
 
-  \{
-    "name": "`<human-readable-name>`",
-    "type": "transfer | contract_call | message_sign",
-    "rules": \{
-      "effect": "allow",
-      "when": \{ ... \},
-      "deny_if": \{ ... \},
-      "review_if": \{ ... \},
-      "always_review": true | false
-    \}
-  \}
+```json
+{
+  "name": "`<human-readable-name>`",
+  "type": "transfer | contract_call | message_sign",
+  "rules": {
+    "effect": "allow",
+    "when": { ... },
+    "deny_if": { ... },
+    "review_if": { ... },
+    "always_review": true | false
+  }
+}
+```
 
 | Field | Required | Description |
 |---|---|---|
@@ -1391,28 +1421,30 @@ Policy Structure
 
 Evaluation flow:
 
-  Operation
-    │
-    ▼
-  Match any policy's when? ──No──► DENY
-    │
-    Yes
-    │
-    ▼
-  Hit deny_if limit? ──Yes──► DENY
-    │
-    No
-    │
-    ▼
-  Exceed review_if threshold? ──No──► ALLOW
-    │
-    Yes
-    │
-    ▼
-  Pause for owner approval
-    │
-    ├── approved ──► ALLOW
-    └── rejected ──► DENY
+```
+Operation
+  │
+  ▼
+Match any policy's when? ──No──► DENY
+  │
+  Yes
+  │
+  ▼
+Hit deny_if limit? ──Yes──► DENY
+  │
+  No
+  │
+  ▼
+Exceed review_if threshold? ──No──► ALLOW
+  │
+  Yes
+  │
+  ▼
+Pause for owner approval
+  │
+  ├── approved ──► ALLOW
+  └── rejected ──► DENY
+```
 
 Allowlist Conditions (when)
 
@@ -1471,22 +1503,24 @@ message_sign policies control EIP-712 typed-data signing.
 
 Example — restrict Permit2 signatures to a specific contract:
 
-  \{
-    "name": "permit2-sign",
-    "type": "message_sign",
-    "rules": \{
-      "effect": "allow",
-      "when": \{
-        "domain_match": [
-          \{ "param_name": "name", "op": "eq", "value": "Permit2" \},
-          \{ "param_name": "verifyingContract", "op": "eq", "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" \}
-        ]
-      \},
-      "deny_if": \{
-        "usage_limits": \{ "rolling_24h": \{ "request_count_gt": 50 \} \}
-      \}
-    \}
-  \}
+```json
+{
+  "name": "permit2-sign",
+  "type": "message_sign",
+  "rules": {
+    "effect": "allow",
+    "when": {
+      "domain_match": [
+        { "param_name": "name", "op": "eq", "value": "Permit2" },
+        { "param_name": "verifyingContract", "op": "eq", "value": "0x000000000022D473030F116dDEE9F6B43aC78BA3" }
+      ]
+    },
+    "deny_if": {
+      "usage_limits": { "rolling_24h": { "request_count_gt": 50 } }
+    }
+  }
+}
+```
 
 Amount Units and USD Pricing
 
@@ -1536,9 +1570,11 @@ Without arguments, returns a lightweight index of all commands (name + descripti
 With arguments, returns the full schema for the specified command.
 
 Examples:
-  caw schema                 # list all commands
-  caw schema tx transfer     # full schema for tx transfer
-  caw schema wallet balance  # full schema for wallet balance
+```bash
+caw schema                 # list all commands
+caw schema tx transfer     # full schema for tx transfer
+caw schema wallet balance  # full schema for wallet balance
+```
 
 ```bash
 caw schema [command...]
