@@ -55,6 +55,7 @@
             "group": "Overview",
             "pages": [
               "products/agentic-wallet/manual/start-here/introduction",
+              "products/agentic-wallet/manual/start-here/product-updates",
               "products/agentic-wallet/manual/start-here/choose-your-path",
               "products/agentic-wallet/manual/start-here/what-is-a-pact",
               "products/agentic-wallet/manual/start-here/pact-flow",
@@ -74,21 +75,21 @@
             ]
           },
           {
-            "group": "Give Your Agent a Wallet",
+            "group": "Give your agent a wallet",
             "pages": [
               "products/agentic-wallet/manual/owners/install-skill",
               "products/agentic-wallet/manual/owners/connect-agent-human-app"
             ]
           },
           {
-            "group": "Control Your Agent",
+            "group": "Control your agent",
             "pages": [
               "products/agentic-wallet/manual/owners/approve",
               "products/agentic-wallet/manual/owners/pending-ops"
             ]
           },
           {
-            "group": "Manage Your Wallet",
+            "group": "Manage your wallet",
             "pages": [
               "products/agentic-wallet/manual/owners/transfers",
               "products/agentic-wallet/manual/owners/activity"
@@ -100,7 +101,7 @@
         "tab": "For Agent Developers",
         "groups": [
           {
-            "group": "Start Here",
+            "group": "Start here",
             "pages": [
               "products/agentic-wallet/manual/developer/quickstart-overview",
               "products/agentic-wallet/manual/developer/cli",
@@ -121,12 +122,14 @@
             "pages": [
               "products/agentic-wallet/manual/developer/features",
               "products/agentic-wallet/manual/developer/technical-architecture",
-              "products/agentic-wallet/manual/developer/pacts"
+              "products/agentic-wallet/manual/developer/pacts",
+              "products/agentic-wallet/manual/developer/pact-policies"
             ]
           },
           {
             "group": "How-to",
             "pages": [
+              "products/agentic-wallet/manual/developer/create-pact",
               "products/agentic-wallet/manual/developer/transfers",
               "products/agentic-wallet/manual/developer/contract-calls",
               "products/agentic-wallet/manual/developer/handle-policy-denial",
@@ -156,14 +159,14 @@
             ]
           },
           {
-            "group": "Why Your Funds Stay Yours",
+            "group": "Why your funds stay yours",
             "pages": [
               "products/agentic-wallet/manual/security/custodial-model",
               "products/agentic-wallet/manual/security/mpc-model"
             ]
           },
           {
-            "group": "Pacts & Enforcement",
+            "group": "Pacts & enforcement",
             "pages": [
               "products/agentic-wallet/manual/security/pact-mechanism",
               "products/agentic-wallet/manual/security/policy-engine",
@@ -172,13 +175,13 @@
             ]
           },
           {
-            "group": "Monitoring & Response",
+            "group": "Monitoring & response",
             "pages": [
               "products/agentic-wallet/manual/security/freeze-revoke"
             ]
           },
           {
-            "group": "Key Share Management",
+            "group": "Key share management",
             "pages": [
               "products/agentic-wallet/manual/security/key-share-backup",
               "products/agentic-wallet/manual/security/key-export"
@@ -190,7 +193,7 @@
         "tab": "Reference",
         "groups": [
           {
-            "group": "Supported Chains",
+            "group": "Supported chains",
             "pages": [
               "products/agentic-wallet/manual/reference/supported-chains"
             ]
@@ -210,7 +213,7 @@
             ]
           },
           {
-            "group": "Framework Integrations",
+            "group": "Framework integrations",
             "pages": [
               "products/agentic-wallet/manual/reference/toolkit",
               "products/agentic-wallet/manual/reference/langchain",
@@ -292,7 +295,7 @@
                 ]
               },
               {
-                "group": "Pending Operations",
+                "group": "Pending operations",
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-pending-operations",
                   "products/agentic-wallet/manual/reference/get-pending-operation",
@@ -326,7 +329,7 @@
                 ]
               },
               {
-                "group": "Coin Price",
+                "group": "Coin price",
                 "pages": [
                   "products/agentic-wallet/manual/reference/get-asset-coin-prices"
                 ]
@@ -386,14 +389,14 @@
             ]
           },
           {
-            "group": "Agentic Wallets",
+            "group": "Agentic wallets",
             "pages": [
               "products/agentic-wallet/manual/learn/what-is-agentic-wallet",
               "products/agentic-wallet/manual/learn/ai-specific-risks"
             ]
           },
           {
-            "group": "Blockchain Basics",
+            "group": "Blockchain basics",
             "pages": [
               "products/agentic-wallet/manual/learn/chains",
               "products/agentic-wallet/manual/learn/tokens",

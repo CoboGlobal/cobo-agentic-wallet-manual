@@ -1,11 +1,9 @@
 ---
 title: "Changelog"
-description: "Version history for Cobo Agentic Wallet — service and SDK."
+description: "Release history for Cobo Agentic Wallet."
 ---
 
-## 0.1.0 — Initial release
-
-### Cobo Agentic Wallet service
+## April 20, 2026 — Initial release
 
 - Identity and API key management with scoped access control
 - Wallet and address lifecycle, including on-chain transaction execution
@@ -13,18 +11,8 @@ description: "Version history for Cobo Agentic Wallet — service and SDK."
 - Policy engine: transfer limits and contract call restrictions at global, wallet, or delegation scope
 - Approval workflow: operations above threshold are paused for owner review
 - Audit log and real-time event stream for monitoring activity
-
-### SDK & integrations
-
-- Async Python client for all service endpoints
+- Async Python and TypeScript clients for all API endpoints
 - Agent tools for transfer, balance checks, contract calls, and more
 - Framework adapters: LangChain, OpenAI Agents SDK
 - MCP server exposing agent tools to any MCP-compatible client
-- CLI (`caw`) for common operations: wallets, balances, transfers, policies, delegation, and audit logs
-- 5 agent recipes: Discord Tip Bot, DCA Trader, Treasury Manager, NFT Minter, Cross-chain Arbitrageur
-- PyPI packaging with optional extras per framework
-
-### Human interfaces
-
-- Cobo Agentic Wallet app for wallet management, pact approvals, and on-the-go transaction approval
-- Cobo Agentic Wallet app for onboarding, configuration, and AI-assisted product guidance
+- CLI (`caw`) for wallets, balances, transfers, policies, delegation, and audit logs
