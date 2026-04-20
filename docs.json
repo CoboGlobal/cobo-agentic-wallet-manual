@@ -214,11 +214,7 @@
             "pages": [
               "products/agentic-wallet/manual/reference/toolkit",
               "products/agentic-wallet/manual/reference/langchain",
-              "products/agentic-wallet/manual/reference/openai",
-              "products/agentic-wallet/manual/reference/vercel-ai-sdk",
-              "products/agentic-wallet/manual/reference/mastra",
-              "products/agentic-wallet/manual/reference/agno",
-              "products/agentic-wallet/manual/reference/crewai"
+              "products/agentic-wallet/manual/reference/openai"
             ]
           },
           {

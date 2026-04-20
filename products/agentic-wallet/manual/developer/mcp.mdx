@@ -106,7 +106,7 @@ The MCP server exposes the same canonical toolkit surface as the other CAW integ
 
 - **Add custom MCP tools** — define additional MCP tools alongside Cobo's for your own business logic (e.g. a `check_price` tool that fetches a token price before submitting a transfer).
 - **Use the Python SDK for non-MCP operations** — pact lifecycle management, policy configuration, and audit queries are all available via `WalletAPIClient` for operations you want to handle outside the LLM loop.
-- **Use framework integrations for code-based runtimes** — if you're building a Python agent with LangChain, OpenAI Agents SDK, Agno, or CrewAI, use the framework-native toolkit instead of the MCP server. You get the same tools natively integrated with your runtime's tool-calling mechanism.
+- **Use framework integrations for code-based runtimes** — if you're building a Python agent with LangChain or OpenAI Agents SDK, use the framework-native toolkit instead of the MCP server. You get the same tools natively integrated with your runtime's tool-calling mechanism.
 
 <CardGroup cols={2}>
   <Card title="Full MCP Integration Guide" icon="plug" href="/products/agentic-wallet/manual/reference/mcp">

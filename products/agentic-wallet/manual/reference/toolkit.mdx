@@ -7,7 +7,7 @@ sidebarTitle: "Toolkit"
 
 ## Overview
 
-`AgentWalletToolkit` provides the canonical CAW runtime tool surface that framework-specific integrations (LangChain, OpenAI, Agno, CrewAI, MCP) consume and adapt to their runtimes.
+`AgentWalletToolkit` provides the canonical CAW runtime tool surface that framework-specific integrations (LangChain, OpenAI, MCP) consume and adapt to their runtimes.
 
 ## Constructor
 
@@ -30,7 +30,7 @@ toolkit = AgentWalletToolkit(
 )
 ```
 
-`include_tools` keeps only the named tools, in the same order you provide. `exclude_tools` removes tools from the default surface. This selection propagates cleanly to LangChain, OpenAI Agents SDK, CrewAI, Agno, and MCP-backed custom usage when those adapters are built from the toolkit.
+`include_tools` keeps only the named tools, in the same order you provide. `exclude_tools` removes tools from the default surface. This selection propagates cleanly to LangChain, OpenAI Agents SDK, and MCP-backed custom usage when those adapters are built from the toolkit.
 
 ## Recommended Presets
 
