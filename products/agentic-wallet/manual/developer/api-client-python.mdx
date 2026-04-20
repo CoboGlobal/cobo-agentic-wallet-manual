@@ -254,7 +254,7 @@ Use [Contract Calls](/products/agentic-wallet/manual/developer/contract-calls) w
 `WalletAPIClient` is a direct API wrapper — it gives you full control. You can build on top of it in several ways:
 
 - **Write custom tool functions** — wrap `WalletAPIClient` calls in domain-specific functions that encode your business logic (e.g. `transfer_with_price_check`, `batch_payout`), then expose those as agent tools.
-- **Use framework integrations** — `AgentWalletToolkit` exposes the widened runtime toolkit as native LangChain, OpenAI Agents SDK, Agno, or CrewAI tools. Use it for the canonical wallet/pact/onchain surface, and add your own custom tools alongside it for extended functionality.
+- **Use framework integrations** — `AgentWalletToolkit` exposes the widened runtime toolkit as native LangChain or OpenAI Agents SDK tools. Use it for the canonical wallet/pact/onchain surface, and add your own custom tools alongside it for extended functionality.
 - **Pair with the CLI** — use `caw` for onboarding, debugging, and one-off operations; use `WalletAPIClient` for programmatic agent logic. They share the same config and credentials.
 - **Design around presets** — even if you later expose CAW through an agent framework, keep your runtime logic split into Pact Drafting, Execution, and Observer responsibilities.
 
