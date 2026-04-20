@@ -1,0 +1,229 @@
+---
+title: "Create a pact"
+description: "Submit a pact to get scoped onchain access, then use it to execute transfers and contract calls."
+---
+
+Before your runtime can transfer tokens or call contracts, it needs an active pact. A pact is a structured authorization request: it describes what the agent wants to do, under what rules, and when that authority ends. The wallet owner approves it in the Cobo Agentic Wallet app, after which the runtime receives a scoped credential to operate.
+
+## What you need
+
+Every pact submission requires four parts:
+
+| Part | What it is |
+|---|---|
+| **Intent** | A plain-language description of the task — e.g., `"Transfer 100 USDC to 0x123 on Base"` |
+| **Execution plan** | Concrete steps the runtime will take after approval: what operations, in what order |
+| **Policies** | Rules that constrain every operation: which chains, tokens, contracts are allowed; spend caps; rolling limits |
+| **Completion conditions** | When the pact ends — after N transactions, a spend threshold, or elapsed time |
+
+For the full policy schema, see [Pact policy reference](/products/agentic-wallet/manual/developer/pact-policies).
+
+## Submit a pact
+
+The example below submits a simple one-time transfer pact that allows a single USDC transfer of up to $101 on Base.
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw pact submit \
+  --intent "Transfer 100 USDC to 0xRecipient... on Base" \
+  --original-intent "Send 100 USDC to 0xRecipient... on Base" \
+  --execution-plan "# Summary
+Transfer 100 USDC to 0xRecipient... on Base.
+
+# Operations
+- Transfer 100 USDC to 0xRecipient... on BASE_ETH
+
+# Risk Controls
+- Per-tx cap: \$101
+- One-time transfer only" \
+  --policies '[
+    {
+      "name": "usdc-transfer",
+      "type": "transfer",
+      "rules": {
+        "effect": "allow",
+        "when": {
+          "chain_in": ["BASE_ETH"],
+          "token_in": [{"chain_id": "BASE_ETH", "token_id": "BASE_USDC"}],
+          "destination_address_in": [{"chain_id": "BASE_ETH", "address": "0xRecipient..."}]
+        },
+        "deny_if": {
+          "amount_usd_gt": "101"
+        }
+      }
+    }
+  ]' \
+  --completion-conditions '[{"type": "tx_count", "threshold": "1"}]'
+```
+
+The command prints a `pact_id`. Save it — you need it to poll for approval and to execute transactions.
+</Tab>
+<Tab title="Python SDK">
+```python
+from cobo_agentic_wallet import WalletAPIClient
+
+async with WalletAPIClient(base_url=API_URL, api_key=AGENT_API_KEY) as client:
+    result = await client.submit_pact(
+        wallet_id=WALLET_UUID,
+        intent="Transfer 100 USDC to 0xRecipient... on Base",
+        spec={
+            "policies": [
+                {
+                    "name": "usdc-transfer",
+                    "type": "transfer",
+                    "rules": {
+                        "effect": "allow",
+                        "when": {
+                            "chain_in": ["BASE_ETH"],
+                            "token_in": [{"chain_id": "BASE_ETH", "token_id": "BASE_USDC"}],
+                            "destination_address_in": [{"chain_id": "BASE_ETH", "address": "0xRecipient..."}],
+                        },
+                        "deny_if": {
+                            "amount_usd_gt": "101"
+                        },
+                    },
+                }
+            ],
+            "completion_conditions": [{"type": "tx_count", "threshold": "1"}],
+        },
+        execution_plan=(
+            "# Summary\n"
+            "Transfer 100 USDC to 0xRecipient... on Base.\n\n"
+            "# Operations\n"
+            "- Transfer 100 USDC to 0xRecipient... on BASE_ETH\n\n"
+            "# Risk Controls\n"
+            "- Per-tx cap: $101\n"
+            "- One-time transfer only"
+        ),
+    )
+    pact_id = result["pact_id"]
+    print(f"Submitted: {pact_id}")
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+import { WalletAPIClient } from 'cobo-agentic-wallet';
+
+const client = new WalletAPIClient({ baseUrl: API_URL, apiKey: AGENT_API_KEY });
+
+const result = await client.submitPact({
+  wallet_id: WALLET_UUID,
+  intent: 'Transfer 100 USDC to 0xRecipient... on Base',
+  spec: {
+    policies: [
+      {
+        name: 'usdc-transfer',
+        type: 'transfer',
+        rules: {
+          effect: 'allow',
+          when: {
+            chain_in: ['BASE_ETH'],
+            token_in: [{ chain_id: 'BASE_ETH', token_id: 'BASE_USDC' }],
+            destination_address_in: [{ chain_id: 'BASE_ETH', address: '0xRecipient...' }],
+          },
+          deny_if: {
+            amount_usd_gt: '101',
+          },
+        },
+      },
+    ],
+    completion_conditions: [{ type: 'tx_count', threshold: '1' }],
+  },
+  execution_plan:
+    '# Summary\nTransfer 100 USDC to 0xRecipient... on Base.\n\n' +
+    '# Operations\n- Transfer 100 USDC to 0xRecipient... on BASE_ETH\n\n' +
+    '# Risk Controls\n- Per-tx cap: $101\n- One-time transfer only',
+});
+const pactId = result.pact_id;
+console.log('Submitted:', pactId);
+```
+</Tab>
+</Tabs>
+
+## Wait for approval
+
+After submission, the pact is in `pending_approval` state. If the wallet is paired with the Cobo Agentic Wallet app, the owner must approve it there. If the wallet is not yet paired, it activates automatically.
+
+Poll until the status changes:
+
+<Tabs>
+<Tab title="CLI">
+```bash
+caw pact status <PACT_ID>
+```
+</Tab>
+<Tab title="Python SDK">
+```python
+import asyncio
+
+while True:
+    pact = await client.get_pact(pact_id)
+    status = pact["status"]
+    if status == "active":
+        break
+    if status in ("rejected", "revoked", "expired"):
+        raise RuntimeError(f"Pact {status} — cannot proceed")
+    await asyncio.sleep(3)
+
+print("Pact active — ready to execute")
+```
+</Tab>
+<Tab title="TypeScript SDK">
+```typescript
+const poll = async (): Promise<void> => {
+  while (true) {
+    const pact = await client.getPact(pactId);
+    if (pact.status === 'active') break;
+    if (['rejected', 'revoked', 'expired'].includes(pact.status)) {
+      throw new Error(`Pact ${pact.status} — cannot proceed`);
+    }
+    await new Promise(res => setTimeout(res, 3000));
+  }
+};
+await poll();
+```
+</Tab>
+</Tabs>
+
+## Pact states
+
+| State | What it means |
+|---|---|
+| `pending_approval` | Waiting for the owner to approve in the Cobo Agentic Wallet app |
+| `active` | Approved — the runtime can now execute operations within the pact's scope |
+| `rejected` | Owner declined. No access was granted. |
+| `completed` | A completion condition was met. Access revoked automatically. |
+| `expired` | Approval timed out or a time-based condition elapsed. |
+| `revoked` | Owner revoked manually. Access removed immediately. |
+
+## Handle rejection
+
+If the owner rejects the pact, offer to resubmit with a narrower scope — lower spend cap, shorter duration, or a tighter allowlist.
+
+```python
+if pact["status"] == "rejected":
+    # Submit a revised pact with narrower limits
+    result = await client.submit_pact(
+        wallet_id=WALLET_UUID,
+        intent="Transfer 50 USDC to 0xRecipient... on Base",
+        spec={
+            "policies": [...],  # revised, narrower policy
+            "completion_conditions": [{"type": "tx_count", "threshold": "1"}],
+        },
+        execution_plan="...",
+    )
+```
+
+## Next steps
+
+Once a pact is active, use it to execute transactions:
+
+<CardGroup cols={2}>
+  <Card title="Transfers" href="/products/agentic-wallet/manual/developer/transfers">
+    Submit token transfers under an active pact.
+  </Card>
+  <Card title="Contract calls" href="/products/agentic-wallet/manual/developer/contract-calls">
+    Call smart contracts under an active pact.
+  </Card>
+</CardGroup>
