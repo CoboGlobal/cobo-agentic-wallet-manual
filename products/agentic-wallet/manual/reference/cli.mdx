@@ -1012,14 +1012,14 @@ caw util abi
 Encode a function call into hex calldata for use with caw tx call --calldata.
 
 Examples:
-  # ERC-20 approve(address, uint256)
+  \# ERC-20 approve(address, uint256)
   caw abi encode --method "approve(address,uint256)" --args '["0x1234...", "115792089237316195423570985008687907853269984665640564039457584007913129639935"]'
 
-  # Uniswap V3 exactInputSingle (tuple)
+  \# Uniswap V3 exactInputSingle (tuple)
   caw abi encode --method "exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))" \
     --args '[["0xTokenIn","0xTokenOut",3000,"0xRecipient","1000000","0","0"]]'
 
-  # Zero-argument function
+  \# Zero-argument function
   caw abi encode --method "totalSupply()"
 
 ```bash
@@ -1037,10 +1037,10 @@ Decode hex calldata back into function name and arguments, or decode
 an eth_call return value using --output-types.
 
 Examples:
-  # Decode input calldata (validates selector)
+  \# Decode input calldata (validates selector)
   caw util abi decode --method "transfer(address,uint256)" --calldata 0xa9059cbb000000...
 
-  # Decode eth_call return value (no selector check)
+  \# Decode eth_call return value (no selector check)
   caw util abi decode --output-types '["string"]' --calldata 0x000000...
   caw util abi decode --output-types '["uint256","address"]' --calldata 0x000000...
 
@@ -1113,13 +1113,13 @@ caw util base64
 Encode hex, raw string, or stdin to base64.
 
 Examples:
-  # Encode hex bytes (auto-detected by 0x prefix)
+  \# Encode hex bytes (auto-detected by 0x prefix)
   caw util base64 encode --data 0x02000000008078120000000000
 
-  # Encode raw string
+  \# Encode raw string
   caw util base64 encode --data "DCA_ROUND_1_USDC_SOL" --raw
 
-  # Encode from stdin
+  \# Encode from stdin
   echo -n "hello" | caw util base64 encode --stdin
 
 ```bash
@@ -1138,13 +1138,13 @@ caw util base64 encode
 Decode a base64 string and output as hex or raw.
 
 Examples:
-  # Decode to hex (default)
+  \# Decode to hex (default)
   caw util base64 decode --data "AgAAAACAehIAAAAAAA=="
 
-  # Decode to raw string
+  \# Decode to raw string
   caw util base64 decode --data "RENBX1JPVU5EXzFfVVNEQ19TT0w=" --raw
 
-  # Decode from stdin
+  \# Decode from stdin
   echo "AgAAAACAehIAAAAAAA==" | caw util base64 decode --stdin
 
 ```bash
@@ -1321,21 +1321,21 @@ Execution Plan (--execution-plan)
 Describe the operations the agent will run after the pact is active. Use
 these sections:
 
-- # Summary — one-line goal
-- # Operations — concrete calls/transfers (token, amount, target contract)
-- # Risk Controls — per-tx cap, daily cap, etc
+- \# Summary — one-line goal
+- \# Operations — concrete calls/transfers (token, amount, target contract)
+- \# Risk Controls — per-tx cap, daily cap, etc
 
 Example — "buy $500 ETH weekly on Base":
 
-  # Summary
+  \# Summary
   Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
 
-  # Operations
+  \# Operations
   - Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
   - Swap $500 USDC → ETH via Uniswap V3 on Base
   - Repeat weekly
 
-  # Risk Controls
+  \# Risk Controls
   - Per-swap cap: $550 (includes slippage buffer)
   - Rolling 24h limit: $600
 
