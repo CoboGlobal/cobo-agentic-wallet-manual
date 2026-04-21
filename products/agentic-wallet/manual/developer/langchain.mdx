@@ -55,6 +55,29 @@ from typing import Any
 from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.langchain import CoboAgentWalletToolkit
 
+INCLUDE_TOOLS = [
+    "submit_pact",
+    "get_pact",
+    "transfer_tokens",
+    "estimate_transfer_fee",
+    "get_transaction_record_by_request_id",
+    "get_audit_logs",
+]
+
+
+def build_demo_prompt(wallet_id: str, destination: str) -> str:
+    return (
+        f"Use wallet {wallet_id}. "
+        "Submit a pact for a controlled transfer task and wait until it is active. "
+        f"Using the newly created pact, transfer 0.001 SETH to {destination} on SETH. "
+        "Next, using the same pact, attempt 0.005 SETH. If denied, follow the denial "
+        "guidance and retry with a compliant amount. "
+        "Track the result by request_id and summarize what happened."
+    )
+
+
+# ─── Pretty-printing helpers ──────────────────────────────────────────────────
+
 
 def _truncate(value: Any, limit: int = 120) -> str:
     text = value if isinstance(value, str) else json.dumps(value, default=str)
@@ -63,7 +86,7 @@ def _truncate(value: Any, limit: int = 120) -> str:
 
 def _format_tool_args(args: dict[str, Any]) -> str:
     skip = {"wallet_uuid", "wallet_id"}
-    return ", ".join(f"{k}={_truncate(v, 60)}" for k, v in args.items() if k not in skip) or "-"
+    return ", ".join(f"{k}={_truncate(v, 400)}" for k, v in args.items() if k not in skip) or "-"
 
 
 def _summarise_tool_result(raw: Any) -> str:
@@ -76,10 +99,8 @@ def _summarise_tool_result(raw: Any) -> str:
         payload = raw
     if not isinstance(payload, dict):
         return _truncate(payload)
-    # Pact submission result.
     if "pact_id" in payload and "status" in payload and "request_id" not in payload:
         return f"pact_id={_truncate(payload['pact_id'], 36)} status={payload.get('status')}"
-    # Transfer submission result.
     if "request_id" in payload:
         bits = [f"request_id={_truncate(payload['request_id'], 36)}"]
         if payload.get("status_display"):
@@ -89,16 +110,19 @@ def _summarise_tool_result(raw: Any) -> str:
         if payload.get("transaction_hash"):
             bits.append(f"hash={payload['transaction_hash']}")
         return " ".join(bits)
-    # Structured API error envelope.
     if "error" in payload:
         err = payload["error"]
         if isinstance(err, dict):
             return f"ERROR {err.get('code', '-')}: {err.get('reason', '-')}"
+        message = payload.get("message")
+        if isinstance(message, str) and message:
+            return f"ERROR {err}: {_truncate(message, 600)}"
         return f"ERROR {err}"
     return _truncate(payload)
 
 
 def print_agent_result(result: Any) -> None:
+    """Walk a LangChain message list and pretty-print calls + final answer."""
     messages = result.get("messages", []) if isinstance(result, dict) else []
     tool_calls_by_id: dict[str, dict[str, Any]] = {}
     final_text = ""
@@ -126,27 +150,20 @@ def print_agent_result(result: Any) -> None:
     print(final_text or "(no final answer produced)")
 
 
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
+
 async def main() -> None:
     api_url = os.environ["AGENT_WALLET_API_URL"]
     api_key = os.environ["AGENT_WALLET_API_KEY"]
-    wallet_uuid = os.environ["AGENT_WALLET_WALLET_ID"]
+    wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
     destination = os.environ.get(
         "CAW_DESTINATION",
         "0x1111111111111111111111111111111111111111",
     )
 
     async with WalletAPIClient(base_url=api_url, api_key=api_key) as client:
-        toolkit = CoboAgentWalletToolkit(
-            client=client,
-            include_tools=[
-                "submit_pact",
-                "get_pact",
-                "transfer_tokens",
-                "estimate_transfer_fee",
-                "get_transaction_record_by_request_id",
-                "get_audit_logs",
-            ],
-        )
+        toolkit = CoboAgentWalletToolkit(client=client, include_tools=INCLUDE_TOOLS)
         tools = toolkit.get_tools()
 
         try:
@@ -162,61 +179,26 @@ async def main() -> None:
                 return
 
             try:
+                from langchain.agents import create_agent
                 from langchain_openai import ChatOpenAI
             except ImportError as exc:
                 raise RuntimeError(
-                    "langchain-openai is required for the OpenAI model example. "
-                    "Install with: pip install langchain-openai"
+                    "langchain>=1.0 and langchain-openai are required for this example. "
+                    "Install with: pip install 'cobo-agentic-wallet[langchain]' langchain-openai"
                 ) from exc
 
-            prompt = (
-                f"Use wallet {wallet_uuid}. "
-                "Submit a pact for a controlled transfer task and wait until it is active. "
-                f"Using the newly created pact, transfer 0.001 SETH to {destination} on SETH. "
-                "Next, using the same pact, attempt 0.005 SETH. If denied, follow the denial "
-                "guidance and retry with a compliant amount. "
-                "Track the result by request_id and summarize what happened."
+            agent = create_agent(
+                model=ChatOpenAI(model="gpt-4.1-mini"),
+                tools=tools,
             )
-
-            # LangChain v1 API
-            try:
-                from langchain.agents import create_agent
-            except ImportError:
-                create_agent = None
-
-            if create_agent is not None:
-                agent = create_agent(
-                    model=ChatOpenAI(model="gpt-4.1-mini"),
-                    tools=tools,
-                )
-                result = await agent.ainvoke(
-                    {"messages": [{"role": "user", "content": prompt}]}
-                )
-                print_agent_result(result)
-                return
-
-            # Legacy pre-v1 API fallback
-            try:
-                from langchain.agents import AgentExecutor, create_openai_tools_agent
-                from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-            except ImportError as exc:
-                raise RuntimeError(
-                    "Unsupported langchain version detected. Install langchain>=1.0.0, "
-                    "or a compatible legacy release exposing create_openai_tools_agent."
-                ) from exc
-
-            llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0)
-            prompt_template = ChatPromptTemplate.from_messages(
-                [
-                    ("human", "{input}"),
-                    MessagesPlaceholder(variable_name="agent_scratchpad"),
-                ]
+            result = await agent.ainvoke(
+                {
+                    "messages": [
+                        {"role": "user", "content": build_demo_prompt(wallet_id, destination)}
+                    ]
+                }
             )
-            agent = create_openai_tools_agent(llm, tools, prompt_template)
-            executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-            result = await executor.ainvoke({"input": prompt})
-            print("\nFinal answer:")
-            print(result.get("output", result))
+            print_agent_result(result)
         finally:
             await toolkit.aclose()
 
@@ -244,33 +226,80 @@ tools = toolkit.get_tools()
 </Tab>
 <Tab title="TypeScript">
 ```typescript title="langchain_quickstart.ts"
-import { tool } from 'langchain';
-import { createAgent } from 'langchain';
+import { randomUUID } from 'node:crypto';
+import { tool, createAgent } from 'langchain';
 import { z } from 'zod';
+
 import {
   AuditApi,
   Configuration,
+  type PactSpecInput,
   PactsApi,
   TransactionRecordsApi,
   TransactionsApi,
 } from '@cobo/agentic-wallet';
 
-const CHAIN_ID = 'SETH';
-const TOKEN_ID = 'SETH';
+// ─── Env ─────────────────────────────────────────────────────────────────────
 
-const basePath = process.env.AGENT_WALLET_API_URL!;
-const ownerKey = process.env.AGENT_WALLET_API_KEY!;
-const ownerConfig = new Configuration({ apiKey: ownerKey, basePath });
+const DEFAULT_DESTINATION = '0x1111111111111111111111111111111111111111';
 
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing required environment variable: ${name}. See README.md for the full list.`);
+  return v;
+}
+
+const env = {
+  basePath: requireEnv('AGENT_WALLET_API_URL'),
+  ownerKey: requireEnv('AGENT_WALLET_API_KEY'),
+  walletId: requireEnv('AGENT_WALLET_WALLET_ID'),
+  destination: process.env.CAW_DESTINATION ?? DEFAULT_DESTINATION,
+  openaiApiKey: process.env.OPENAI_API_KEY,
+};
+
+// ─── Owner-scoped API clients ────────────────────────────────────────────────
+
+const ownerConfig = new Configuration({ apiKey: env.ownerKey, basePath: env.basePath });
 const pactsApi = new PactsApi(ownerConfig);
-const txApi = new TransactionsApi(ownerConfig);
+const ownerTxApi = new TransactionsApi(ownerConfig);
 const recordsApi = new TransactionRecordsApi(ownerConfig);
 const auditApi = new AuditApi(ownerConfig);
 
-// pact_id -> pact-scoped api_key, populated by submit_pact / get_pact tool calls
-const pactSessions = new Map<string, string>();
-// pact_id -> lazily-built TransactionsApi using the scoped api_key
-const pactTxApiCache = new Map<string, TransactionsApi>();
+// ─── Pact spec (single source of truth for the demo policy) ──────────────────
+
+const CHAIN_ID = 'SETH';
+const TOKEN_ID = 'SETH';
+const DENY_THRESHOLD = '0.002';
+const PACT_TTL_SECONDS = '86400';
+
+function buildTransferPactSpec(): PactSpecInput {
+  return {
+    policies: [
+      {
+        name: 'max-tx-limit',
+        type: 'transfer',
+        rules: {
+          effect: 'allow',
+          when: {
+            chain_in: [CHAIN_ID],
+            token_in: [{ chain_id: CHAIN_ID, token_id: TOKEN_ID }],
+          },
+          deny_if: { amount_gt: DENY_THRESHOLD },
+        },
+      },
+    ],
+    completion_conditions: [{ type: 'time_elapsed', threshold: PACT_TTL_SECONDS }],
+  };
+}
+
+// ─── Pact session store ──────────────────────────────────────────────────────
+// Tracks pact_id → pact-scoped api_key across the agent run, and lazily
+// materialises per-pact TransactionsApi clients. Agent tools register pacts
+// via `capturePactSession()` as they are submitted/fetched, then look up
+// the scoped client by pact_id at transfer time via `txApiForPact()`.
+
+const sessionApiKeys = new Map<string, string>();
+const pactScopedTxApis = new Map<string, TransactionsApi>();
 
 function capturePactSession(response: unknown): void {
   if (!response || typeof response !== 'object') return;
@@ -278,77 +307,211 @@ function capturePactSession(response: unknown): void {
   const pactId = (r.pact_id ?? r.id) as string | undefined;
   const apiKey = r.api_key as string | undefined;
   if (typeof pactId === 'string' && typeof apiKey === 'string' && apiKey) {
-    pactSessions.set(pactId, apiKey);
+    sessionApiKeys.set(pactId, apiKey);
   }
 }
 
-function txApiFor(pactId?: string): TransactionsApi {
-  if (!pactId) return txApi;
-  const cached = pactTxApiCache.get(pactId);
+function txApiForPact(pactId?: string): TransactionsApi {
+  if (!pactId) return ownerTxApi;
+  const cached = pactScopedTxApis.get(pactId);
   if (cached) return cached;
-  const apiKey = pactSessions.get(pactId);
+  const apiKey = sessionApiKeys.get(pactId);
   if (!apiKey) {
     throw new Error(
-      `Unknown pact_id ${pactId}. Call submit_pact or get_pact first so the pact-scoped api_key can be cached, then retry.`,
+      `Unknown pact_id ${pactId}. Call submit_pact or get_pact first ` +
+        `so the pact-scoped api_key is captured, then retry.`,
     );
   }
-  const scoped = new TransactionsApi(new Configuration({ apiKey, basePath }));
-  pactTxApiCache.set(pactId, scoped);
+  const scoped = new TransactionsApi(new Configuration({ apiKey, basePath: env.basePath }));
+  pactScopedTxApis.set(pactId, scoped);
   return scoped;
 }
 
-async function returnPolicyDenial<T>(work: () => Promise<T>): Promise<T | Record<string, unknown>> {
+/**
+ * After `submit_pact`, auto-activated pacts may carry `status=active` but
+ * omit `api_key` from the initial response. This helper fills the gap by
+ * fetching the full pact record and capturing the scoped api_key so that
+ * subsequent transfer tool calls can resolve `pact_id → TransactionsApi`.
+ */
+async function backfillPactSessionIfActive(result: unknown): Promise<void> {
+  if (!result || typeof result !== 'object') return;
+  const r = result as Record<string, unknown>;
+  const id = (r.pact_id ?? r.id) as string | undefined;
+  if (r.status !== 'active' || !id || sessionApiKeys.has(id)) return;
   try {
-    return await work();
-  } catch (error) {
-    const response = (error as { response?: { data?: { error?: Record<string, unknown>; suggestion?: string } } })
-      .response;
-    const data = response?.data;
-    if (data?.error) {
-      return { error: data.error, suggestion: data.suggestion };
-    }
-    return { error: 'UNKNOWN_ERROR' };
+    const full = (await pactsApi.getPact(id)).data.result;
+    capturePactSession(full);
+  } catch {
+    // best-effort
   }
 }
+
+// ─── Denial handling ─────────────────────────────────────────────────────────
+// The service returns denials as structured `{ error, suggestion }` payloads
+// on non-2xx responses. Agent tools surface those payloads back to the LLM
+// so it can self-correct, rather than aborting the agent loop.
+
+interface DenialEnvelope {
+  error: Record<string, unknown> | string;
+  suggestion?: string;
+}
+
+function parseApiError(err: unknown): {
+  http: number | '-';
+  error?: Record<string, unknown>;
+  suggestion?: string;
+} {
+  const resp = (
+    err as {
+      response?: {
+        status?: number;
+        data?: { error?: Record<string, unknown>; suggestion?: string };
+      };
+    } | null | undefined
+  )?.response;
+  return { http: resp?.status ?? '-', error: resp?.data?.error, suggestion: resp?.data?.suggestion };
+}
+
+async function returnPolicyDenial<T>(work: () => Promise<T>): Promise<T | DenialEnvelope> {
+  try {
+    return await work();
+  } catch (err) {
+    const { error, suggestion } = parseApiError(err);
+    return error ? { error, suggestion } : { error: 'UNKNOWN_ERROR' };
+  }
+}
+
+// ─── Audit-log helper ────────────────────────────────────────────────────────
+
+async function listRecentAuditLogs(walletId: string, limit = 20) {
+  const response = await auditApi.listAuditLogs(
+    walletId,
+    undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+    limit,
+  );
+  const items = (response.data.result as { items?: Array<{ result?: string }> })?.items ?? [];
+  const allowed = items.filter(it => it.result === 'allowed').length;
+  const denied = items.filter(it => it.result === 'denied').length;
+  return { items, allowed, denied };
+}
+
+// ─── Prompts ─────────────────────────────────────────────────────────────────
+
+const DEMO_SYSTEM_PROMPT =
+  'Submit a pact before execution, wait until it is active, execute compliant ' +
+  'blockchain actions, and if a tool returns policy denial guidance then retry ' +
+  'inside the allowed boundary.';
+
+const DEMO_USER_PROMPT =
+  `Use wallet ${env.walletId}. ` +
+  `Submit a pact for a controlled transfer task and wait until it is active. ` +
+  `Using the newly created pact, transfer 0.001 ${TOKEN_ID} to ${env.destination} on ${CHAIN_ID}. ` +
+  `Next, using the same pact, attempt 0.005 ${TOKEN_ID}. If denied, follow the denial ` +
+  `guidance and retry with a compliant amount. ` +
+  `Track the result by request_id and summarize what happened.`;
+
+// ─── Pretty-printing ─────────────────────────────────────────────────────────
+
+interface ToolCallRecord {
+  name: string;
+  args?: Record<string, unknown>;
+  result?: unknown;
+}
+
+const NOISY_ARG_KEYS = new Set<string>(['wallet_uuid', 'wallet_id']);
+
+function truncate(value: unknown, limit = 120): string {
+  const text = typeof value === 'string' ? value : JSON.stringify(value);
+  if (text === undefined) return '';
+  return text.length <= limit ? text : text.slice(0, limit - 1) + '…';
+}
+
+function formatToolArgs(args: Record<string, unknown> | undefined): string {
+  if (!args) return '-';
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(args)) {
+    if (NOISY_ARG_KEYS.has(k)) continue;
+    parts.push(`${k}=${truncate(v, 80)}`);
+  }
+  return parts.join(', ') || '-';
+}
+
+function summariseToolResult(raw: unknown): string {
+  if (raw === undefined || raw === null) return '(no result)';
+  let payload: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return truncate(raw.replace(/\n/g, ' '));
+    }
+  }
+  if (!payload || typeof payload !== 'object') return truncate(payload);
+
+  const p = payload as Record<string, unknown>;
+  if ('pact_id' in p && 'status' in p && !('request_id' in p) && !('spec' in p)) {
+    return `pact_id=${truncate(p.pact_id, 36)} status=${p.status}`;
+  }
+  if ('id' in p && 'status' in p && 'spec' in p) {
+    return `pact_id=${truncate(p.id, 36)} status=${p.status} api_key=${p.api_key ? 'present' : 'null'}`;
+  }
+  if ('request_id' in p) {
+    const bits: string[] = [`request_id=${truncate(p.request_id, 36)}`];
+    if (p.status_display) bits.push(`status=${p.status_display}`);
+    else if ('status' in p) bits.push(`status=${p.status}`);
+    if (p.transaction_hash) bits.push(`hash=${p.transaction_hash}`);
+    return bits.join(' ');
+  }
+  if ('fee' in p || 'gas_price' in p || 'estimated_fee' in p) {
+    return `fee=${truncate(p.fee ?? p.estimated_fee ?? p.gas_price)}`;
+  }
+  if ('items' in p && Array.isArray(p.items) && 'allowed' in p && 'denied' in p) {
+    return `audit entries=${p.items.length} allowed=${p.allowed} denied=${p.denied}`;
+  }
+  if ('error' in p) {
+    const err = p.error;
+    if (err && typeof err === 'object') {
+      const e = err as { code?: string; reason?: string; message?: string };
+      const code = e.code ?? '-';
+      const reason = e.reason ?? e.message ?? '-';
+      const sug = p.suggestion ? ` suggestion=${truncate(p.suggestion, 80)}` : '';
+      if (code === '-' && reason === '-') return `DENIED raw=${truncate(err, 100)}${sug}`;
+      return `DENIED code=${code} reason=${reason}${sug}`;
+    }
+    return `ERROR ${err}`;
+  }
+  return truncate(p);
+}
+
+function printToolCalls(records: ToolCallRecord[]): void {
+  console.log('\nTool calls:');
+  if (records.length === 0) {
+    console.log('  (none)');
+    return;
+  }
+  records.forEach((call, idx) => {
+    console.log(`  ${idx + 1}. ${call.name}(${formatToolArgs(call.args)})`);
+    console.log(`     → ${summariseToolResult(call.result)}`);
+  });
+}
+
+function printFinalAnswer(text: string | undefined): void {
+  console.log('\nFinal answer:');
+  console.log(text || '(no final answer produced)');
+}
+
+// ─── Tool definitions (LangChain-specific) ───────────────────────────────────
 
 const submitPact = tool(
   async ({ wallet_id, intent }) => {
     const response = await pactsApi.submitPact({
       wallet_id,
       intent,
-      spec: {
-        policies: [
-          {
-            name: 'max-tx-limit',
-            type: 'transfer',
-            rules: {
-              effect: 'allow',
-              when: {
-                chain_in: [CHAIN_ID],
-                token_in: [{ chain_id: CHAIN_ID, token_id: TOKEN_ID }],
-              },
-              deny_if: { amount_gt: '0.002' },
-            },
-          },
-        ],
-        completion_conditions: [{ type: 'time_elapsed', threshold: '86400' }],
-      },
+      spec: buildTransferPactSpec(),
     });
     const result = response.data.result;
     capturePactSession(result);
-    // Auto-activated pacts may carry status=active without api_key — fetch it now
-    if (result && typeof result === 'object') {
-      const r = result as unknown as Record<string, unknown>;
-      const id = (r.pact_id ?? r.id) as string | undefined;
-      if (r.status === 'active' && typeof id === 'string' && !pactSessions.has(id)) {
-        try {
-          const full = (await pactsApi.getPact(id)).data.result;
-          capturePactSession(full);
-        } catch {
-          // Best-effort capture; agent can call get_pact explicitly to retry.
-        }
-      }
-    }
+    await backfillPactSessionIfActive(result);
     return result;
   },
   {
@@ -369,16 +532,14 @@ const getPact = tool(
   },
   {
     name: 'get_pact',
-    description: 'Fetch the current state of a pact, including its status and api_key once active.',
-    schema: z.object({
-      pact_id: z.string(),
-    }),
+    description: 'Fetch a pact, including its status and api_key once active.',
+    schema: z.object({ pact_id: z.string() }),
   },
 );
 
 const estimateTransferFee = tool(
   async ({ wallet_uuid, dst_addr, token_id, amount, pact_id }) => {
-    const api = txApiFor(pact_id);
+    const api = txApiForPact(pact_id);
     const response = await api.estimateTransferFee(wallet_uuid, {
       chain_id: CHAIN_ID,
       dst_addr,
@@ -398,42 +559,39 @@ const estimateTransferFee = tool(
       pact_id: z
         .string()
         .optional()
-        .describe(
-          'Pact id from submit_pact / get_pact. Pass it to estimate under pact-scoped permissions.',
-        ),
+        .describe('Pact id. Pass it to estimate under pact-scoped permissions.'),
     }),
   },
 );
 
 const transferTokens = tool(
-  async ({ wallet_uuid, dst_addr, token_id, amount, request_id, pact_id }) => {
-    return await returnPolicyDenial(async () => {
-      const api = txApiFor(pact_id);
+  async ({ wallet_uuid, dst_addr, token_id, amount, pact_id }) => {
+    return returnPolicyDenial(async () => {
+      const api = txApiForPact(pact_id);
       const response = await api.transferTokens(wallet_uuid, {
         chain_id: CHAIN_ID,
         dst_addr,
         token_id,
         amount,
-        request_id,
+        request_id: randomUUID(),
       });
       return response.data.result;
     });
   },
   {
     name: 'transfer_tokens',
-    description: 'Execute a policy-enforced transfer.',
+    description:
+      'Execute a policy-enforced transfer. A unique request_id is auto-generated ' +
+      'and returned in the response; use that value to track or look up the tx later.',
     schema: z.object({
       wallet_uuid: z.string(),
       dst_addr: z.string(),
       token_id: z.string(),
       amount: z.string(),
-      request_id: z.string(),
       pact_id: z
         .string()
         .optional()
-        .describe(
-          'Pact id from submit_pact / get_pact. REQUIRED to invoke under pact-scoped policy permissions.',
-        ),
+        .describe('Pact id from submit_pact / get_pact. REQUIRED to invoke under pact-scoped policy permissions.'),
     }),
   },
 );
@@ -454,21 +612,7 @@ const getTransactionRecordByRequestId = tool(
 );
 
 const getAuditLogs = tool(
-  async ({ wallet_id, limit }) => {
-    const response = await auditApi.listAuditLogs(
-      wallet_id,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      limit ?? 20,
-    );
-    return response.data.result;
-  },
+  async ({ wallet_id, limit }) => listRecentAuditLogs(wallet_id, limit),
   {
     name: 'get_audit_logs',
     description: 'List recent audit log entries for the wallet.',
@@ -488,16 +632,14 @@ const tools = [
   getAuditLogs,
 ];
 
-const walletId = process.env.AGENT_WALLET_WALLET_ID!;
-const destination =
-  process.env.CAW_DESTINATION ?? '0x1111111111111111111111111111111111111111';
+// ─── Boot ────────────────────────────────────────────────────────────────────
 
 console.log('Registered Cobo LangChain tools:');
 for (const t of tools) {
   console.log(`  - ${t.name}: ${t.description}`);
 }
 
-if (!process.env.OPENAI_API_KEY) {
+if (!env.openaiApiKey) {
   console.log('\nSet OPENAI_API_KEY to run a full agent demo prompt.');
   process.exit(0);
 }
@@ -505,140 +647,52 @@ if (!process.env.OPENAI_API_KEY) {
 const agent = createAgent({
   model: 'openai:gpt-4.1-mini',
   tools,
-  systemPrompt:
-    'Submit a pact before execution, wait until it is active, execute compliant blockchain actions, and if a tool returns policy denial guidance then retry inside the allowed boundary.',
+  systemPrompt: DEMO_SYSTEM_PROMPT,
 });
 
-const prompt =
-  `Use wallet ${walletId}. ` +
-  `Submit a pact for a controlled transfer task and wait until it is active. ` +
-  `Using the newly created pact, transfer 0.001 ${TOKEN_ID} to ${destination} on ${CHAIN_ID}. ` +
-  `Next, using the same pact, attempt 0.005 ${TOKEN_ID}. If denied, follow the denial ` +
-  `guidance and retry with a compliant amount. ` +
-  `Track the result by request_id and summarize what happened.`;
+const result = await agent.invoke({
+  messages: [{ role: 'user', content: DEMO_USER_PROMPT }],
+});
 
-interface ToolCallInfo {
-  name: string;
-  args: Record<string, unknown>;
-  result?: string;
-}
+// ─── LangChain → ToolCallRecord adapter ──────────────────────────────────────
+// LangChain threads each tool call into the message list: an AI message holds
+// one or more `tool_calls` entries, and the corresponding tool response
+// carries the same `tool_call_id`. We pair them up into `ToolCallRecord`s and
+// also extract the last assistant message without any tool plumbing as the
+// "final answer".
 
-interface AgentMessage {
+interface LangChainMessage {
   tool_calls?: { id: string; name: string; args?: Record<string, unknown> }[];
   tool_call_id?: string;
   content?: string;
 }
 
-function truncate(value: unknown, limit = 120): string {
-  const text = typeof value === 'string' ? value : JSON.stringify(value);
-  return text.length <= limit ? text : text.slice(0, limit - 1) + '…';
-}
-
-function formatToolArgs(args: Record<string, unknown>): string {
-  const skip = new Set(['wallet_uuid', 'wallet_id']);
-  const parts: string[] = [];
-  for (const [k, v] of Object.entries(args)) {
-    if (skip.has(k)) continue;
-    parts.push(`${k}=${truncate(v, 60)}`);
-  }
-  return parts.join(', ') || '-';
-}
-
-function summariseToolResult(raw: string | undefined): string {
-  if (!raw) return '(no result)';
-  let payload: unknown;
-  try {
-    payload = JSON.parse(raw);
-  } catch {
-    return truncate(raw.replace(/\n/g, ' '));
-  }
-  if (!payload || typeof payload !== 'object') return truncate(payload);
-  const p = payload as Record<string, unknown>;
-  // submit_pact result envelope: { pact_id, status, approval_id?, message? }
-  if ('pact_id' in p && 'status' in p && !('request_id' in p) && !('spec' in p)) {
-    return `pact_id=${truncate(p.pact_id, 36)} status=${p.status}`;
-  }
-  // get_pact result: full pact record (contains id + spec)
-  if ('id' in p && 'status' in p && 'spec' in p) {
-    return (
-      `pact_id=${truncate(p.id, 36)} status=${p.status} ` +
-      `api_key=${p.api_key ? 'present' : 'null'}`
-    );
-  }
-  // transfer / record result
-  if ('request_id' in p) {
-    const bits: string[] = [`request_id=${truncate(p.request_id, 36)}`];
-    if (p.status_display) bits.push(`status=${p.status_display}`);
-    else if ('status' in p) bits.push(`status=${p.status}`);
-    if (p.transaction_hash) bits.push(`hash=${p.transaction_hash}`);
-    return bits.join(' ');
-  }
-  // estimate fee result
-  if ('fee' in p || 'gas_price' in p || 'estimated_fee' in p) {
-    return `fee=${truncate(p.fee ?? p.estimated_fee ?? p.gas_price)}`;
-  }
-  // audit logs page
-  if ('items' in p && Array.isArray(p.items)) {
-    const items = p.items as { result?: string }[];
-    const allowed = items.filter(it => it.result === 'allowed').length;
-    const denied = items.filter(it => it.result === 'denied').length;
-    return `audit entries=${items.length} allowed=${allowed} denied=${denied}`;
-  }
-  // structured policy denial wrapped by returnPolicyDenial
-  if ('error' in p) {
-    const err = p.error;
-    if (err && typeof err === 'object') {
-      const e = err as { code?: string; reason?: string };
-      const sug = p.suggestion ? ` suggestion=${truncate(p.suggestion, 80)}` : '';
-      return `DENIED code=${e.code ?? '-'} reason=${e.reason ?? '-'}${sug}`;
-    }
-    return `ERROR ${err}`;
-  }
-  return truncate(p);
-}
-
-function printAgentResult(result: unknown): void {
-  const messages = ((result as { messages?: AgentMessage[] })?.messages ?? []) as AgentMessage[];
-  const toolCalls = new Map<string, ToolCallInfo>();
-  let finalText = '';
-
+function toRecords(messages: LangChainMessage[]): ToolCallRecord[] {
+  const byId = new Map<string, ToolCallRecord>();
   for (const msg of messages) {
-    const tcs = msg.tool_calls ?? [];
-    for (const tc of tcs) {
-      toolCalls.set(tc.id, { name: tc.name, args: tc.args ?? {} });
+    for (const tc of msg.tool_calls ?? []) {
+      byId.set(tc.id, { name: tc.name, args: tc.args });
     }
-    const tcId = msg.tool_call_id;
-    if (tcId && toolCalls.has(tcId)) {
-      toolCalls.get(tcId)!.result = msg.content ?? '';
-    }
-    const content = msg.content ?? '';
-    if (content && tcs.length === 0 && !tcId) {
-      finalText = content;
+    if (msg.tool_call_id && byId.has(msg.tool_call_id)) {
+      byId.get(msg.tool_call_id)!.result = msg.content ?? '';
     }
   }
-
-  console.log('\nTool calls:');
-  if (toolCalls.size === 0) {
-    console.log('  (none)');
-  }
-  let idx = 1;
-  for (const call of toolCalls.values()) {
-    const args = formatToolArgs(call.args);
-    const summary = summariseToolResult(call.result);
-    console.log(`  ${idx}. ${call.name}(${args})`);
-    console.log(`     → ${summary}`);
-    idx++;
-  }
-
-  console.log('\nFinal answer:');
-  console.log(finalText || '(no final answer produced)');
+  return [...byId.values()];
 }
 
-const result = await agent.invoke({
-  messages: [{ role: 'user', content: prompt }],
-});
+function extractFinalText(messages: LangChainMessage[]): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.content && !m.tool_call_id && !(m.tool_calls ?? []).length) {
+      return m.content;
+    }
+  }
+  return undefined;
+}
 
-printAgentResult(result);
+const messages = ((result as { messages?: LangChainMessage[] }).messages ?? []) as LangChainMessage[];
+printToolCalls(toRecords(messages));
+printFinalAnswer(extractFinalText(messages));
 ```
 
 Add `get_audit_logs` once you want the model to explain operator history as part of the same loop. Keep the first example narrower so the pact-to-execution path is easier to follow.

@@ -33,54 +33,73 @@ export OPENAI_API_KEY=your-openai-api-key
 ## Step 3: Create Agno agent
 
 ```python title="agno_quickstart.py"
-from __future__ import annotations
-
 import asyncio
 import os
 
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-
-from cobo_agentic_wallet.client import WalletAPIClient
+from cobo_agentic_wallet import WalletAPIClient
 from cobo_agentic_wallet.integrations.agno import CoboAgentWalletTools
 
+INCLUDE_TOOLS = [
+    "submit_pact",
+    "get_pact",
+    "transfer_tokens",
+    "estimate_transfer_fee",
+    "get_transaction_record_by_request_id",
+    "get_audit_logs",
+]
 
-def main() -> None:
-    client = WalletAPIClient(
-        base_url=os.environ["AGENT_WALLET_API_URL"],
-        api_key=os.environ["AGENT_WALLET_API_KEY"],
-    )
-    tools = CoboAgentWalletTools(client=client)
 
-    wallet_uuid = "your-wallet-uuid"
-    destination = "0x1111111111111111111111111111111111111111"
-
-    agent = Agent(
-        model=OpenAIChat(id="gpt-4.1-mini"),
-        tools=[tools],
-        markdown=True,
-        instructions=(
-            "Use Cobo tools. Before executing transfers, submit a pact using submit_pact and "
-            "wait until its status is active. If a transfer is denied, parse the suggestion "
-            "and retry with a compliant amount."
-        ),
+def build_demo_prompt(wallet_id: str, destination: str) -> str:
+    return (
+        f"Use wallet {wallet_id}. "
+        "Submit a pact for a controlled transfer task and wait until it is active. "
+        f"Using the newly created pact, transfer 0.001 SETH to {destination} on SETH. "
+        "Next, using the same pact, attempt 0.005 SETH. If denied, follow the denial "
+        "guidance and retry with a compliant amount. "
+        "Track the result by request_id and summarize what happened."
     )
 
-    prompt = (
-        f"Use wallet {wallet_uuid}. "
-        "First, submit a pact with intent 'Transfer tokens for testing', permissions "
-        "write:transfer, max_tx 100, and duration 86400. Wait until the pact is active. "
-        f"Then transfer 50 USDC from wallet {wallet_uuid} to {destination} on BASE. "
-        "Then attempt 200 USDC. If denied, retry with a compliant amount from the suggestion. "
-        f"Finally fetch audit logs for wallet {wallet_uuid}."
+
+async def main() -> None:
+    api_url = os.environ["AGENT_WALLET_API_URL"]
+    api_key = os.environ["AGENT_WALLET_API_KEY"]
+    wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
+    destination = os.environ.get(
+        "CAW_DESTINATION",
+        "0x1111111111111111111111111111111111111111",
     )
 
-    asyncio.run(agent.aprint_response(prompt))
-    asyncio.run(client.close())
+    async with WalletAPIClient(base_url=api_url, api_key=api_key) as client:
+        toolkit = CoboAgentWalletTools(client=client, include_tools=INCLUDE_TOOLS)
+
+        try:
+            print("Registered Cobo tools (sync):")
+            for name in sorted(toolkit.functions.keys()):
+                print(f"  - {name}")
+            print("Registered Cobo tools (async):")
+            for name in sorted(toolkit.async_functions.keys()):
+                print(f"  - {name}")
+
+            if not os.getenv("OPENAI_API_KEY"):
+                print("\nSet OPENAI_API_KEY to run a full Agno agent demo prompt.")
+                return
+
+            from agno.agent import Agent
+            from agno.models.openai import OpenAIChat
+
+            agent = Agent(
+                model=OpenAIChat(id="gpt-4.1-mini"),
+                tools=[toolkit],
+                markdown=True,
+            )
+
+            await agent.aprint_response(build_demo_prompt(wallet_id, destination))
+        finally:
+            await toolkit.aclose()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 ```
 
 If you want to keep the runtime narrower at first, select a smaller tool subset:
