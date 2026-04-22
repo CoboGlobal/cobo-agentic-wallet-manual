@@ -1,37 +1,28 @@
 ---
-title: "OpenAI Agents SDK"
-description: "Use Cobo Agentic Wallet with OpenAI Agents SDK in Python or TypeScript."
-sidebarTitle: "OpenAI Agents"
+title: "Vercel AI SDK"
+description: "Use Cobo Agentic Wallet from TypeScript agent flows built with the Vercel AI SDK."
+sidebarTitle: "Vercel AI SDK"
 ---
 
-Start with the language SDK quickstart first, then move to OpenAI Agents SDK once the pact-to-execution flow works without an agent loop.
+Use this path when your runtime is TypeScript-first and already built around the Vercel AI SDK.
 
-## Before you start
+Run [CLI Setup](/products/agentic-wallet/manual/developer/cli) and [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript) first, then add the AI SDK layer.
 
-Complete the [CLI quickstart](/products/agentic-wallet/manual/developer/cli) first so your runtime already has a paired wallet, API key, and wallet UUID.
+CAW does not ship a dedicated AI SDK adapter. The recommended pattern is to keep CAW behind a small set of AI SDK tools backed by `@cobo/agentic-wallet`.
 
 ## 5-minute outcome
 
-1. Create Cobo-enabled OpenAI agent
-2. Submit a pact and wait for owner approval
-3. Execute success plus denial contract-call sequence
-4. Let agent adapt using denial context
-5. Track by `request_id` and verify with audit logs
+1. Create CAW-backed tools in TypeScript
+2. Submit a pact before execution
+3. Execute a blockchain action
+4. Return policy denials as normal tool output
+5. Track the result by `request_id`
 
 ## Step 1: Install
 
-<Tabs>
-<Tab title="Python">
 ```bash
-pip install "cobo-agentic-wallet[openai]"
+npm install @cobo/agentic-wallet ai @ai-sdk/openai zod
 ```
-</Tab>
-<Tab title="TypeScript">
-```bash
-npm install @cobo/agentic-wallet @openai/agents zod
-```
-</Tab>
-</Tabs>
 
 ## Step 2: Configure environment
 
@@ -41,96 +32,13 @@ export AGENT_WALLET_API_KEY=your-api-key
 export OPENAI_API_KEY=your-openai-api-key
 ```
 
-## Step 3: Run agent flow
+## Step 3: Build a narrow CAW tool set
 
-<Tabs>
-<Tab title="Python">
-```python title="openai_quickstart.py"
-import asyncio
-import os
-
-from cobo_agentic_wallet import WalletAPIClient
-from cobo_agentic_wallet.integrations.openai import create_cobo_agent, create_cobo_agent_context
-
-INCLUDE_TOOLS = [
-    "submit_pact",
-    "get_pact",
-    "transfer_tokens",
-    "estimate_transfer_fee",
-    "get_transaction_record_by_request_id",
-    "get_audit_logs",
-]
-
-
-def build_demo_prompt(wallet_id: str, destination: str) -> str:
-    return (
-        f"Use wallet {wallet_id}. "
-        "Submit a pact for a controlled transfer task and wait until it is active. "
-        f"Using the newly created pact, transfer 0.001 SETH to {destination} on SETH. "
-        "Next, using the same pact, attempt 0.005 SETH. If denied, follow the denial "
-        "guidance and retry with a compliant amount. "
-        "Track the result by request_id and summarize what happened."
-    )
-
-
-async def main() -> None:
-    api_url = os.environ["AGENT_WALLET_API_URL"]
-    api_key = os.environ["AGENT_WALLET_API_KEY"]
-    wallet_id = os.environ["AGENT_WALLET_WALLET_ID"]
-    destination = os.environ.get(
-        "CAW_DESTINATION",
-        "0x1111111111111111111111111111111111111111",
-    )
-
-    async with WalletAPIClient(base_url=api_url, api_key=api_key) as client:
-        agent = create_cobo_agent(
-            client=client,
-            model="gpt-4.1-mini",
-            include_tools=INCLUDE_TOOLS,
-        )
-        try:
-            print("Registered Cobo OpenAI tools:")
-            for tool in agent.tools:
-                name = getattr(tool, "name", tool.__class__.__name__)
-                description = getattr(tool, "description", "")
-                print(f"  - {name}: {description}")
-
-            if not os.getenv("OPENAI_API_KEY"):
-                print("\nSet OPENAI_API_KEY to run a full OpenAI agent demo prompt.")
-                return
-
-            try:
-                from agents import Runner
-            except ImportError as exc:
-                raise RuntimeError(
-                    "openai-agents is required for this example. "
-                    "Install with: pip install 'cobo-agentic-wallet[openai]'"
-                ) from exc
-
-            context = create_cobo_agent_context()
-            result = await Runner.run(
-                agent,
-                build_demo_prompt(wallet_id, destination),
-                context=context,
-                max_turns=20,
-            )
-            print("\nAgent result:", result.final_output)
-        finally:
-            # Release any pact-scoped aiohttp sessions the toolkit spun up
-            # during the run; the owner client is closed by the outer async-with.
-            toolkit = getattr(agent, "_caw_toolkit", None)
-            if toolkit is not None:
-                await toolkit.aclose()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-</Tab>
-<Tab title="TypeScript">
-```typescript title="openai_quickstart.ts"
+```typescript title="vercel_ai_sdk_quickstart.ts"
 import { randomUUID } from 'node:crypto';
-import { Agent, run, tool } from '@openai/agents';
+
+import { openai } from '@ai-sdk/openai';
+import { generateText, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
 
 import {
@@ -390,16 +298,16 @@ function printFinalAnswer(text: string | undefined): void {
   console.log(text || '(no final answer produced)');
 }
 
-// ─── Tool definitions (@openai/agents-specific) ──────────────────────────────
+// ─── Tool definitions (Vercel AI SDK-specific) ───────────────────────────────
+// In v5 the option is `inputSchema` (renamed from `parameters` in v4).
 
-const submitPact = tool({
-  name: 'submit_pact',
+const submitPactTool = tool({
   description: 'Submit a pact and return the pact id.',
-  parameters: z.object({
+  inputSchema: z.object({
     wallet_id: z.string(),
     intent: z.string(),
   }),
-  async execute({ wallet_id, intent }) {
+  execute: async ({ wallet_id, intent }) => {
     const response = await pactsApi.submitPact({
       wallet_id,
       intent,
@@ -412,32 +320,30 @@ const submitPact = tool({
   },
 });
 
-const getPact = tool({
-  name: 'get_pact',
+const getPactTool = tool({
   description: 'Fetch a pact, including its status and api_key once active.',
-  parameters: z.object({ pact_id: z.string() }),
-  async execute({ pact_id }) {
+  inputSchema: z.object({ pact_id: z.string() }),
+  execute: async ({ pact_id }) => {
     const response = await pactsApi.getPact(pact_id);
     capturePactSession(response.data.result);
     return response.data.result;
   },
 });
 
-const estimateTransferFee = tool({
-  name: 'estimate_transfer_fee',
+const estimateTransferFeeTool = tool({
   description: 'Estimate fees for a token transfer before submitting it.',
-  parameters: z.object({
+  inputSchema: z.object({
     wallet_uuid: z.string(),
     dst_addr: z.string(),
     token_id: z.string(),
     amount: z.string(),
     pact_id: z
       .string()
-      .nullable()
+      .optional()
       .describe('Pact id. Pass it to estimate under pact-scoped permissions.'),
   }),
-  async execute({ wallet_uuid, dst_addr, token_id, amount, pact_id }) {
-    const api = txApiForPact(pact_id ?? undefined);
+  execute: async ({ wallet_uuid, dst_addr, token_id, amount, pact_id }) => {
+    const api = txApiForPact(pact_id);
     const response = await api.estimateTransferFee(wallet_uuid, {
       chain_id: CHAIN_ID,
       dst_addr,
@@ -448,24 +354,23 @@ const estimateTransferFee = tool({
   },
 });
 
-const transferTokens = tool({
-  name: 'transfer_tokens',
+const transferTokensTool = tool({
   description:
     'Execute a policy-enforced transfer. A unique request_id is auto-generated ' +
     'and returned in the response; use that value to track or look up the tx later.',
-  parameters: z.object({
+  inputSchema: z.object({
     wallet_uuid: z.string(),
     dst_addr: z.string(),
     token_id: z.string(),
     amount: z.string(),
     pact_id: z
       .string()
-      .nullable()
+      .optional()
       .describe('Pact id from submit_pact / get_pact. REQUIRED to invoke under pact-scoped policy permissions.'),
   }),
-  async execute({ wallet_uuid, dst_addr, token_id, amount, pact_id }) {
+  execute: async ({ wallet_uuid, dst_addr, token_id, amount, pact_id }) => {
     return returnPolicyDenial(async () => {
-      const api = txApiForPact(pact_id ?? undefined);
+      const api = txApiForPact(pact_id);
       const response = await api.transferTokens(wallet_uuid, {
         chain_id: CHAIN_ID,
         dst_addr,
@@ -478,45 +383,41 @@ const transferTokens = tool({
   },
 });
 
-const getTransactionRecordByRequestId = tool({
-  name: 'get_transaction_record_by_request_id',
+const getTransactionRecordByRequestIdTool = tool({
   description: 'Look up a transaction record by request id.',
-  parameters: z.object({
+  inputSchema: z.object({
     wallet_uuid: z.string(),
     request_id: z.string(),
   }),
-  async execute({ wallet_uuid, request_id }) {
+  execute: async ({ wallet_uuid, request_id }) => {
     const response = await recordsApi.getUserTransactionByRequestId(wallet_uuid, request_id);
     return response.data.result;
   },
 });
 
-const getAuditLogs = tool({
-  name: 'get_audit_logs',
+const getAuditLogsTool = tool({
   description: 'List recent audit log entries for the wallet.',
-  parameters: z.object({
+  inputSchema: z.object({
     wallet_id: z.string(),
-    limit: z.number().int().positive().nullable(),
+    limit: z.number().int().positive().optional(),
   }),
-  async execute({ wallet_id, limit }) {
-    return listRecentAuditLogs(wallet_id, limit ?? 20);
-  },
+  execute: async ({ wallet_id, limit }) => listRecentAuditLogs(wallet_id, limit),
 });
 
-const tools = [
-  submitPact,
-  getPact,
-  transferTokens,
-  estimateTransferFee,
-  getTransactionRecordByRequestId,
-  getAuditLogs,
-];
+const tools = {
+  submit_pact: submitPactTool,
+  get_pact: getPactTool,
+  estimate_transfer_fee: estimateTransferFeeTool,
+  transfer_tokens: transferTokensTool,
+  get_transaction_record_by_request_id: getTransactionRecordByRequestIdTool,
+  get_audit_logs: getAuditLogsTool,
+};
 
 // ─── Boot ────────────────────────────────────────────────────────────────────
 
-console.log('Registered Cobo OpenAI tools:');
-for (const t of tools) {
-  console.log(`  - ${t.name}: ${t.description}`);
+console.log('Registered Cobo Vercel AI SDK tools:');
+for (const [name, t] of Object.entries(tools)) {
+  console.log(`  - ${name}: ${t.description}`);
 }
 
 if (!env.openaiApiKey) {
@@ -524,103 +425,75 @@ if (!env.openaiApiKey) {
   process.exit(0);
 }
 
-const agent = new Agent({
-  name: 'cobo-operator',
-  model: 'gpt-4.1-mini',
-  instructions: DEMO_SYSTEM_PROMPT,
+// `stepCountIs(N)` caps how many model→tool→model loops generateText runs.
+// The demo takes up to a dozen tool calls (pact lifecycle + retries) and the
+// final summary message counts as an extra step, so give it generous headroom.
+const result = await generateText({
+  model: openai('gpt-4.1-mini'),
+  system: DEMO_SYSTEM_PROMPT,
+  prompt: DEMO_USER_PROMPT,
   tools,
+  stopWhen: stepCountIs(20),
 });
 
-const result = await run(agent, DEMO_USER_PROMPT, { maxTurns: 20 });
+// ─── Vercel AI SDK → ToolCallRecord adapter ──────────────────────────────────
+// `result.steps[]` has one entry per model/tool turn. Each step exposes
+// parallel `toolCalls` and `toolResults` arrays that share `toolCallId`;
+// we flatten them into `ToolCallRecord[]` across all steps.
 
-// ─── @openai/agents → ToolCallRecord adapter ─────────────────────────────────
-// `RunResult.history` interleaves `function_call` items (with stringified
-// `arguments`) and matching `function_call_result` items (with `output.text`).
-// We pair them by `callId` and parse the argument JSON once.
-
-interface FunctionCallItem {
-  type: 'function_call';
-  callId: string;
-  name: string;
-  arguments: string;
+interface VercelToolCall {
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+}
+interface VercelToolResult {
+  toolCallId: string;
+  output?: unknown;
 }
 
-interface FunctionCallResultItem {
-  type: 'function_call_result';
-  callId: string;
-  output: { type: 'text'; text: string } | { type: 'image'; data: string };
-}
-
-type HistoryItem = FunctionCallItem | FunctionCallResultItem | { type: string };
-
-function toRecords(history: HistoryItem[]): ToolCallRecord[] {
-  const byCallId = new Map<string, ToolCallRecord>();
-  for (const item of history) {
-    if (item.type === 'function_call') {
-      const call = item as FunctionCallItem;
-      let args: Record<string, unknown> | undefined;
-      try {
-        args = call.arguments ? JSON.parse(call.arguments) : undefined;
-      } catch {
-        args = undefined;
-      }
-      byCallId.set(call.callId, { name: call.name, args });
-    } else if (item.type === 'function_call_result') {
-      const res = item as FunctionCallResultItem;
-      const existing = byCallId.get(res.callId);
-      if (!existing) continue;
-      existing.result = res.output && 'text' in res.output ? res.output.text : res.output;
+function toRecords(
+  steps: Array<{ toolCalls?: VercelToolCall[]; toolResults?: VercelToolResult[] }>,
+): ToolCallRecord[] {
+  const byId = new Map<string, ToolCallRecord>();
+  for (const step of steps) {
+    for (const c of step.toolCalls ?? []) {
+      byId.set(c.toolCallId, { name: c.toolName, args: c.input });
+    }
+    for (const r of step.toolResults ?? []) {
+      const existing = byId.get(r.toolCallId);
+      if (existing) existing.result = r.output;
     }
   }
-  return [...byCallId.values()];
+  return [...byId.values()];
 }
 
-const history = ((result as { history?: HistoryItem[] }).history ?? []) as HistoryItem[];
-printToolCalls(toRecords(history));
-printFinalAnswer(
-  typeof result.finalOutput === 'string' ? result.finalOutput : JSON.stringify(result.finalOutput),
-);
+const steps = (result.steps ?? []) as unknown as Array<{
+  toolCalls?: VercelToolCall[];
+  toolResults?: VercelToolResult[];
+}>;
+printToolCalls(toRecords(steps));
+printFinalAnswer(result.text);
 ```
 
-Add `get_audit_logs` as a fourth tool when you want the model to summarize operator activity on its own. Keep it out of the first example so the core authorization and execution loop stays obvious.
-</Tab>
-</Tabs>
+## Recommended tool preset
 
-## Step 4: Validate results
+Start with this subset:
 
-Confirm final output includes:
+- `submit_pact`
+- `contract_call` or `transfer_tokens`
+- `get_transaction_record_by_request_id`
 
-- pact submission and activation confirmation
-- success event
-- denial reason and suggestion
-- successful compliant retry
-- transaction lookup by `request_id`
-- audit confirmation
+Add `get_audit_logs` once you want the model to summarize operator history too. Do not expose wallet management, delegation, and every transaction primitive unless the runtime really needs them.
 
-## Keep the OpenAI layer thin
+## Design guidance
 
-The OpenAI agent should coordinate the CAW flow, not absorb every wallet capability by default.
+- keep the tool set narrow and role-specific
+- use pact submission as a mandatory step before execution
+- return policy denials as normal tool output so the model can adapt
+- prefer transaction-record tracking over raw transaction polling
 
-- expose only the tools needed for the runtime role
-- keep pact submission and execution close together so the approval story stays legible
-- prefer durable tracking by `request_id`
-- move deterministic checks outside the agent loop when you need strict control
+## Related guides
 
-## Go further
-
-In Python, `create_cobo_agent` wires up the widened CAW runtime toolkit directly. In TypeScript, the normal pattern is to wrap the CAW TypeScript SDK in OpenAI tool functions and expose only the subset your runtime needs.
-
-- **Define custom function tools** — in Python, add functions alongside CAW's built-in adapter; in TypeScript, wrap `@cobo/agentic-wallet` API calls in framework-native tool definitions.
-- **Keep CAW behind a narrow tool surface** — do not expose the whole API to the model. Start with Pact Drafting, Execution, and Observer roles.
-- **Use direct SDK calls for out-of-band operations** — run pact submission, policy dry-runs, and audit queries programmatically outside the agent loop when you need deterministic behavior.
-- **Combine with CLI** — use `caw` for onboarding and debugging; use the SDK tools for agent-time execution.
-- **Use role-based presets** — start with Pact Drafting, Execution, and Observer responsibilities instead of exposing the entire toolkit immediately.
-
-<CardGroup cols={2}>
-  <Card title="OpenAI Integration Details" icon="brain" href="/products/agentic-wallet/manual/reference/openai">
-    Context handling and denial behavior.
-  </Card>
-  <Card title="Python SDK" href="/products/agentic-wallet/manual/developer/api-client-python">
-    Use WalletAPIClient directly for custom tool functions.
-  </Card>
-</CardGroup>
+- [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript)
+- [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai)
+- [Contract Calls](/products/agentic-wallet/manual/developer/contract-calls)

@@ -114,22 +114,24 @@
             "pages": [
               "products/agentic-wallet/manual/developer/mcp",
               "products/agentic-wallet/manual/developer/langchain",
-              "products/agentic-wallet/manual/developer/openai"
+              "products/agentic-wallet/manual/developer/openai",
+              "products/agentic-wallet/manual/developer/agno",
+              "products/agentic-wallet/manual/developer/crewai",
+              "products/agentic-wallet/manual/developer/mastra",
+              "products/agentic-wallet/manual/developer/vercel-ai-sdk"
             ]
           },
           {
             "group": "Concepts",
             "pages": [
               "products/agentic-wallet/manual/developer/features",
-              "products/agentic-wallet/manual/developer/technical-architecture",
-              "products/agentic-wallet/manual/developer/pacts",
-              "products/agentic-wallet/manual/developer/pact-policies"
+              "products/agentic-wallet/manual/developer/technical-architecture"
             ]
           },
           {
             "group": "How-to",
             "pages": [
-              "products/agentic-wallet/manual/developer/create-pact",
+              "products/agentic-wallet/manual/developer/pacts",
               "products/agentic-wallet/manual/developer/transfers",
               "products/agentic-wallet/manual/developer/contract-calls",
               "products/agentic-wallet/manual/developer/handle-policy-denial",
@@ -139,12 +141,6 @@
               "products/agentic-wallet/manual/developer/wallets",
               "products/agentic-wallet/manual/developer/addresses",
               "products/agentic-wallet/manual/developer/audit"
-            ]
-          },
-          {
-            "group": "Changelog",
-            "pages": [
-              "products/agentic-wallet/manual/developer/changelog"
             ]
           }
         ]
@@ -193,48 +189,23 @@
         "tab": "Reference",
         "groups": [
           {
-            "group": "Supported chains",
+            "group": "General",
             "pages": [
-              "products/agentic-wallet/manual/reference/supported-chains"
+              "products/agentic-wallet/manual/reference/supported-chains",
+              "products/agentic-wallet/manual/reference/pact-policies"
             ]
           },
           {
-            "group": "Tools",
+            "group": "CLI",
             "pages": [
-              "products/agentic-wallet/manual/reference/cli",
-              "products/agentic-wallet/manual/reference/mcp"
-            ]
-          },
-          {
-            "group": "SDK",
-            "pages": [
-              "products/agentic-wallet/manual/reference/python",
-              "products/agentic-wallet/manual/reference/typescript"
-            ]
-          },
-          {
-            "group": "Framework integrations",
-            "pages": [
-              "products/agentic-wallet/manual/reference/toolkit",
-              "products/agentic-wallet/manual/reference/langchain",
-              "products/agentic-wallet/manual/reference/openai"
+              "products/agentic-wallet/manual/reference/cli"
             ]
           },
           {
             "group": "API Reference",
             "pages": [
-              {
-                "group": "Health",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/health-check"
-                ]
-              },
-              {
-                "group": "Meta",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/ping"
-                ]
-              },
+              "products/agentic-wallet/manual/reference/changelog",
+
               {
                 "group": "Identity",
                 "pages": [
@@ -342,15 +313,6 @@
                 ]
               },
               {
-                "group": "Telemetry",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/ingest-telemetry",
-                  "products/agentic-wallet/manual/reference/get-telemetry-config",
-                  "products/agentic-wallet/manual/reference/record-langfuse-raw",
-                  "products/agentic-wallet/manual/reference/ingest-session-telemetry"
-                ]
-              },
-              {
                 "group": "Recipes",
                 "pages": [
                   "products/agentic-wallet/manual/reference/list-recipe-library",
@@ -367,12 +329,6 @@
                   "products/agentic-wallet/manual/reference/review-recipe-submission",
                   "products/agentic-wallet/manual/reference/search-recipes",
                   "products/agentic-wallet/manual/reference/get-recipe-document"
-                ]
-              },
-              {
-                "group": "Suggestions",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/get-suggestion"
                 ]
               }
             ]
