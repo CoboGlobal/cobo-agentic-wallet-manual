@@ -807,34 +807,34 @@ caw onboard self-test
 Perform an HTTP request and automatically handle 402 Payment Required
 responses using the x402 or MPP machine-payment protocols.
 
---url is the endpoint to fetch. When a 402 is received, caw detects the
-payment protocol from the response headers (unless overridden), pays using the
-configured wallet, and retries the request with the payment headers.
+`<pact-id>` is the pact UUID used to resolve the paying wallet and the
+pact-scoped API key (same behavior as "caw tx transfer `<pact-id>`"). `<url>` is
+the endpoint to fetch. When a 402 is received, caw detects the payment
+protocol from the response headers (unless overridden), pays using the wallet
+bound to the pact, and retries the request with the payment headers.
 
 Example:
 ```bash
-caw fetch --url https://api.example.com/data --wallet-id `<uuid>` --network eip155:8453
+caw fetch `<pact-uuid>` https://api.example.com/data --network eip155:8453
 ```
 
 ```bash
-caw fetch
+caw fetch <pact-id> <url>
 ```
 
-| Option | Required | Default | Description |
-|---|---|---|---|
-| `--method` / `-X` | No | `GET` | HTTP method to use for the request (e.g. GET, POST, PUT) |
-| `--header` / `-H` | No | `nil` | HTTP request header in Key: Value format; may be repeated |
-| `--data` / `-d` | No | — | Raw HTTP request body to send with the request |
-| `--output` / `-o` | No | `body` | Output mode: body prints the response body only, full includes status code and headers |
-| `--wallet-id` / `-w` | No | — | Wallet UUID to charge for payment; falls back to wallet_uuid in the active wallet (see caw wallet list) |
-| `--protocol` / `-p` | No | `auto` | Payment protocol to use: auto detects from response headers, x402 forces x402, mpp forces MPP |
-| `--network` | No | — | CAIP-2 network filter that excludes payment options on other networks (e.g. eip155:8453); x402 only |
-| `--url` | Yes | — | URL to fetch [required] |
-| `--json` | No | — | Send JSON data (sets Content-Type/Accept to application/json, defaults method to POST) |
-| `--asset` | No | — | Token contract address filter that excludes payment options for other tokens (case-insensitive); x402 only |
-| `--max-amount` | No | — | Maximum acceptable raw token amount; payment options requiring more than this amount are excluded; x402 only |
-| `--deposit` | No | — | Session deposit amount in raw token units; defaults to per_request_amount multiplied by 10; MPP session intent only |
-| `--dry-run` | No | — | Print the payment challenge received in the 402 response and exit without calling the payment API |
+| Option | Default | Description |
+|---|---|---|
+| `--method` / `-X` | `GET` | HTTP method to use for the request (e.g. GET, POST, PUT) |
+| `--header` / `-H` | `nil` | HTTP request header in Key: Value format; may be repeated |
+| `--data` / `-d` | — | Raw HTTP request body to send with the request |
+| `--output` / `-o` | `body` | Output mode: body prints the response body only, full includes status code and headers |
+| `--protocol` / `-p` | `auto` | Payment protocol to use: auto detects from response headers, x402 forces x402, mpp forces MPP |
+| `--network` | — | CAIP-2 network filter that excludes payment options on other networks (e.g. eip155:8453); x402 only |
+| `--json` | — | Send JSON data (sets Content-Type/Accept to application/json, defaults method to POST) |
+| `--asset` | — | Token contract address filter that excludes payment options for other tokens (case-insensitive); x402 only |
+| `--max-amount` | — | Maximum acceptable raw token amount; payment options requiring more than this amount are excluded; x402 only |
+| `--deposit` | — | Session deposit amount in raw token units; defaults to per_request_amount multiplied by 10; MPP session intent only |
+| `--dry-run` | — | Print the payment challenge received in the 402 response and exit without calling the payment API |
 
 ## `caw payment`
 
@@ -877,6 +877,11 @@ relay server and submit an on-chain requestClose transaction directly; after a
 force-close there is a 15-minute grace period before you can reclaim funds
 with "caw payment session withdraw".
 
+The session is closed under the pact that originally opened it (persisted in
+active.json). Pass --pact-id to override when that pact has been rotated or
+revoked, or to recover a session opened by an older CLI that did not persist
+the pact id.
+
 ```bash
 caw payment session close
 ```
@@ -886,14 +891,19 @@ caw payment session close
 | `--realm` | — | Realm of the session to close |
 | `--channel-id` | — | Channel ID of the session to close |
 | `--force` | — | Bypass RS and close on-chain directly via requestClose |
+| `--pact-id` | — | Pact UUID to authorize the close; defaults to the pact that opened the session |
 
 #### `close-all`
 
 Close every active MPP payment session found in the local sessions
 directory. Each session is closed via protocol negotiation with the relay
 server by default. Use --force to bypass the relay server and submit an
-on-chain requestClose for all sessions instead. A summary of closed,
-close-requested, and failed sessions is printed on completion.
+on-chain requestClose for all sessions instead.
+
+Each session is closed under the pact that originally opened it. Sessions
+that have no persisted pact_id (opened by older CLIs) are skipped unless
+--pact-id is provided to apply the same pact to every session. A summary of
+closed, close-requested, failed, and skipped sessions is printed on completion.
 
 ```bash
 caw payment session close-all
@@ -902,6 +912,7 @@ caw payment session close-all
 | Option | Default | Description |
 |---|---|---|
 | `--force` | — | Close all sessions on-chain directly via requestClose |
+| `--pact-id` | — | Pact UUID to authorize all closes; defaults to each session's own pact |
 
 #### `withdraw`
 
@@ -909,6 +920,10 @@ Reclaim deposited funds from an MPP channel that has been closed on-chain
 and whose grace period has expired. The session must be in 'close_requested'
 status; use "caw payment session close --force" to initiate an on-chain close
 if it is not.
+
+The withdraw is signed under the pact that opened the session. Pass
+--pact-id to override when that pact has been rotated, or to recover a
+session opened by an older CLI.
 
 ```bash
 caw payment session withdraw
@@ -918,11 +933,16 @@ caw payment session withdraw
 |---|---|---|
 | `--realm` | — | Realm of the session to withdraw |
 | `--channel-id` | — | Channel ID of the session to withdraw |
+| `--pact-id` | — | Pact UUID to authorize the withdraw; defaults to the pact that opened the session |
 
 ### `gateway`
 
 Start a local HTTP proxy that intercepts outgoing requests and automatically
 handles payment challenges using the x402 or MPP protocol.
+
+`<pact-id>` is the pact UUID used to resolve the paying wallet and the
+pact-scoped API key (same behavior as "caw tx transfer `<pact-id>`"). All
+payments signed by the gateway are authorized under that pact.
 
 Two proxy modes are available. In forward mode the proxy accepts plain HTTP
 requests whose URL contains the full target address. In MITM mode the proxy
@@ -931,17 +951,16 @@ certificate is generated on first run and must be trusted by the HTTP client.
 
 Example:
 ```bash
-caw gateway --wallet-id `<uuid>` --mode mitm --protocol x402
+caw payment gateway `<pact-uuid>` --mode mitm --protocol x402
 ```
 
 ```bash
-caw payment gateway
+caw payment gateway <pact-id>
 ```
 
 | Option | Default | Description |
 |---|---|---|
 | `--listen` / `-l` | `127.0.0.1:8402` | Listen address for the proxy |
-| `--wallet-id` / `-w` | — | Wallet UUID to use for payments |
 | `--protocol` / `-p` | `auto` | Payment protocol: auto, x402, or mpp |
 | `--deposit` | — | Initial deposit amount (in the payment token's base unit) pre-funded into each MPP session |
 | `--mode` | `all` | Proxy mode: all, forward, or mitm |
