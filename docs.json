@@ -202,15 +202,14 @@
             ]
           },
           {
-            "group": "API Reference",
+            "group": "API reference",
             "pages": [
+              "products/agentic-wallet/manual/reference/overview",
               "products/agentic-wallet/manual/reference/changelog",
 
               {
                 "group": "Identity",
                 "pages": [
-                  "products/agentic-wallet/manual/reference/create-principal",
-                  "products/agentic-wallet/manual/reference/list-principals",
                   "products/agentic-wallet/manual/reference/provision-agent",
                   "products/agentic-wallet/manual/reference/get-agent-status",
                   "products/agentic-wallet/manual/reference/list-my-agents",
@@ -218,12 +217,6 @@
                   "products/agentic-wallet/manual/reference/create-api-key",
                   "products/agentic-wallet/manual/reference/list-api-keys",
                   "products/agentic-wallet/manual/reference/revoke-api-key"
-                ]
-              },
-              {
-                "group": "Balance",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/list-balances"
                 ]
               },
               {
@@ -245,6 +238,12 @@
                 ]
               },
               {
+                "group": "Balance",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/list-balances"
+                ]
+              },
+              {
                 "group": "Transactions",
                 "pages": [
                   "products/agentic-wallet/manual/reference/transfer-tokens",
@@ -253,6 +252,7 @@
                   "products/agentic-wallet/manual/reference/estimate-contract-call-fee",
                   "products/agentic-wallet/manual/reference/message-sign",
                   "products/agentic-wallet/manual/reference/list-recent-addresses",
+                  "products/agentic-wallet/manual/reference/list-recent-addresses-by-user",
                   "products/agentic-wallet/manual/reference/drop-transaction",
                   "products/agentic-wallet/manual/reference/speedup-transaction",
                   "products/agentic-wallet/manual/reference/handle-waas-webhook",
@@ -260,18 +260,12 @@
                 ]
               },
               {
-                "group": "Audit",
+                "group": "Transaction records",
                 "pages": [
-                  "products/agentic-wallet/manual/reference/list-audit-logs"
-                ]
-              },
-              {
-                "group": "Pending operations",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/list-pending-operations",
-                  "products/agentic-wallet/manual/reference/get-pending-operation",
-                  "products/agentic-wallet/manual/reference/approve-pending-operation",
-                  "products/agentic-wallet/manual/reference/reject-pending-operation"
+                  "products/agentic-wallet/manual/reference/list-user-transactions",
+                  "products/agentic-wallet/manual/reference/get-user-transaction-by-request-id",
+                  "products/agentic-wallet/manual/reference/get-user-transaction-by-uuid",
+                  "products/agentic-wallet/manual/reference/get-user-transaction"
                 ]
               },
               {
@@ -287,6 +281,21 @@
                   "products/agentic-wallet/manual/reference/update-completion-conditions",
                   "products/agentic-wallet/manual/reference/update-policies",
                   "products/agentic-wallet/manual/reference/list-pact-events"
+                ]
+              },
+              {
+                "group": "Pending operations",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/list-pending-operations",
+                  "products/agentic-wallet/manual/reference/get-pending-operation",
+                  "products/agentic-wallet/manual/reference/approve-pending-operation",
+                  "products/agentic-wallet/manual/reference/reject-pending-operation"
+                ]
+              },
+              {
+                "group": "Audit",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/list-audit-logs"
                 ]
               },
               {
@@ -310,25 +319,6 @@
                 "pages": [
                   "products/agentic-wallet/manual/reference/deposit",
                   "products/agentic-wallet/manual/reference/list-tokens"
-                ]
-              },
-              {
-                "group": "Recipes",
-                "pages": [
-                  "products/agentic-wallet/manual/reference/list-recipe-library",
-                  "products/agentic-wallet/manual/reference/create-recipe",
-                  "products/agentic-wallet/manual/reference/list-featured-recipes",
-                  "products/agentic-wallet/manual/reference/list-recipe-categories",
-                  "products/agentic-wallet/manual/reference/get-recipe-by-slug",
-                  "products/agentic-wallet/manual/reference/update-recipe",
-                  "products/agentic-wallet/manual/reference/archive-recipe",
-                  "products/agentic-wallet/manual/reference/track-recipe-share",
-                  "products/agentic-wallet/manual/reference/track-recipe-use",
-                  "products/agentic-wallet/manual/reference/get-recipe-search-count",
-                  "products/agentic-wallet/manual/reference/submit-recipe",
-                  "products/agentic-wallet/manual/reference/review-recipe-submission",
-                  "products/agentic-wallet/manual/reference/search-recipes",
-                  "products/agentic-wallet/manual/reference/get-recipe-document"
                 ]
               }
             ]

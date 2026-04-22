@@ -1,0 +1,85 @@
+---
+title: "Overview"
+description: "How to authenticate, read responses, and paginate results."
+---
+
+## Base URL
+
+All API endpoints are served under:
+
+```
+https://api.agenticwallet.cobo.com
+```
+
+## Authentication
+
+Pass your API key in the `X-API-Key` request header:
+
+```bash
+curl https://api.agenticwallet.cobo.com/api/v1/wallets \
+  -H "X-API-Key: <your-api-key>"
+```
+
+API keys are scoped to a principal and optionally to a pact. To create one, use the [Create API key](/products/agentic-wallet/manual/reference/create-api-key) endpoint or the `caw` CLI.
+
+## Response format
+
+Every response is wrapped in a standard envelope:
+
+```json
+{
+  "success": true,
+  "result": { ... },
+  "message": "",
+  "suggestion": "",
+  "meta": null
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `success` | `boolean` | `true` on success, `false` on error. |
+| `result` | `object` | The response payload. |
+| `message` | `string` | Optional human-readable message. |
+| `suggestion` | `string` | Optional hint for agents on how to proceed. |
+| `meta` | `object \| null` | Pagination metadata for list endpoints (see below). |
+
+On error, the envelope uses `error` instead of `result`:
+
+```json
+{
+  "success": false,
+  "error": "Not found",
+  "suggestion": ""
+}
+```
+
+## Pagination
+
+List endpoints support cursor-based pagination via `after` and `before` query parameters, and an optional `limit`.
+
+| Parameter | Description |
+|---|---|
+| `limit` | Maximum number of items to return. |
+| `after` | Return items after this cursor (next page). |
+| `before` | Return items before this cursor (previous page). |
+
+Cursors are returned in the `meta` field of the response:
+
+```json
+{
+  "success": true,
+  "result": [ ... ],
+  "meta": {
+    "has_more": true,
+    "after": "cursor-token",
+    "before": null
+  }
+}
+```
+
+To fetch the next page, pass the returned `after` value as the `after` parameter in your next request. When `has_more` is `false`, you have reached the end of the list.
+
+## Policy denials
+
+When an operation is blocked by a policy, the API returns HTTP `403` with a machine-readable error body. See [Handle policy denial](/products/agentic-wallet/manual/developer/handle-policy-denial) for the full error structure and retry patterns.

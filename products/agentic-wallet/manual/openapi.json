@@ -3,7 +3,7 @@
   "info": {
     "title": "Cobo Agentic Wallet Service",
     "description": "Unified wallet engine for human and agent principals",
-    "version": "0.1.0"
+    "version": "1.1.0"
   },
   "paths": {
     "/health": {
@@ -541,7 +541,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApiKeyCreateResult_"
+                  "$ref": "#/components/schemas/StandardResponse_ApiKeyCreateResultPublic_"
                 }
               }
             }
@@ -561,7 +561,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_ApiKeyCreateResult_"
+                  "$ref": "#/components/schemas/StandardResponse_ApiKeyCreateResultPublic_"
                 }
               }
             }
@@ -657,7 +657,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_ApiKeyRead__"
+                  "$ref": "#/components/schemas/StandardResponse_list_ApiKeyPublicRead__"
                 }
               }
             }
@@ -2557,6 +2557,64 @@
         }
       }
     },
+    "/api/v1/wallets/recent-addresses": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "List recent addresses for current user",
+        "description": "This operation retrieves the most recently used recipient addresses across all transfers initiated by the current principal (across all their wallets). Results are ordered from most to least recent.",
+        "operationId": "list_recent_addresses_by_user",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "The maximum number of addresses to return. Range: [1, 50].",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "The maximum number of addresses to return. Range: [1, 50]."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_RecentAddressRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/wallets/{wallet_uuid}/transactions/{transaction_uuid}/drop": {
       "post": {
         "tags": [
@@ -3716,7 +3774,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PactRead_"
+                  "$ref": "#/components/schemas/StandardResponse_PactPublicRead_"
                 }
               }
             }
@@ -3772,7 +3830,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PactRead_"
+                  "$ref": "#/components/schemas/StandardResponse_PactPublicRead_"
                 }
               }
             }
@@ -3828,7 +3886,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PactRead_"
+                  "$ref": "#/components/schemas/StandardResponse_PactPublicRead_"
                 }
               }
             }
@@ -3894,7 +3952,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PactRead_"
+                  "$ref": "#/components/schemas/StandardResponse_PactPublicRead_"
                 }
               }
             }
@@ -3960,7 +4018,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_PactRead_"
+                  "$ref": "#/components/schemas/StandardResponse_PactPublicRead_"
                 }
               }
             }
@@ -5540,7 +5598,7 @@
           "Recipes"
         ],
         "summary": "Search recipes",
-        "description": "Search the recipe library using natural language. Set `source` to `knowledge` (default) to query the knowledge hub, or `graph` to query the LightRAG graph index. Optionally filter results by `chain` or `token`.",
+        "description": "Search the recipe library using natural language via the knowledge hub. Optionally filter results by `chain` or `token`.",
         "operationId": "search_recipes",
         "parameters": [
           {
@@ -5594,7 +5652,7 @@
           "Recipes"
         ],
         "summary": "Get full recipe document by ID",
-        "description": "Retrieve the full content of a recipe document by its knowledge hub or graph document ID. The `document_id` is returned in search results.",
+        "description": "Retrieve the full content of a recipe document by its knowledge hub document ID. The `document_id` is returned in search results.",
         "operationId": "get_recipe_document",
         "parameters": [
           {
@@ -5605,17 +5663,6 @@
               "type": "string",
               "title": "Document Id"
             }
-          },
-          {
-            "name": "source",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/RecipeSearchSource",
-              "description": "Document source to retrieve from. Possible values: `graph`, `knowledge`.",
-              "default": "graph"
-            },
-            "description": "Document source to retrieve from. Possible values: `graph`, `knowledge`."
           },
           {
             "name": "X-API-Key",
@@ -5687,6 +5734,148 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardResponse_SuggestionResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/script-tools/reload": {
+      "post": {
+        "tags": [
+          "Script Tools"
+        ],
+        "summary": "Reload all scripts",
+        "description": "Return all code-defined scripts. Aladdin calls this to discover available scripts and stores them in its own database.",
+        "operationId": "reload_all_scripts",
+        "parameters": [
+          {
+            "name": "X-Assistant-Service-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Assistant-Service-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_ScriptBrief__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/script-tools/execute": {
+      "post": {
+        "tags": [
+          "Script Tools"
+        ],
+        "summary": "Execute a script",
+        "description": "Look up a registered script by func_name and execute it with the given parameters. Returns the script output or an error message.",
+        "operationId": "execute_script",
+        "parameters": [
+          {
+            "name": "X-Assistant-Service-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Assistant-Service-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteScriptRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_ExecuteScriptResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/script-tools": {
+      "get": {
+        "tags": [
+          "Script Tools"
+        ],
+        "summary": "List registered scripts",
+        "description": "Return all in-memory registered scripts.",
+        "operationId": "list_scripts",
+        "parameters": [
+          {
+            "name": "X-Assistant-Service-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Assistant-Service-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_ScriptBrief__"
                 }
               }
             }
@@ -5783,10 +5972,10 @@
         "title": "ApiKeyCreate",
         "description": "Request payload for creating an API key."
       },
-      "ApiKeyCreateResult": {
+      "ApiKeyCreateResultPublic": {
         "properties": {
           "api_key": {
-            "$ref": "#/components/schemas/ApiKeyRead"
+            "$ref": "#/components/schemas/ApiKeyPublicRead"
           },
           "raw_key": {
             "type": "string",
@@ -5799,10 +5988,10 @@
           "api_key",
           "raw_key"
         ],
-        "title": "ApiKeyCreateResult",
-        "description": "Create API key result including one-time plaintext key."
+        "title": "ApiKeyCreateResultPublic",
+        "description": "Create API key result payload without delegation internals."
       },
-      "ApiKeyRead": {
+      "ApiKeyPublicRead": {
         "properties": {
           "id": {
             "type": "string",
@@ -5815,13 +6004,6 @@
             "format": "uuid",
             "title": "Principal Id",
             "description": "The ID of the principal this key belongs to."
-          },
-          "delegation_id": {
-            "title": "Delegation Id",
-            "description": "Optional delegation binding for this key. When set, requests must execute within this delegation context.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
           },
           "pact_id": {
             "title": "Pact Id",
@@ -5919,8 +6101,8 @@
           "created_at",
           "updated_at"
         ],
-        "title": "ApiKeyRead",
-        "description": "API key response payload."
+        "title": "ApiKeyPublicRead",
+        "description": "Public API key response payload without delegation internals."
       },
       "ApplicableLimitRead": {
         "properties": {
@@ -5979,195 +6161,6 @@
         ],
         "title": "ApplicableLimitRead",
         "description": "Represents a spending limit that applies to a given operation, returned in dry-run and pending operation responses."
-      },
-      "ApprovalAction": {
-        "type": "string",
-        "enum": [
-          "approve",
-          "reject"
-        ],
-        "title": "ApprovalAction",
-        "description": "Actions that can be taken to resolve an approval."
-      },
-      "ApprovalListResponse": {
-        "properties": {
-          "approvals": {
-            "items": {
-              "$ref": "#/components/schemas/ApprovalRead"
-            },
-            "type": "array",
-            "title": "Approvals",
-            "description": "List of approval records."
-          }
-        },
-        "type": "object",
-        "required": [
-          "approvals"
-        ],
-        "title": "ApprovalListResponse"
-      },
-      "ApprovalRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "The approval record ID."
-          },
-          "subject_type": {
-            "$ref": "#/components/schemas/ApprovalSubjectType",
-            "description": "The type of subject requiring approval. Possible values: `transaction`, `pact`."
-          },
-          "subject_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Subject Id",
-            "description": "The ID of the subject (transaction or pact) awaiting approval."
-          },
-          "request": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PactRead"
-              },
-              {
-                "$ref": "#/components/schemas/UserTransactionRead"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Request",
-            "description": "The full request data for the approval subject (a `PactRead` or `TransactionRecordRead`)."
-          },
-          "response": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PactApprovalResponse-Output"
-              },
-              {
-                "$ref": "#/components/schemas/TransactionApprovalResponse"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Response",
-            "description": "The reviewer's response once the approval is resolved. Null while the approval is pending."
-          },
-          "initiator_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Initiator Id",
-            "description": "The ID of the principal that triggered this approval."
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id",
-            "description": "The ID of the wallet owner who must resolve this approval."
-          },
-          "status": {
-            "$ref": "#/components/schemas/ApprovalStatus",
-            "description": "The approval lifecycle state. Possible values: `submitted`, `approved`, `rejected`, `success`, `failed`."
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error",
-            "description": "Error message if the approval resulted in a failure. Null otherwise."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The timestamp when this approval was created, in ISO 8601 format."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "The timestamp when this approval was last updated, in ISO 8601 format."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "subject_type",
-          "subject_id",
-          "request",
-          "response",
-          "initiator_id",
-          "owner_id",
-          "status",
-          "error",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ApprovalRead",
-        "description": "Approval read schema."
-      },
-      "ApprovalStatus": {
-        "type": "string",
-        "enum": [
-          "submitted",
-          "approved",
-          "rejected",
-          "success",
-          "failed"
-        ],
-        "title": "ApprovalStatus",
-        "description": "Lifecycle states for an Approval record."
-      },
-      "ApprovalSubjectType": {
-        "type": "string",
-        "enum": [
-          "transaction",
-          "pact"
-        ],
-        "title": "ApprovalSubjectType",
-        "description": "Subject types that can require approval."
-      },
-      "Artifact": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Type"
-          },
-          "reference": {
-            "type": "string",
-            "maxLength": 2048,
-            "minLength": 1,
-            "title": "Reference"
-          },
-          "description": {
-            "title": "Description",
-            "type": "string",
-            "maxLength": 2000,
-            "nullable": true
-          },
-          "metadata": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Metadata"
-          }
-        },
-        "type": "object",
-        "required": [
-          "type",
-          "reference"
-        ],
-        "title": "Artifact",
-        "description": "Evidence or delivery artifact reference."
       },
       "AuditAction": {
         "type": "string",
@@ -6390,34 +6383,6 @@
         ],
         "title": "AuditResult",
         "description": "Supported audit decision outcomes."
-      },
-      "AutomatedCheck": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Type"
-          },
-          "threshold": {
-            "title": "Threshold",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          },
-          "script_url": {
-            "title": "Script Url",
-            "type": "string",
-            "maxLength": 2048,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "type"
-        ],
-        "title": "AutomatedCheck",
-        "description": "Automated verification rule."
       },
       "BalanceRead": {
         "properties": {
@@ -6695,20 +6660,6 @@
         "title": "ChainMetadata",
         "description": "Chain metadata returned by the Cobo WaaS API. Describes a supported blockchain network and its operational parameters."
       },
-      "CompleteExportResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/KeyExportStatus",
-            "description": "Final state of the key export request after it has been marked as complete."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "CompleteExportResponse",
-        "description": "Response after marking export as complete."
-      },
       "CompletionCondition": {
         "properties": {
           "type": {
@@ -6903,374 +6854,6 @@
         "title": "ContractCallSubmitResult",
         "description": "Contract call submission response payload."
       },
-      "CreateExportResponse": {
-        "properties": {
-          "export_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Export Id",
-            "description": "Unique identifier assigned to the newly created key export request."
-          },
-          "authorization_url": {
-            "type": "string",
-            "title": "Authorization Url",
-            "description": "URL the wallet owner must visit to approve or reject the export request."
-          },
-          "status": {
-            "$ref": "#/components/schemas/KeyExportStatus",
-            "description": "Initial state of the key export request immediately after creation."
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Expires At",
-            "description": "Timestamp after which this key export request is no longer valid."
-          }
-        },
-        "type": "object",
-        "required": [
-          "export_id",
-          "authorization_url",
-          "status",
-          "expires_at"
-        ],
-        "title": "CreateExportResponse",
-        "description": "Response after creating a key export."
-      },
-      "CustodyTerms": {
-        "properties": {
-          "model": {
-            "type": "string",
-            "pattern": "^mpc_2_of_3$",
-            "title": "Model",
-            "description": "MPC custody model. Currently only `mpc_2_of_3` is supported (client-agent + service-agent + pact-agent)."
-          },
-          "threshold": {
-            "type": "integer",
-            "maximum": 2.0,
-            "minimum": 2.0,
-            "title": "Threshold",
-            "description": "Number of co-signers required to authorize a transaction (always 2 for `mpc_2_of_3`)."
-          },
-          "participants": {
-            "items": {
-              "$ref": "#/components/schemas/HireParticipantRole"
-            },
-            "type": "array",
-            "maxItems": 3,
-            "minItems": 3,
-            "title": "Participants",
-            "description": "Ordered list of the three MPC key share holders: `client_agent`, `service_agent`, and `pact_agent`."
-          },
-          "vault_address": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Vault Address",
-            "description": "On-chain address of the MPC vault holding pact funds."
-          },
-          "normal_settlement_signers": {
-            "items": {
-              "$ref": "#/components/schemas/HireParticipantRole"
-            },
-            "type": "array",
-            "maxItems": 2,
-            "minItems": 2,
-            "title": "Normal Settlement Signers",
-            "description": "Two parties that must co-sign normal milestone payments (pact-agent + service-agent)."
-          },
-          "refund_or_dispute_signers": {
-            "items": {
-              "$ref": "#/components/schemas/HireParticipantRole"
-            },
-            "type": "array",
-            "maxItems": 2,
-            "minItems": 2,
-            "title": "Refund Or Dispute Signers",
-            "description": "Two parties that must co-sign refunds and dispute settlements (pact-agent + client-agent)."
-          }
-        },
-        "type": "object",
-        "required": [
-          "model",
-          "threshold",
-          "participants",
-          "vault_address",
-          "normal_settlement_signers",
-          "refund_or_dispute_signers"
-        ],
-        "title": "CustodyTerms",
-        "description": "Reviewed custody rules for the pact vault."
-      },
-      "DelegationCreate": {
-        "properties": {
-          "operator_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Operator Id",
-            "description": "The ID of the principal receiving wallet access."
-          },
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "The wallet to delegate access to. The wallet ID can be retrieved by calling the List all wallets operation."
-          },
-          "permissions": {
-            "items": {
-              "$ref": "#/components/schemas/DelegationPermission"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Permissions",
-            "description": "The permissions to grant. At least one is required. Valid values: `read:wallet`, `operator`, `write:transaction`, `write:transfer`, `write:contract_call`, `write:manage`, `write:policy`."
-          },
-          "policies": {
-            "items": {
-              "$ref": "#/components/schemas/InlinePolicyCreate"
-            },
-            "type": "array",
-            "title": "Policies",
-            "description": "Optional delegation-scoped policies to create alongside the delegation."
-          },
-          "expires_at": {
-            "title": "Expires At",
-            "description": "The expiry timestamp for this delegation, in ISO 8601 format. If omitted, the delegation does not expire.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "operator_id",
-          "wallet_id",
-          "permissions"
-        ],
-        "title": "DelegationCreate",
-        "description": "Request payload for creating a delegation."
-      },
-      "DelegationFreezeRequest": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/FreezeScope",
-            "description": "The scope of delegations to freeze. Possible values: `owner` (all delegations owned by `owner_id`), `wallet` (all delegations for `wallet_id`), `delegation` (a specific delegation identified by `delegation_id`)."
-          },
-          "owner_id": {
-            "title": "Owner Id",
-            "description": "The owner's principal ID. Required when `scope=owner`.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "wallet_id": {
-            "title": "Wallet Id",
-            "description": "The wallet ID. Required when `scope=wallet`. The wallet ID can be retrieved by calling the List all wallets operation.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "delegation_id": {
-            "title": "Delegation Id",
-            "description": "The delegation ID. Required when `scope=delegation`. The delegation ID can be retrieved by calling the List delegations operation.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "reason": {
-            "title": "Reason",
-            "description": "An optional reason to record for this freeze action. Max 255 characters.",
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "scope"
-        ],
-        "title": "DelegationFreezeRequest",
-        "description": "Request payload for freezing one or more delegations by scope."
-      },
-      "DelegationFreezeResult": {
-        "properties": {
-          "affected_count": {
-            "type": "integer",
-            "title": "Affected Count",
-            "description": "The number of delegations that were frozen."
-          },
-          "scope": {
-            "$ref": "#/components/schemas/FreezeScope",
-            "description": "The scope used for this freeze operation."
-          },
-          "ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array",
-            "title": "Ids",
-            "description": "The IDs of the delegations that were frozen."
-          },
-          "audit_event_id": {
-            "type": "string",
-            "title": "Audit Event Id",
-            "description": "The audit log event ID for this operation."
-          },
-          "frozen_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Frozen At",
-            "description": "The timestamp when the delegations were frozen, in ISO 8601 format."
-          }
-        },
-        "type": "object",
-        "required": [
-          "affected_count",
-          "scope",
-          "audit_event_id",
-          "frozen_at"
-        ],
-        "title": "DelegationFreezeResult",
-        "description": "Response payload returned after a freeze operation."
-      },
-      "DelegationPermission": {
-        "type": "string",
-        "enum": [
-          "operator",
-          "read:wallet",
-          "write:transaction",
-          "write:transfer",
-          "write:contract_call",
-          "write:message_sign",
-          "write:manage",
-          "write:policy"
-        ],
-        "title": "DelegationPermission",
-        "description": "Delegation permission vocabulary."
-      },
-      "DelegationRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "The delegation ID."
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id",
-            "description": "The ID of the principal that created this delegation (the wallet owner)."
-          },
-          "operator_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Operator Id",
-            "description": "The ID of the principal that received access."
-          },
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "The wallet this delegation grants access to."
-          },
-          "permissions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Permissions",
-            "description": "The list of permissions granted by this delegation."
-          },
-          "policies": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Policies",
-            "description": "Delegation-scoped policies associated with this delegation."
-          },
-          "status": {
-            "$ref": "#/components/schemas/DelegationStatus",
-            "description": "The delegation status. Possible values: `active`, `revoked`, `expired`."
-          },
-          "frozen": {
-            "type": "boolean",
-            "title": "Frozen",
-            "description": "Whether this delegation is currently frozen. `true`: the operator cannot perform any actions. `false`: the delegation is active.",
-            "default": false
-          },
-          "freeze_reason": {
-            "title": "Freeze Reason",
-            "description": "The reason the delegation was frozen, if set.",
-            "type": "string",
-            "nullable": true
-          },
-          "frozen_at": {
-            "title": "Frozen At",
-            "description": "The timestamp when the delegation was frozen, in ISO 8601 format. Null if not frozen.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expires At",
-            "description": "The expiry timestamp for this delegation, in ISO 8601 format. Null if no expiry."
-          },
-          "revoked_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Revoked At",
-            "description": "The timestamp when the delegation was revoked, in ISO 8601 format. Null if not revoked."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The timestamp when the delegation was created, in ISO 8601 format."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "The timestamp when the delegation was last updated, in ISO 8601 format."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "owner_id",
-          "operator_id",
-          "wallet_id",
-          "permissions",
-          "status",
-          "expires_at",
-          "revoked_at",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "DelegationRead",
-        "description": "Delegation response payload."
-      },
       "DelegationSpendSummary": {
         "properties": {
           "delegation_id": {
@@ -7331,82 +6914,6 @@
         ],
         "title": "DelegationSpendSummary"
       },
-      "DelegationStatus": {
-        "type": "string",
-        "enum": [
-          "active",
-          "revoked",
-          "expired"
-        ],
-        "title": "DelegationStatus",
-        "description": "Lifecycle states for a delegation."
-      },
-      "DelegationUnfreezeResult": {
-        "properties": {
-          "affected_count": {
-            "type": "integer",
-            "title": "Affected Count",
-            "description": "The number of delegations that were unfrozen."
-          },
-          "scope": {
-            "$ref": "#/components/schemas/FreezeScope",
-            "description": "The scope used for this unfreeze operation."
-          },
-          "ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array",
-            "title": "Ids",
-            "description": "The IDs of the delegations that were unfrozen."
-          },
-          "audit_event_id": {
-            "type": "string",
-            "title": "Audit Event Id",
-            "description": "The audit log event ID for this unfreeze operation."
-          },
-          "unfrozen_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Unfrozen At",
-            "description": "The timestamp when the delegations were unfrozen, in ISO 8601 format."
-          }
-        },
-        "type": "object",
-        "required": [
-          "affected_count",
-          "scope",
-          "audit_event_id",
-          "unfrozen_at"
-        ],
-        "title": "DelegationUnfreezeResult",
-        "description": "Response payload returned after an unfreeze operation."
-      },
-      "DelegationUpdate": {
-        "properties": {
-          "permissions": {
-            "title": "Permissions",
-            "description": "The updated list of permissions to grant. Replaces the existing permissions. At least one is required if provided.",
-            "items": {
-              "$ref": "#/components/schemas/DelegationPermission"
-            },
-            "type": "array",
-            "minItems": 1,
-            "nullable": true
-          },
-          "expires_at": {
-            "title": "Expires At",
-            "description": "The updated expiry timestamp for this delegation, in ISO 8601 format. Set to null to remove the expiry.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "DelegationUpdate",
-        "description": "Request payload for updating a delegation.\n\nNote: policies cannot be updated via delegation APIs.\nUse the policy APIs (PATCH /policies/{id}) to manage delegation-scoped policies individually."
-      },
       "DelegationUsageLimitSummary": {
         "properties": {
           "operation_type": {
@@ -7450,91 +6957,6 @@
           "remaining"
         ],
         "title": "DelegationUsageLimitSummary"
-      },
-      "DeliverableSpec": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Type"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Description"
-          },
-          "format": {
-            "title": "Format",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "delivery_method": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Delivery Method"
-          },
-          "quality_criteria": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Quality Criteria"
-          }
-        },
-        "type": "object",
-        "required": [
-          "type",
-          "description",
-          "delivery_method"
-        ],
-        "title": "DeliverableSpec",
-        "description": "Deliverable required for a milestone."
-      },
-      "DisputeResolutionSpec": {
-        "properties": {
-          "method": {
-            "type": "string",
-            "maxLength": 64,
-            "title": "Method",
-            "description": "Dispute resolution method. `pact_agent_adjudication`: the pact agent arbitrates unresolved disputes.",
-            "default": "pact_agent_adjudication"
-          },
-          "dispute_window_seconds": {
-            "title": "Dispute Window Seconds",
-            "description": "Time window after a disputed event during which a party may open a formal dispute, in seconds.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "response_deadline_seconds": {
-            "title": "Response Deadline Seconds",
-            "description": "Time allowed for the opposing party to respond to a dispute, in seconds.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "arbitration_deadline_seconds": {
-            "title": "Arbitration Deadline Seconds",
-            "description": "Time allowed for the pact agent to issue an arbitration ruling, in seconds.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "default_resolution": {
-            "title": "Default Resolution",
-            "description": "Default resolution applied if a response or ruling is not submitted before the deadline.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "DisputeResolutionSpec",
-        "description": "Dispute resolution settings."
       },
       "DropTransactionRequest": {
         "properties": {
@@ -7851,61 +7273,43 @@
         "title": "EthCallResult",
         "description": "Result of an eth_call proxy request."
       },
-      "ExecutionPlan": {
+      "ExecuteScriptRequest": {
         "properties": {
-          "approach": {
+          "func_name": {
             "type": "string",
-            "maxLength": 5000,
+            "maxLength": 128,
             "minLength": 1,
-            "title": "Approach"
+            "title": "Func Name",
+            "description": "脚本方法名称"
           },
-          "methodology": {
-            "title": "Methodology",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "tools": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tools"
-          },
-          "steps": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Steps"
-          },
-          "assumptions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Assumptions"
-          },
-          "risks": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Risks"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string",
-            "maxLength": 5000,
-            "nullable": true
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "description": "脚本参数 (JSON 对象)"
           }
         },
         "type": "object",
         "required": [
-          "approach"
+          "func_name"
         ],
-        "title": "ExecutionPlan",
-        "description": "Execution approach proposed by the service agent."
+        "title": "ExecuteScriptRequest",
+        "description": "Request body for executing a script."
+      },
+      "ExecuteScriptResponse": {
+        "properties": {
+          "output": {
+            "title": "Output"
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ExecuteScriptResponse",
+        "description": "Response body for script execution."
       },
       "ExternalTransactionOperationType": {
         "type": "string",
@@ -8151,1700 +7555,6 @@
         "title": "FeeEstimateRead",
         "description": "Standardized fee estimate view (supports both EVM and SOL fields)."
       },
-      "FreezeScope": {
-        "type": "string",
-        "enum": [
-          "owner",
-          "wallet",
-          "delegation"
-        ],
-        "title": "FreezeScope"
-      },
-      "HireAcknowledgeRequest": {
-        "properties": {
-          "review_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Review Id"
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "acknowledge",
-              "withdraw"
-            ],
-            "title": "Action",
-            "description": "Action to take on the review. `acknowledge`: confirm acceptance of the review. `withdraw`: retract a previous acknowledgment."
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 2000,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "review_id",
-          "action"
-        ],
-        "title": "HireAcknowledgeRequest",
-        "description": "Record one party's review acknowledgment or withdrawal."
-      },
-      "HireArbitrationRulingCreateRequest": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Dispute Id"
-          },
-          "resolution": {
-            "description": "The arbitration outcome (for example, `full_refund`, `full_payment`, `custom_split`). Null to dismiss the dispute without a ruling.",
-            "$ref": "#/components/schemas/HireResolution",
-            "nullable": true
-          },
-          "custom_split": {
-            "$ref": "#/components/schemas/HireSettlementSplit",
-            "nullable": true
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id"
-        ],
-        "title": "HireArbitrationRulingCreateRequest",
-        "description": "Issue a pact-agent arbitration ruling."
-      },
-      "HireArbitrationRulingRecord": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Dispute Id"
-          },
-          "resolution": {
-            "$ref": "#/components/schemas/HireResolution",
-            "description": "The arbitration outcome (for example, `full_refund`, `full_payment`, `custom_split`)."
-          },
-          "client_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Client Amount",
-            "description": "Amount awarded to the client under this ruling, as a decimal string."
-          },
-          "service_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Service Amount",
-            "description": "Amount awarded to the service agent under this ruling, as a decimal string."
-          },
-          "custom_split": {
-            "$ref": "#/components/schemas/HireSettlementSplit",
-            "nullable": true
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "ruled_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Ruled At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id",
-          "resolution",
-          "client_amount",
-          "service_amount",
-          "ruled_at"
-        ],
-        "title": "HireArbitrationRulingRecord",
-        "description": "Structured arbitration ruling persisted on a dispute."
-      },
-      "HireCancellationRequest": {
-        "properties": {
-          "reason": {
-            "title": "Reason",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "HireCancellationRequest",
-        "description": "Request cancellation before first delivery."
-      },
-      "HireDeliveryCreateRequest": {
-        "properties": {
-          "milestone_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Milestone Id"
-          },
-          "delivery_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Delivery Id"
-          },
-          "artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Artifacts"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "delivered_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Delivered At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "milestone_id",
-          "delivery_id",
-          "artifacts",
-          "delivered_at"
-        ],
-        "title": "HireDeliveryCreateRequest",
-        "description": "Submit a milestone delivery from the service side."
-      },
-      "HireDeliveryRead": {
-        "properties": {
-          "delivery_id": {
-            "type": "string",
-            "title": "Delivery Id"
-          },
-          "milestone_id": {
-            "type": "string",
-            "title": "Milestone Id"
-          },
-          "artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "title": "Artifacts"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "nullable": true
-          },
-          "delivered_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Delivered At"
-          },
-          "received_at": {
-            "title": "Received At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "forwarded_to_client_at": {
-            "title": "Forwarded To Client At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "review_action": {
-            "title": "Review Action",
-            "type": "string",
-            "nullable": true
-          },
-          "revision_notes": {
-            "title": "Revision Notes",
-            "type": "string",
-            "nullable": true
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "type": "string",
-            "nullable": true
-          },
-          "reviewed_at": {
-            "title": "Reviewed At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "delivery_id",
-          "milestone_id",
-          "artifacts",
-          "delivered_at"
-        ],
-        "title": "HireDeliveryRead",
-        "description": "Delivery snapshot returned from the API."
-      },
-      "HireDeliveryReviewAction": {
-        "type": "string",
-        "enum": [
-          "approve",
-          "request_revision",
-          "reject"
-        ],
-        "title": "HireDeliveryReviewAction",
-        "description": "Client review actions for a delivery."
-      },
-      "HireDeliveryReviewCreateRequest": {
-        "properties": {
-          "delivery_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Delivery Id"
-          },
-          "action": {
-            "$ref": "#/components/schemas/HireDeliveryReviewAction",
-            "description": "Client's decision on the delivery. Possible values: `accept`, `request_revision`, `reject`."
-          },
-          "revision_notes": {
-            "title": "Revision Notes",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "delivery_id",
-          "action"
-        ],
-        "title": "HireDeliveryReviewCreateRequest",
-        "description": "Submit a client review for an existing delivery."
-      },
-      "HireDisputeCreateRequest": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Dispute Id"
-          },
-          "dispute_type": {
-            "$ref": "#/components/schemas/HireDisputeType",
-            "description": "The type of dispute being raised (for example, `non_delivery`, `quality`, `scope_creep`)."
-          },
-          "requested_resolution": {
-            "$ref": "#/components/schemas/HireResolution",
-            "description": "The resolution outcome requested by the disputing party (for example, `full_refund`, `full_payment`, `custom_split`)."
-          },
-          "evidence": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "title": "Evidence",
-            "description": "Supporting artifacts submitted as evidence for this dispute."
-          },
-          "message": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id",
-          "dispute_type",
-          "requested_resolution",
-          "message"
-        ],
-        "title": "HireDisputeCreateRequest",
-        "description": "Open a formal dispute for an active or disputed pact."
-      },
-      "HireDisputeRead": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "title": "Dispute Id"
-          },
-          "opened_by": {
-            "type": "string",
-            "title": "Opened By"
-          },
-          "dispute_type": {
-            "type": "string",
-            "title": "Dispute Type"
-          },
-          "requested_resolution": {
-            "type": "string",
-            "title": "Requested Resolution"
-          },
-          "evidence": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "title": "Evidence"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "response": {
-            "$ref": "#/components/schemas/HireDisputeResponseRecord",
-            "nullable": true
-          },
-          "ruling": {
-            "$ref": "#/components/schemas/HireArbitrationRulingRecord",
-            "nullable": true
-          },
-          "response_received_at": {
-            "title": "Response Received At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "ruled_at": {
-            "title": "Ruled At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "settled_at": {
-            "title": "Settled At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id",
-          "opened_by",
-          "dispute_type",
-          "requested_resolution",
-          "message",
-          "status",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "HireDisputeRead",
-        "description": "Dispute snapshot returned from the API."
-      },
-      "HireDisputeResponseCreateRequest": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Dispute Id"
-          },
-          "counter_evidence": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "title": "Counter Evidence",
-            "description": "Artifacts submitted by the responding party to counter the dispute."
-          },
-          "proposed_resolution": {
-            "description": "The resolution the responding party proposes (for example, `full_refund`, `full_payment`, `custom_split`). Null to accept the disputing party's requested resolution.",
-            "$ref": "#/components/schemas/HireResolution",
-            "nullable": true
-          },
-          "custom_split": {
-            "$ref": "#/components/schemas/HireSettlementSplit",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Message"
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id",
-          "message"
-        ],
-        "title": "HireDisputeResponseCreateRequest",
-        "description": "Respond to an open dispute."
-      },
-      "HireDisputeResponseRecord": {
-        "properties": {
-          "dispute_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Dispute Id"
-          },
-          "counter_evidence": {
-            "items": {
-              "$ref": "#/components/schemas/Artifact"
-            },
-            "type": "array",
-            "title": "Counter Evidence",
-            "description": "Artifacts submitted by the responding party as counter-evidence."
-          },
-          "proposed_resolution": {
-            "description": "Resolution proposed by the responding party. Null if the responder accepts the disputing party's requested resolution.",
-            "$ref": "#/components/schemas/HireResolution",
-            "nullable": true
-          },
-          "custom_split": {
-            "description": "Custom percentage split when `proposed_resolution=custom_split`.",
-            "$ref": "#/components/schemas/HireSettlementSplit",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Message"
-          },
-          "responded_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Responded At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "dispute_id",
-          "message",
-          "responded_at"
-        ],
-        "title": "HireDisputeResponseRecord",
-        "description": "Stored dispute response payload."
-      },
-      "HireDisputeType": {
-        "type": "string",
-        "enum": [
-          "non_delivery",
-          "quality",
-          "scope_change",
-          "non_payment",
-          "non_review"
-        ],
-        "title": "HireDisputeType",
-        "description": "Dispute categories from the Hire protocol."
-      },
-      "HireEventListResponse": {
-        "properties": {
-          "events": {
-            "items": {
-              "$ref": "#/components/schemas/HireEventRead"
-            },
-            "type": "array",
-            "title": "Events"
-          }
-        },
-        "type": "object",
-        "required": [
-          "events"
-        ],
-        "title": "HireEventListResponse",
-        "description": "Paginated event list wrapper."
-      },
-      "HireEventRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "event_type": {
-            "type": "string",
-            "title": "Event Type"
-          },
-          "actor_role": {
-            "title": "Actor Role",
-            "type": "string",
-            "nullable": true
-          },
-          "payload": {
-            "title": "Payload",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "event_type",
-          "created_at"
-        ],
-        "title": "HireEventRead",
-        "description": "Immutable hire event row returned from the API."
-      },
-      "HireFundRequest": {
-        "properties": {
-          "funding_tx_hash": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Funding Tx Hash",
-            "description": "On-chain transaction hash of the funding deposit to the pact vault."
-          },
-          "amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Amount",
-            "description": "Amount deposited into the vault, as a decimal string."
-          },
-          "token": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Token",
-            "description": "Token ID of the deposited funds (for example, `USDC`)."
-          },
-          "chain": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Chain",
-            "description": "Chain ID on which the deposit transaction was submitted (for example, `ETH`)."
-          }
-        },
-        "type": "object",
-        "required": [
-          "funding_tx_hash",
-          "amount",
-          "token",
-          "chain"
-        ],
-        "title": "HireFundRequest",
-        "description": "Record pact-vault funding that should activate the pact."
-      },
-      "HireListResponse": {
-        "properties": {
-          "pacts": {
-            "items": {
-              "$ref": "#/components/schemas/HireSummary"
-            },
-            "type": "array",
-            "title": "Pacts"
-          }
-        },
-        "type": "object",
-        "required": [
-          "pacts"
-        ],
-        "title": "HireListResponse",
-        "description": "Paginated hire list wrapper."
-      },
-      "HireMilestoneRead": {
-        "properties": {
-          "milestone_id": {
-            "type": "string",
-            "title": "Milestone Id"
-          },
-          "sequence": {
-            "type": "integer",
-            "title": "Sequence"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "deliverables": {
-            "items": {
-              "$ref": "#/components/schemas/DeliverableSpec"
-            },
-            "type": "array",
-            "title": "Deliverables"
-          },
-          "payment_amount": {
-            "type": "string",
-            "title": "Payment Amount"
-          },
-          "payment_token": {
-            "type": "string",
-            "title": "Payment Token"
-          },
-          "payment_chain": {
-            "type": "string",
-            "title": "Payment Chain"
-          },
-          "deadline_seconds": {
-            "title": "Deadline Seconds",
-            "type": "integer",
-            "nullable": true
-          },
-          "deadline_mode": {
-            "type": "string",
-            "title": "Deadline Mode"
-          },
-          "review_deadline_seconds": {
-            "title": "Review Deadline Seconds",
-            "type": "integer",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "revision_count": {
-            "type": "integer",
-            "title": "Revision Count"
-          },
-          "delivered_at": {
-            "title": "Delivered At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "approved_at": {
-            "title": "Approved At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "settled_at": {
-            "title": "Settled At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "payout_tx_hash": {
-            "title": "Payout Tx Hash",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "milestone_id",
-          "sequence",
-          "title",
-          "description",
-          "deliverables",
-          "payment_amount",
-          "payment_token",
-          "payment_chain",
-          "deadline_mode",
-          "status",
-          "revision_count"
-        ],
-        "title": "HireMilestoneRead",
-        "description": "Milestone snapshot returned from the API."
-      },
-      "HireNotificationPreference": {
-        "type": "string",
-        "enum": [
-          "stream",
-          "push",
-          "poll"
-        ],
-        "title": "HireNotificationPreference",
-        "description": "Client notification preference for execution updates."
-      },
-      "HirePactSpec-Input": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/WorkScope"
-          },
-          "execution_plan": {
-            "$ref": "#/components/schemas/ExecutionPlan",
-            "nullable": true
-          },
-          "milestones": {
-            "items": {
-              "$ref": "#/components/schemas/MilestoneSpec"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Milestones",
-            "description": "Ordered list of milestones defining the work breakdown and payment schedule."
-          },
-          "payment": {
-            "$ref": "#/components/schemas/PaymentTerms"
-          },
-          "verification": {
-            "$ref": "#/components/schemas/VerificationSpec",
-            "nullable": true
-          },
-          "dispute_resolution": {
-            "$ref": "#/components/schemas/DisputeResolutionSpec",
-            "nullable": true
-          },
-          "duration_seconds": {
-            "title": "Duration Seconds",
-            "description": "Maximum duration for the entire pact in seconds. Null means no overall time limit.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "funding_deadline_seconds": {
-            "title": "Funding Deadline Seconds",
-            "description": "Time allowed for the client to fund the pact vault after acknowledgment, in seconds. Null means no funding deadline.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "revision_limit": {
-            "title": "Revision Limit",
-            "description": "Maximum number of revision requests the client may make. Null means no revision limit.",
-            "type": "integer",
-            "minimum": 0.0,
-            "nullable": true
-          },
-          "auto_approve_after_seconds": {
-            "title": "Auto Approve After Seconds",
-            "description": "If set, a delivery is automatically approved after this many seconds with no client review action.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "scope",
-          "milestones",
-          "payment"
-        ],
-        "title": "HirePactSpec",
-        "description": "Canonical Pact: Hire spec."
-      },
-      "HirePactSpec-Output": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/WorkScope"
-          },
-          "execution_plan": {
-            "$ref": "#/components/schemas/ExecutionPlan",
-            "nullable": true
-          },
-          "milestones": {
-            "items": {
-              "$ref": "#/components/schemas/MilestoneSpec"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Milestones",
-            "description": "Ordered list of milestones defining the work breakdown and payment schedule."
-          },
-          "payment": {
-            "$ref": "#/components/schemas/PaymentTerms"
-          },
-          "verification": {
-            "$ref": "#/components/schemas/VerificationSpec",
-            "nullable": true
-          },
-          "dispute_resolution": {
-            "$ref": "#/components/schemas/DisputeResolutionSpec",
-            "nullable": true
-          },
-          "duration_seconds": {
-            "title": "Duration Seconds",
-            "description": "Maximum duration for the entire pact in seconds. Null means no overall time limit.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "funding_deadline_seconds": {
-            "title": "Funding Deadline Seconds",
-            "description": "Time allowed for the client to fund the pact vault after acknowledgment, in seconds. Null means no funding deadline.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "revision_limit": {
-            "title": "Revision Limit",
-            "description": "Maximum number of revision requests the client may make. Null means no revision limit.",
-            "type": "integer",
-            "minimum": 0.0,
-            "nullable": true
-          },
-          "auto_approve_after_seconds": {
-            "title": "Auto Approve After Seconds",
-            "description": "If set, a delivery is automatically approved after this many seconds with no client review action.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "scope",
-          "milestones",
-          "payment"
-        ],
-        "title": "HirePactSpec",
-        "description": "Canonical Pact: Hire spec."
-      },
-      "HirePactSpecPatch-Input": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/WorkScope",
-            "nullable": true
-          },
-          "execution_plan": {
-            "$ref": "#/components/schemas/ExecutionPlan",
-            "nullable": true
-          },
-          "milestones": {
-            "title": "Milestones",
-            "items": {
-              "$ref": "#/components/schemas/MilestoneSpec"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "payment": {
-            "$ref": "#/components/schemas/PaymentTerms",
-            "nullable": true
-          },
-          "verification": {
-            "$ref": "#/components/schemas/VerificationSpec",
-            "nullable": true
-          },
-          "dispute_resolution": {
-            "$ref": "#/components/schemas/DisputeResolutionSpec",
-            "nullable": true
-          },
-          "duration_seconds": {
-            "title": "Duration Seconds",
-            "description": "Updated maximum duration for the pact in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "funding_deadline_seconds": {
-            "title": "Funding Deadline Seconds",
-            "description": "Updated funding deadline in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "revision_limit": {
-            "title": "Revision Limit",
-            "description": "Updated maximum number of revision requests. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "minimum": 0.0,
-            "nullable": true
-          },
-          "auto_approve_after_seconds": {
-            "title": "Auto Approve After Seconds",
-            "description": "Updated auto-approval timeout in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "HirePactSpecPatch",
-        "description": "Partial update representation for negotiated or reviewed changes."
-      },
-      "HirePactSpecPatch-Output": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/WorkScope",
-            "nullable": true
-          },
-          "execution_plan": {
-            "$ref": "#/components/schemas/ExecutionPlan",
-            "nullable": true
-          },
-          "milestones": {
-            "title": "Milestones",
-            "items": {
-              "$ref": "#/components/schemas/MilestoneSpec"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "payment": {
-            "$ref": "#/components/schemas/PaymentTerms",
-            "nullable": true
-          },
-          "verification": {
-            "$ref": "#/components/schemas/VerificationSpec",
-            "nullable": true
-          },
-          "dispute_resolution": {
-            "$ref": "#/components/schemas/DisputeResolutionSpec",
-            "nullable": true
-          },
-          "duration_seconds": {
-            "title": "Duration Seconds",
-            "description": "Updated maximum duration for the pact in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "funding_deadline_seconds": {
-            "title": "Funding Deadline Seconds",
-            "description": "Updated funding deadline in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "revision_limit": {
-            "title": "Revision Limit",
-            "description": "Updated maximum number of revision requests. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "minimum": 0.0,
-            "nullable": true
-          },
-          "auto_approve_after_seconds": {
-            "title": "Auto Approve After Seconds",
-            "description": "Updated auto-approval timeout in seconds. Null leaves the existing value unchanged.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "HirePactSpecPatch",
-        "description": "Partial update representation for negotiated or reviewed changes."
-      },
-      "HireParticipantRole": {
-        "type": "string",
-        "enum": [
-          "client-agent",
-          "service-agent",
-          "pact-agent",
-          "pact-service"
-        ],
-        "title": "HireParticipantRole",
-        "description": "Participant roles in the hire protocol."
-      },
-      "HireRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "client_principal_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Client Principal Id"
-          },
-          "service_principal_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Service Principal Id"
-          },
-          "pact_agent_principal_id": {
-            "title": "Pact Agent Principal Id",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "protocol_pact_id": {
-            "title": "Protocol Pact Id",
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "negotiated_spec": {
-            "$ref": "#/components/schemas/HirePactSpec-Output"
-          },
-          "negotiated_patch_history": {
-            "items": {
-              "$ref": "#/components/schemas/NegotiatedSpecPatchEntry-Output"
-            },
-            "type": "array",
-            "title": "Negotiated Patch History"
-          },
-          "reviewed_spec": {
-            "$ref": "#/components/schemas/HirePactSpec-Output",
-            "nullable": true
-          },
-          "review_modifications_patch": {
-            "$ref": "#/components/schemas/HirePactSpecPatch-Output",
-            "nullable": true
-          },
-          "reviewed_custody_terms": {
-            "$ref": "#/components/schemas/CustodyTerms",
-            "nullable": true
-          },
-          "review_concerns": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Review Concerns"
-          },
-          "review_id": {
-            "title": "Review Id",
-            "type": "string",
-            "nullable": true
-          },
-          "review_action": {
-            "title": "Review Action",
-            "type": "string",
-            "nullable": true
-          },
-          "enforceability_assessment": {
-            "title": "Enforceability Assessment",
-            "type": "string",
-            "nullable": true
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "type": "string",
-            "nullable": true
-          },
-          "service_agent_card_url": {
-            "type": "string",
-            "title": "Service Agent Card Url"
-          },
-          "service_agent_endpoint_url": {
-            "title": "Service Agent Endpoint Url",
-            "type": "string",
-            "nullable": true
-          },
-          "client_refund_address": {
-            "type": "string",
-            "title": "Client Refund Address"
-          },
-          "service_payout_address": {
-            "type": "string",
-            "title": "Service Payout Address"
-          },
-          "notification_preference": {
-            "type": "string",
-            "title": "Notification Preference"
-          },
-          "push_notification_url": {
-            "title": "Push Notification Url",
-            "type": "string",
-            "nullable": true
-          },
-          "client_ack_status": {
-            "type": "string",
-            "title": "Client Ack Status"
-          },
-          "service_ack_status": {
-            "type": "string",
-            "title": "Service Ack Status"
-          },
-          "client_acknowledged_at": {
-            "title": "Client Acknowledged At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "service_acknowledged_at": {
-            "title": "Service Acknowledged At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "review_expires_at": {
-            "title": "Review Expires At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "acknowledgment_deadline_at": {
-            "title": "Acknowledgment Deadline At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "funding_deadline_at": {
-            "title": "Funding Deadline At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "activated_at": {
-            "title": "Activated At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "expires_at": {
-            "title": "Expires At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "completed_at": {
-            "title": "Completed At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "cancelled_at": {
-            "title": "Cancelled At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "first_delivery_at": {
-            "title": "First Delivery At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "last_delivery_at": {
-            "title": "Last Delivery At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "vault_state": {
-            "type": "string",
-            "title": "Vault State"
-          },
-          "vault_address": {
-            "title": "Vault Address",
-            "type": "string",
-            "nullable": true
-          },
-          "funding_tx_hash": {
-            "title": "Funding Tx Hash",
-            "type": "string",
-            "nullable": true
-          },
-          "total_funded": {
-            "title": "Total Funded",
-            "type": "string",
-            "nullable": true
-          },
-          "funding_token": {
-            "title": "Funding Token",
-            "type": "string",
-            "nullable": true
-          },
-          "funding_chain": {
-            "title": "Funding Chain",
-            "type": "string",
-            "nullable": true
-          },
-          "current_dispute_id": {
-            "title": "Current Dispute Id",
-            "type": "string",
-            "nullable": true
-          },
-          "milestones": {
-            "items": {
-              "$ref": "#/components/schemas/HireMilestoneRead"
-            },
-            "type": "array",
-            "title": "Milestones"
-          },
-          "deliveries": {
-            "items": {
-              "$ref": "#/components/schemas/HireDeliveryRead"
-            },
-            "type": "array",
-            "title": "Deliveries"
-          },
-          "disputes": {
-            "items": {
-              "$ref": "#/components/schemas/HireDisputeRead"
-            },
-            "type": "array",
-            "title": "Disputes"
-          },
-          "settlement_proposals": {
-            "items": {
-              "$ref": "#/components/schemas/HireSettlementProposalRead"
-            },
-            "type": "array",
-            "title": "Settlement Proposals"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "client_principal_id",
-          "service_principal_id",
-          "status",
-          "negotiated_spec",
-          "negotiated_patch_history",
-          "service_agent_card_url",
-          "client_refund_address",
-          "service_payout_address",
-          "notification_preference",
-          "client_ack_status",
-          "service_ack_status",
-          "vault_state",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "HireRead",
-        "description": "Top-level hire pact representation returned from the API."
-      },
-      "HireResolution": {
-        "type": "string",
-        "enum": [
-          "full_refund",
-          "partial_refund",
-          "full_payment",
-          "partial_payment",
-          "custom_split"
-        ],
-        "title": "HireResolution",
-        "description": "Settlement and dispute resolution outcomes."
-      },
-      "HireReviewRequest": {
-        "properties": {
-          "review_expiry_seconds": {
-            "title": "Review Expiry Seconds",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "HireReviewRequest",
-        "description": "Trigger Pact Service review for a submitted pact."
-      },
-      "HireSettlementProposalCreateRequest": {
-        "properties": {
-          "client_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Client Amount",
-            "description": "Amount proposed to be returned to the client, as a decimal string."
-          },
-          "service_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Service Amount",
-            "description": "Amount proposed to be paid to the service agent, as a decimal string."
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "client_amount",
-          "service_amount"
-        ],
-        "title": "HireSettlementProposalCreateRequest",
-        "description": "Record a settlement proposal during execution."
-      },
-      "HireSettlementProposalRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "proposed_by": {
-            "type": "string",
-            "title": "Proposed By"
-          },
-          "client_amount": {
-            "type": "string",
-            "title": "Client Amount"
-          },
-          "service_amount": {
-            "type": "string",
-            "title": "Service Amount"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "matched_with_proposal_id": {
-            "title": "Matched With Proposal Id",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "applied_settlement": {
-            "$ref": "#/components/schemas/HireSettlementRecord",
-            "nullable": true
-          },
-          "applied_at": {
-            "title": "Applied At",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "proposed_by",
-          "client_amount",
-          "service_amount",
-          "status",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "HireSettlementProposalRead",
-        "description": "Settlement proposal snapshot returned from the API."
-      },
-      "HireSettlementRecord": {
-        "properties": {
-          "settlement_type": {
-            "$ref": "#/components/schemas/HireSettlementType",
-            "description": "How the settlement was reached (for example, `mutual_agreement`, `arbitration_ruling`, `milestone_payment`)."
-          },
-          "payment_tx_hash": {
-            "title": "Payment Tx Hash",
-            "description": "On-chain transaction hash for the service payment. Null if no payment transaction was sent.",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "refund_tx_hash": {
-            "title": "Refund Tx Hash",
-            "description": "On-chain transaction hash for the client refund. Null if no refund transaction was sent.",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "amount": {
-            "title": "Amount",
-            "description": "Total settled amount when a single payment covers the full settlement, as a decimal string.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          },
-          "client_amount": {
-            "title": "Client Amount",
-            "description": "Amount returned to the client in a split settlement, as a decimal string.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          },
-          "service_amount": {
-            "title": "Service Amount",
-            "description": "Amount paid to the service agent in a split settlement, as a decimal string.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          },
-          "token": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Token",
-            "description": "Token ID in which the settlement is denominated (for example, `USDC`)."
-          },
-          "chain": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Chain",
-            "description": "Chain ID on which the settlement transactions are submitted (for example, `ETH`)."
-          },
-          "signed_by": {
-            "items": {
-              "$ref": "#/components/schemas/HireParticipantRole"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Signed By",
-            "description": "Participant roles that co-signed the settlement transaction."
-          },
-          "settled_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Settled At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "settlement_type",
-          "token",
-          "chain",
-          "signed_by",
-          "settled_at"
-        ],
-        "title": "HireSettlementRecord",
-        "description": "Stored settlement result."
-      },
-      "HireSettlementSplit": {
-        "properties": {
-          "client_percent": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Client Percent"
-          },
-          "service_percent": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Service Percent"
-          }
-        },
-        "type": "object",
-        "required": [
-          "client_percent",
-          "service_percent"
-        ],
-        "title": "HireSettlementSplit",
-        "description": "Custom percentage split for a dispute response."
-      },
-      "HireSettlementType": {
-        "type": "string",
-        "enum": [
-          "milestone_payment",
-          "final_payment",
-          "refund",
-          "dispute_resolution"
-        ],
-        "title": "HireSettlementType",
-        "description": "Settlement kinds emitted by the Pact Service."
-      },
-      "HireSubmissionRecord": {
-        "properties": {
-          "service_agent_card_url": {
-            "type": "string",
-            "maxLength": 2048,
-            "minLength": 1,
-            "title": "Service Agent Card Url",
-            "description": "URL of the service agent's agent card (A2A protocol). Used to contact the service agent."
-          },
-          "client_refund_address": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Client Refund Address",
-            "description": "On-chain address to which refunded funds are sent if the pact is cancelled or the client wins a dispute."
-          },
-          "service_payout_address": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Service Payout Address",
-            "description": "On-chain address to which earned milestone payments are sent to the service agent."
-          },
-          "notification_preference": {
-            "$ref": "#/components/schemas/HireNotificationPreference",
-            "description": "How the client wishes to receive pact event notifications. `stream`: server-sent events (SSE). `push`: HTTP POST to `push_notification_url`.",
-            "default": "stream"
-          },
-          "push_notification_url": {
-            "title": "Push Notification Url",
-            "description": "URL to which push notifications are POSTed. Required when `notification_preference=push`.",
-            "type": "string",
-            "maxLength": 2048,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "service_agent_card_url",
-          "client_refund_address",
-          "service_payout_address"
-        ],
-        "title": "HireSubmissionRecord",
-        "description": "Stored client submission metadata."
-      },
-      "HireSubmitRequest": {
-        "properties": {
-          "spec": {
-            "$ref": "#/components/schemas/HirePactSpec-Input"
-          },
-          "service_principal_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Service Principal Id",
-            "description": "UUID of the service agent principal who will perform the work."
-          },
-          "pact_agent_principal_id": {
-            "title": "Pact Agent Principal Id",
-            "description": "UUID of the pact agent principal that arbitrates the pact. Null to use the platform default.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "protocol_pact_id": {
-            "title": "Protocol Pact Id",
-            "description": "External pact identifier from a negotiation protocol (for example, A2A). Null if not applicable.",
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "nullable": true
-          },
-          "submission": {
-            "$ref": "#/components/schemas/HireSubmissionRecord"
-          },
-          "negotiated_patch_history": {
-            "items": {
-              "$ref": "#/components/schemas/NegotiatedSpecPatchEntry-Input"
-            },
-            "type": "array",
-            "title": "Negotiated Patch History",
-            "description": "Chronological list of negotiated spec changes that led to this submission."
-          }
-        },
-        "type": "object",
-        "required": [
-          "spec",
-          "service_principal_id",
-          "submission"
-        ],
-        "title": "HireSubmitRequest",
-        "description": "Create a new hire pact submission."
-      },
-      "HireSummary": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "protocol_pact_id": {
-            "title": "Protocol Pact Id",
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "review_id": {
-            "title": "Review Id",
-            "type": "string",
-            "nullable": true
-          },
-          "review_action": {
-            "title": "Review Action",
-            "type": "string",
-            "nullable": true
-          },
-          "vault_state": {
-            "type": "string",
-            "title": "Vault State"
-          },
-          "vault_address": {
-            "title": "Vault Address",
-            "type": "string",
-            "nullable": true
-          },
-          "client_principal_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Client Principal Id"
-          },
-          "service_principal_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Service Principal Id"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "status",
-          "vault_state",
-          "client_principal_id",
-          "service_principal_id",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "HireSummary",
-        "description": "Compact list representation for hire pacts."
-      },
       "InlinePolicyCreate": {
         "properties": {
           "name": {
@@ -9883,146 +7593,6 @@
         ],
         "title": "InlinePolicyCreate",
         "description": "Inline policy payload used during delegation/pact create."
-      },
-      "KeyExportRead": {
-        "properties": {
-          "export_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Export Id",
-            "description": "Unique identifier for this key export request."
-          },
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "Identifier of the MPC wallet whose keys are being exported."
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id",
-            "description": "Identifier of the user or organization that owns the wallet."
-          },
-          "created_by": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Created By",
-            "description": "Identifier of the user who initiated the key export request."
-          },
-          "status": {
-            "$ref": "#/components/schemas/KeyExportStatus",
-            "description": "Current state of the key export request (e.g. pending, approved, rejected, completed)."
-          },
-          "authorization_url": {
-            "title": "Authorization Url",
-            "description": "URL the wallet owner must visit to approve or reject the export. Null when no authorization step is pending.",
-            "type": "string",
-            "nullable": true
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "description": "Human-readable explanation provided when the export was rejected. Null if not rejected.",
-            "type": "string",
-            "nullable": true
-          },
-          "node_ids": {
-            "title": "Node Ids",
-            "description": "List of temporary TSS node IDs involved in the reshare operation. Null until nodes are submitted.",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "recovery_group_id": {
-            "title": "Recovery Group Id",
-            "description": "Identifier of the TSS key share group used for recovery. Null until the reshare completes.",
-            "type": "string",
-            "nullable": true
-          },
-          "tss_key_share_groups": {
-            "title": "Tss Key Share Groups",
-            "description": "Snapshots of the TSS key share groups produced after the reshare completes. Null until the reshare finishes.",
-            "items": {
-              "$ref": "#/components/schemas/TssKeyShareGroupSnapshot"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "reshare_request_id": {
-            "title": "Reshare Request Id",
-            "description": "Identifier of the underlying TSS reshare request. Null until the reshare is initiated.",
-            "type": "string",
-            "nullable": true
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Expires At",
-            "description": "Timestamp after which this key export request is no longer valid and cannot be approved or completed."
-          },
-          "approved_at": {
-            "title": "Approved At",
-            "description": "Timestamp when the export was approved. Null if not yet approved.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "completed_at": {
-            "title": "Completed At",
-            "description": "Timestamp when the key export was successfully completed. Null if still in progress.",
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "error_message": {
-            "title": "Error Message",
-            "description": "Description of any error that caused the export to fail. Null when no error has occurred.",
-            "type": "string",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "Timestamp when the key export request was created."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "Timestamp when the key export request was last updated."
-          }
-        },
-        "type": "object",
-        "required": [
-          "export_id",
-          "wallet_id",
-          "owner_id",
-          "created_by",
-          "status",
-          "expires_at",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "KeyExportRead",
-        "description": "Full detail for a key export."
-      },
-      "KeyExportStatus": {
-        "type": "string",
-        "enum": [
-          "pending_authorization",
-          "approved",
-          "rejected",
-          "resharing",
-          "reshare_completed",
-          "export_completed",
-          "expired",
-          "failed"
-        ],
-        "title": "KeyExportStatus",
-        "description": "Lifecycle states for a key export request."
       },
       "KeyShareHolderGroupStatus": {
         "type": "string",
@@ -10161,40 +7731,6 @@
         "title": "LangfuseRecord",
         "description": "A single Langfuse telemetry record."
       },
-      "MerchantInfo": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
-          },
-          "status": {
-            "type": "string",
-            "title": "Status",
-            "default": "active"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "url"
-        ],
-        "title": "MerchantInfo",
-        "description": "Public merchant entry returned by GET /ap2/merchants."
-      },
       "MessageSignCreate": {
         "properties": {
           "chain_id": {
@@ -10312,91 +7848,6 @@
         ],
         "title": "MessageSignResult",
         "description": "Response for message signing."
-      },
-      "MilestoneSpec": {
-        "properties": {
-          "milestone_id": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Milestone Id"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Description"
-          },
-          "deliverables": {
-            "items": {
-              "$ref": "#/components/schemas/DeliverableSpec"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Deliverables",
-            "description": "List of deliverables that must be submitted to complete this milestone."
-          },
-          "payment_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Payment Amount",
-            "description": "Payment amount released upon milestone approval, as a decimal string."
-          },
-          "payment_token": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Payment Token",
-            "description": "Token ID used for milestone payment (for example, `USDC`)."
-          },
-          "payment_chain": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Payment Chain",
-            "description": "Chain ID on which the milestone payment is settled (for example, `ETH`)."
-          },
-          "deadline_seconds": {
-            "title": "Deadline Seconds",
-            "description": "Time allowed to complete this milestone in seconds. Null means no deadline.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          },
-          "deadline_mode": {
-            "type": "string",
-            "pattern": "^(from_activation|from_prior_milestone)$",
-            "title": "Deadline Mode",
-            "description": "When the deadline countdown begins. `from_activation`: from pact activation. `from_prior_milestone`: from the prior milestone's completion.",
-            "default": "from_activation"
-          },
-          "review_deadline_seconds": {
-            "title": "Review Deadline Seconds",
-            "description": "Time allowed for the client to review a delivery in seconds. Null means no review deadline.",
-            "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "milestone_id",
-          "title",
-          "description",
-          "deliverables",
-          "payment_amount",
-          "payment_token",
-          "payment_chain"
-        ],
-        "title": "MilestoneSpec",
-        "description": "Milestone and payment structure."
       },
       "MppChallenge": {
         "properties": {
@@ -10536,68 +7987,6 @@
         "title": "MppSessionParams",
         "description": "Parameters for MPP session actions (open / voucher / close / request_close / withdraw)."
       },
-      "NegotiatedSpecPatchEntry-Input": {
-        "properties": {
-          "actor_role": {
-            "$ref": "#/components/schemas/HireParticipantRole",
-            "description": "Role of the party that proposed this spec change. Possible values: `client_agent`, `service_agent`, `pact_agent`."
-          },
-          "patch": {
-            "$ref": "#/components/schemas/HirePactSpecPatch-Input",
-            "description": "The partial spec update proposed in this negotiation round."
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "actor_role",
-          "patch",
-          "created_at"
-        ],
-        "title": "NegotiatedSpecPatchEntry",
-        "description": "Chronological record of negotiated spec changes."
-      },
-      "NegotiatedSpecPatchEntry-Output": {
-        "properties": {
-          "actor_role": {
-            "$ref": "#/components/schemas/HireParticipantRole",
-            "description": "Role of the party that proposed this spec change. Possible values: `client_agent`, `service_agent`, `pact_agent`."
-          },
-          "patch": {
-            "$ref": "#/components/schemas/HirePactSpecPatch-Output",
-            "description": "The partial spec update proposed in this negotiation round."
-          },
-          "message": {
-            "title": "Message",
-            "type": "string",
-            "maxLength": 4000,
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "actor_role",
-          "patch",
-          "created_at"
-        ],
-        "title": "NegotiatedSpecPatchEntry",
-        "description": "Chronological record of negotiated spec changes."
-      },
       "NodeStatusRead": {
         "properties": {
           "name": {
@@ -10639,42 +8028,6 @@
         "type": "object",
         "title": "NodeStatusRead",
         "description": "TSS node status from Cobo WaaS key share holder info."
-      },
-      "PactApprovalResponse-Input": {
-        "properties": {
-          "revised_pact": {
-            "description": "Optional revised pact spec. Replaces the pact's spec before activation.",
-            "$ref": "#/components/schemas/PactSpec-Input",
-            "nullable": true
-          },
-          "reason": {
-            "title": "Reason",
-            "description": "Approval or rejection reason.",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "PactApprovalResponse",
-        "description": "Reviewer's response when resolving a pact approval."
-      },
-      "PactApprovalResponse-Output": {
-        "properties": {
-          "revised_pact": {
-            "description": "Optional revised pact spec. Replaces the pact's spec before activation.",
-            "$ref": "#/components/schemas/PactSpec-Output",
-            "nullable": true
-          },
-          "reason": {
-            "title": "Reason",
-            "description": "Approval or rejection reason.",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "PactApprovalResponse",
-        "description": "Reviewer's response when resolving a pact approval."
       },
       "PactEventListResponse": {
         "properties": {
@@ -10766,7 +8119,7 @@
         ],
         "title": "PactListResponse"
       },
-      "PactRead": {
+      "PactPublicRead": {
         "properties": {
           "id": {
             "type": "string",
@@ -10824,13 +8177,6 @@
           "approval_id": {
             "title": "Approval Id",
             "description": "Linked approval ID.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "delegation_id": {
-            "title": "Delegation Id",
-            "description": "Delegation created for this pact.",
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -10909,8 +8255,8 @@
           "created_at",
           "updated_at"
         ],
-        "title": "PactRead",
-        "description": "Pact detail response. The api_key field is only visible to the operator principal."
+        "title": "PactPublicRead",
+        "description": "Public pact detail response without delegation internals."
       },
       "PactSpec-Input": {
         "properties": {
@@ -11337,67 +8683,6 @@
         ],
         "title": "PaymentResult",
         "description": "Unified payment result.\n\nCLI uses retry_headers to retry the original request."
-      },
-      "PaymentTerms": {
-        "properties": {
-          "total_amount": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Total Amount",
-            "description": "Total payment amount for the entire pact, as a decimal string."
-          },
-          "token": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Token",
-            "description": "Token ID used for all payments in this pact (for example, `USDC`)."
-          },
-          "chain": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Chain",
-            "description": "Chain ID on which payments are settled (for example, `ETH`)."
-          },
-          "funding_model": {
-            "type": "string",
-            "maxLength": 64,
-            "title": "Funding Model",
-            "description": "How the pact vault is funded. `full_upfront`: full payment deposited before activation.",
-            "default": "full_upfront"
-          },
-          "total_funded": {
-            "title": "Total Funded",
-            "description": "Amount actually deposited into the pact vault, as a decimal string. Null until funded.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          },
-          "bonus_criteria": {
-            "title": "Bonus Criteria",
-            "description": "Conditions under which the bonus amount is paid. Must be provided together with `bonus_amount`.",
-            "type": "string",
-            "maxLength": 2000,
-            "nullable": true
-          },
-          "bonus_amount": {
-            "title": "Bonus Amount",
-            "description": "Optional bonus amount payable when `bonus_criteria` are met, as a decimal string. Must be provided together with `bonus_criteria`.",
-            "type": "string",
-            "maxLength": 64,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "total_amount",
-          "token",
-          "chain"
-        ],
-        "title": "PaymentTerms",
-        "description": "Aggregate payment terms."
       },
       "PendingOperationActionResult": {
         "properties": {
@@ -12945,7 +10230,6 @@
       "RecipeSearchSource": {
         "type": "string",
         "enum": [
-          "graph",
           "knowledge"
         ],
         "title": "RecipeSearchSource"
@@ -13178,84 +10462,6 @@
         "title": "RejectPendingOperationRequest",
         "description": "Reject payload for pending operation."
       },
-      "ResolveApprovalRequest": {
-        "properties": {
-          "action": {
-            "$ref": "#/components/schemas/ApprovalAction",
-            "description": "Decision to apply to the approval. Possible values: `approve`, `reject`."
-          },
-          "response": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PactApprovalResponse-Input"
-              },
-              {
-                "$ref": "#/components/schemas/TransactionApprovalResponse"
-              }
-            ],
-            "title": "Response",
-            "description": "Reviewer's typed response data.",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "title": "ResolveApprovalRequest"
-      },
-      "ResolveApprovalResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/ApprovalStatus",
-            "description": "Updated approval status after the action. Possible values: `approved`, `rejected`, `success`, `failed`."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "ResolveApprovalResponse"
-      },
-      "ResolveExportRequest": {
-        "properties": {
-          "action": {
-            "type": "string",
-            "enum": [
-              "approve",
-              "reject"
-            ],
-            "title": "Action",
-            "description": "Decision to apply to the export request. Use 'approve' to authorize the export or 'reject' to deny it."
-          },
-          "rejection_reason": {
-            "title": "Rejection Reason",
-            "description": "Human-readable explanation for the rejection. Required when action is 'reject'; ignored when action is 'approve'.",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "title": "ResolveExportRequest",
-        "description": "Request body for approving or rejecting an export."
-      },
-      "ResolveExportResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/KeyExportStatus",
-            "description": "Updated state of the key export request after the approve or reject action has been applied."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "ResolveExportResponse",
-        "description": "Response after resolving an export."
-      },
       "SOLFeeRequest": {
         "properties": {
           "fee_type": {
@@ -13294,6 +10500,35 @@
         "title": "SOLFeeRequest",
         "description": "Optional Solana fee parameters for transfers."
       },
+      "ScriptBrief": {
+        "properties": {
+          "brief": {
+            "type": "string",
+            "title": "Brief"
+          },
+          "func_name": {
+            "type": "string",
+            "title": "Func Name"
+          },
+          "params": {
+            "type": "string",
+            "title": "Params"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brief",
+          "func_name",
+          "params",
+          "description"
+        ],
+        "title": "ScriptBrief",
+        "description": "Lightweight script info returned after reload."
+      },
       "SearchRecipesRequest": {
         "properties": {
           "query": {
@@ -13302,44 +10537,8 @@
           },
           "source": {
             "$ref": "#/components/schemas/RecipeSearchSource",
-            "description": "Search source: 'graph' for graph-based search, 'knowledge' for knowledge base",
+            "description": "Search source (only 'knowledge' is supported)",
             "default": "knowledge"
-          },
-          "mode": {
-            "title": "Mode",
-            "description": "Search mode: local, global, or mix",
-            "type": "string",
-            "nullable": true
-          },
-          "top_k": {
-            "title": "Top K",
-            "description": "Entities (local/mix) or relationships (global/mix) count",
-            "type": "integer",
-            "nullable": true
-          },
-          "chunk_top_k": {
-            "title": "Chunk Top K",
-            "description": "Text chunks from vector search",
-            "type": "integer",
-            "nullable": true
-          },
-          "max_entity_tokens": {
-            "title": "Max Entity Tokens",
-            "description": "Token budget for entity context",
-            "type": "integer",
-            "nullable": true
-          },
-          "max_relation_tokens": {
-            "title": "Max Relation Tokens",
-            "description": "Token budget for relation context",
-            "type": "integer",
-            "nullable": true
-          },
-          "max_total_tokens": {
-            "title": "Max Total Tokens",
-            "description": "Overall token ceiling; chunks get whatever remains after KG context",
-            "type": "integer",
-            "nullable": true
           },
           "limit": {
             "title": "Limit",
@@ -13380,7 +10579,7 @@
           "query"
         ],
         "title": "SearchRecipesRequest",
-        "description": "Request payload for recipe search across graph-based or knowledge-base sources."
+        "description": "Request payload for recipe knowledge-base search."
       },
       "SessionRecord": {
         "properties": {
@@ -13647,7 +10846,7 @@
         ],
         "title": "StandardResponse[AgentStatusResponse]"
       },
-      "StandardResponse_ApiKeyCreateResult_": {
+      "StandardResponse_ApiKeyCreateResultPublic_": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -13655,7 +10854,7 @@
             "default": true
           },
           "result": {
-            "$ref": "#/components/schemas/ApiKeyCreateResult"
+            "$ref": "#/components/schemas/ApiKeyCreateResultPublic"
           },
           "suggestion": {
             "type": "string",
@@ -13676,69 +10875,7 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[ApiKeyCreateResult]"
-      },
-      "StandardResponse_ApprovalListResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ApprovalListResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ApprovalListResponse]"
-      },
-      "StandardResponse_ApprovalRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ApprovalRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ApprovalRead]"
+        "title": "StandardResponse[ApiKeyCreateResultPublic]"
       },
       "StandardResponse_AuditLogPage_": {
         "properties": {
@@ -13802,37 +10939,6 @@
         ],
         "title": "StandardResponse[ChainInfo]"
       },
-      "StandardResponse_CompleteExportResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/CompleteExportResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[CompleteExportResponse]"
-      },
       "StandardResponse_ContractCallSubmitResult_": {
         "properties": {
           "success": {
@@ -13863,130 +10969,6 @@
           "result"
         ],
         "title": "StandardResponse[ContractCallSubmitResult]"
-      },
-      "StandardResponse_CreateExportResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/CreateExportResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[CreateExportResponse]"
-      },
-      "StandardResponse_DelegationFreezeResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/DelegationFreezeResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[DelegationFreezeResult]"
-      },
-      "StandardResponse_DelegationRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/DelegationRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[DelegationRead]"
-      },
-      "StandardResponse_DelegationUnfreezeResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/DelegationUnfreezeResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[DelegationUnfreezeResult]"
       },
       "StandardResponse_EstimateTransferFeeRead_": {
         "properties": {
@@ -14050,6 +11032,37 @@
         ],
         "title": "StandardResponse[EthCallResult]"
       },
+      "StandardResponse_ExecuteScriptResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "result": {
+            "$ref": "#/components/schemas/ExecuteScriptResponse"
+          },
+          "suggestion": {
+            "type": "string",
+            "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "StandardResponse[ExecuteScriptResponse]"
+      },
       "StandardResponse_FaucetDepositResult_": {
         "properties": {
           "success": {
@@ -14080,130 +11093,6 @@
           "result"
         ],
         "title": "StandardResponse[FaucetDepositResult]"
-      },
-      "StandardResponse_HireEventListResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/HireEventListResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[HireEventListResponse]"
-      },
-      "StandardResponse_HireListResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/HireListResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[HireListResponse]"
-      },
-      "StandardResponse_HireRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/HireRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[HireRead]"
-      },
-      "StandardResponse_KeyExportRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/KeyExportRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[KeyExportRead]"
       },
       "StandardResponse_MessageSignResult_": {
         "properties": {
@@ -14329,7 +11218,7 @@
         ],
         "title": "StandardResponse[PactListResponse]"
       },
-      "StandardResponse_PactRead_": {
+      "StandardResponse_PactPublicRead_": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -14337,7 +11226,7 @@
             "default": true
           },
           "result": {
-            "$ref": "#/components/schemas/PactRead"
+            "$ref": "#/components/schemas/PactPublicRead"
           },
           "suggestion": {
             "type": "string",
@@ -14358,7 +11247,7 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[PactRead]"
+        "title": "StandardResponse[PactPublicRead]"
       },
       "StandardResponse_PactSubmitResponse_": {
         "properties": {
@@ -14825,99 +11714,6 @@
         ],
         "title": "StandardResponse[RecipeSearchResponse]"
       },
-      "StandardResponse_ResolveApprovalResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ResolveApprovalResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ResolveApprovalResponse]"
-      },
-      "StandardResponse_ResolveExportResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/ResolveExportResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[ResolveExportResponse]"
-      },
-      "StandardResponse_SubmitReshareNodesResponse_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/SubmitReshareNodesResponse"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[SubmitReshareNodesResponse]"
-      },
       "StandardResponse_SuggestionResponse_": {
         "properties": {
           "success": {
@@ -14948,37 +11744,6 @@
           "result"
         ],
         "title": "StandardResponse[SuggestionResponse]"
-      },
-      "StandardResponse_SystemConfigRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/SystemConfigRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[SystemConfigRead]"
       },
       "StandardResponse_TelemetryConfigResponse_": {
         "properties": {
@@ -15476,37 +12241,6 @@
         ],
         "title": "StandardResponse[WalletTssCallbackResponse]"
       },
-      "StandardResponse_WebhookDeleteResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/WebhookDeleteResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[WebhookDeleteResult]"
-      },
       "StandardResponse_WebhookProcessResult_": {
         "properties": {
           "success": {
@@ -15537,37 +12271,6 @@
           "result"
         ],
         "title": "StandardResponse[WebhookProcessResult]"
-      },
-      "StandardResponse_WebhookRegistrationRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/WebhookRegistrationRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[WebhookRegistrationRead]"
       },
       "StandardResponse_dict_str__bool__": {
         "properties": {
@@ -15639,7 +12342,7 @@
         ],
         "title": "StandardResponse[dict[str, str]]"
       },
-      "StandardResponse_list_ApiKeyRead__": {
+      "StandardResponse_list_ApiKeyPublicRead__": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -15648,7 +12351,7 @@
           },
           "result": {
             "items": {
-              "$ref": "#/components/schemas/ApiKeyRead"
+              "$ref": "#/components/schemas/ApiKeyPublicRead"
             },
             "type": "array",
             "title": "Result"
@@ -15672,7 +12375,7 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[list[ApiKeyRead]]"
+        "title": "StandardResponse[list[ApiKeyPublicRead]]"
       },
       "StandardResponse_list_BalanceRead__": {
         "properties": {
@@ -15709,41 +12412,6 @@
         ],
         "title": "StandardResponse[list[BalanceRead]]"
       },
-      "StandardResponse_list_DelegationRead__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/DelegationRead"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[DelegationRead]]"
-      },
       "StandardResponse_list_FaucetTokenItem__": {
         "properties": {
           "success": {
@@ -15778,41 +12446,6 @@
           "result"
         ],
         "title": "StandardResponse[list[FaucetTokenItem]]"
-      },
-      "StandardResponse_list_MerchantInfo__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/MerchantInfo"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[MerchantInfo]]"
       },
       "StandardResponse_list_PolicyRead__": {
         "properties": {
@@ -15989,7 +12622,7 @@
         ],
         "title": "StandardResponse[list[RecipeRead]]"
       },
-      "StandardResponse_list_SystemConfigRead__": {
+      "StandardResponse_list_ScriptBrief__": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -15998,7 +12631,7 @@
           },
           "result": {
             "items": {
-              "$ref": "#/components/schemas/SystemConfigRead"
+              "$ref": "#/components/schemas/ScriptBrief"
             },
             "type": "array",
             "title": "Result"
@@ -16022,7 +12655,7 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[list[SystemConfigRead]]"
+        "title": "StandardResponse[list[ScriptBrief]]"
       },
       "StandardResponse_list_TokenCandidate__": {
         "properties": {
@@ -16094,41 +12727,6 @@
         ],
         "title": "StandardResponse[list[UserTransactionRead]]"
       },
-      "StandardResponse_list_WalletAddressInfo__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/WalletAddressInfo"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[WalletAddressInfo]]"
-      },
       "StandardResponse_list_WalletAddressRead__": {
         "properties": {
           "success": {
@@ -16199,74 +12797,6 @@
         ],
         "title": "StandardResponse[list[WalletRead]]"
       },
-      "StandardResponse_list_WebhookDLQRead__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/WebhookDLQRead"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[WebhookDLQRead]]"
-      },
-      "SubmitReshareNodesRequest": {
-        "properties": {
-          "node_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "minItems": 2,
-            "title": "Node Ids",
-            "description": "List of temporary TSS node IDs to participate in the reshare operation. At least two node IDs are required."
-          }
-        },
-        "type": "object",
-        "required": [
-          "node_ids"
-        ],
-        "title": "SubmitReshareNodesRequest",
-        "description": "Request body for submitting TSS node IDs to trigger reshare."
-      },
-      "SubmitReshareNodesResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/KeyExportStatus",
-            "description": "Updated state of the key export request after the node IDs have been submitted and the reshare operation has been initiated."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "SubmitReshareNodesResponse",
-        "description": "Response after submitting reshare nodes."
-      },
       "SuggestionKey": {
         "type": "string",
         "enum": [
@@ -16311,67 +12841,6 @@
           "message"
         ],
         "title": "SuggestionResponse"
-      },
-      "SystemConfigRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "key": {
-            "type": "string",
-            "title": "Key"
-          },
-          "value": {
-            "type": "string",
-            "title": "Value"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "key",
-          "value",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "SystemConfigRead",
-        "description": "Read representation of a system config entry."
-      },
-      "SystemConfigUpsert": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "title": "Key",
-            "description": "The unique configuration key used to identify this system config entry."
-          },
-          "value": {
-            "type": "string",
-            "minLength": 0,
-            "title": "Value",
-            "description": "The configuration value associated with the key. May be an empty string."
-          }
-        },
-        "type": "object",
-        "required": [
-          "key",
-          "value"
-        ],
-        "title": "SystemConfigUpsert",
-        "description": "Body for creating or updating a system config entry."
       },
       "TelemetryConfigResponse": {
         "properties": {
@@ -16546,19 +13015,6 @@
         "title": "TokenMetadata",
         "description": "Token and asset metadata returned by the Cobo WaaS API. Describes a supported token, including its chain, decimals, deposit/withdrawal eligibility, and fee token."
       },
-      "TransactionApprovalResponse": {
-        "properties": {
-          "reason": {
-            "title": "Reason",
-            "description": "Approval or rejection reason.",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "TransactionApprovalResponse",
-        "description": "Reviewer's response when resolving a transaction approval."
-      },
       "TransactionProvider": {
         "type": "string",
         "enum": [
@@ -16732,31 +13188,6 @@
         ],
         "title": "TransferSubmitResult",
         "description": "Transfer submission response payload."
-      },
-      "TssKeyShareGroupSnapshot": {
-        "properties": {
-          "tss_key_share_group_id": {
-            "type": "string",
-            "title": "Tss Key Share Group Id",
-            "description": "TSS key share group id used by cobo-tss-node export-share / local DB."
-          },
-          "curve": {
-            "title": "Curve",
-            "type": "string",
-            "nullable": true
-          },
-          "root_pubkey": {
-            "title": "Root Pubkey",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "tss_key_share_group_id"
-        ],
-        "title": "TssKeyShareGroupSnapshot",
-        "description": "Subset of WaaS ``tss_key_share_groups[]`` (see Get key share holder group)."
       },
       "UcwSharePublicDataCallback": {
         "properties": {
@@ -17140,36 +13571,6 @@
         "title": "VaultGroupType",
         "description": "MPC Vault Group 类型\n\n均为 2/2 配置 (User 1 片 + Cobo 1 片)。\n\nAGENT: Agent 持有密钥分片，用于服务端自动签名（CLI 发起）\nHUMAN: Human 持有密钥分片，用于 UCW 移动端签名（Mobile App 发起）\n\n当 Agent 钱包被 Human 认领后，同一个 Wallet 会同时拥有 AGENT 和 HUMAN\n两个 VaultGroup，分别对应不同的签名参与方。"
       },
-      "VerificationSpec": {
-        "properties": {
-          "method": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Method"
-          },
-          "automated_checks": {
-            "items": {
-              "$ref": "#/components/schemas/AutomatedCheck"
-            },
-            "type": "array",
-            "title": "Automated Checks"
-          },
-          "review_rubric": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Review Rubric"
-          }
-        },
-        "type": "object",
-        "required": [
-          "method"
-        ],
-        "title": "VerificationSpec",
-        "description": "Verification settings for the pact."
-      },
       "WaasPaginatedResponse_ChainMetadata_": {
         "properties": {
           "data": {
@@ -17258,51 +13659,6 @@
         "type": "object",
         "title": "WalletAddressCreate",
         "description": "Request payload for creating wallet address."
-      },
-      "WalletAddressInfo": {
-        "properties": {
-          "chain_id": {
-            "type": "string",
-            "title": "Chain Id",
-            "description": "Identifier of the blockchain network this address belongs to (e.g. 'ETH', 'BTC')."
-          },
-          "address": {
-            "type": "string",
-            "title": "Address",
-            "description": "Blockchain address string in the format native to the specified chain (e.g. '0x…' for EVM chains, 'bc1…' for Bitcoin bech32)."
-          },
-          "path": {
-            "type": "string",
-            "title": "Path",
-            "description": "BIP-32 derivation path used to derive this address from the root key (e.g. 'm/44'/60'/0'/0/0'). Empty string if not applicable.",
-            "default": ""
-          },
-          "pubkey": {
-            "type": "string",
-            "title": "Pubkey",
-            "description": "Compressed public key corresponding to this address, hex-encoded. Empty string if not yet populated.",
-            "default": ""
-          },
-          "encoding": {
-            "type": "string",
-            "title": "Encoding",
-            "description": "Address encoding format applied to the public key (e.g. 'bech32', 'base58'). Empty string if not applicable.",
-            "default": ""
-          },
-          "root_pubkey": {
-            "type": "string",
-            "title": "Root Pubkey",
-            "description": "Hex-encoded root public key from which this address is derived. Empty string if not yet populated.",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "required": [
-          "chain_id",
-          "address"
-        ],
-        "title": "WalletAddressInfo",
-        "description": "A single wallet address with derivation info."
       },
       "WalletAddressRead": {
         "properties": {
@@ -18283,84 +14639,6 @@
         "title": "WalletUpdate",
         "description": "Request payload for updating wallet metadata."
       },
-      "WebhookDLQRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "Unique identifier of this dead-letter queue entry."
-          },
-          "outbox_entry_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Outbox Entry Id",
-            "description": "UUID of the originating outbox entry that failed delivery."
-          },
-          "event_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Event Id",
-            "description": "UUID of the webhook event that could not be delivered."
-          },
-          "event_type": {
-            "type": "string",
-            "title": "Event Type",
-            "description": "String identifier of the event type, e.g. 'transaction.completed'."
-          },
-          "payload": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Payload",
-            "description": "Full event payload that was attempted for delivery."
-          },
-          "registration_id": {
-            "title": "Registration Id",
-            "description": "UUID of the webhook registration targeted for delivery, if available.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "last_error": {
-            "type": "string",
-            "title": "Last Error",
-            "description": "Human-readable description of the last delivery error encountered."
-          },
-          "failed_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Failed At",
-            "description": "Timestamp when the most recent delivery attempt failed."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "outbox_entry_id",
-          "event_id",
-          "event_type",
-          "payload",
-          "last_error",
-          "failed_at"
-        ],
-        "title": "WebhookDLQRead",
-        "description": "Dead-letter queue row response."
-      },
-      "WebhookDeleteResult": {
-        "properties": {
-          "deleted": {
-            "type": "boolean",
-            "title": "Deleted",
-            "description": "True if the webhook registration was successfully deleted."
-          }
-        },
-        "type": "object",
-        "required": [
-          "deleted"
-        ],
-        "title": "WebhookDeleteResult",
-        "description": "Registration deletion response."
-      },
       "WebhookProcessResult": {
         "properties": {
           "processed": {
@@ -18375,158 +14653,6 @@
         ],
         "title": "WebhookProcessResult",
         "description": "Webhook process acknowledgment payload."
-      },
-      "WebhookRegistrationCreate": {
-        "properties": {
-          "callback_url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Callback Url",
-            "description": "The HTTPS URL that will receive webhook POST requests."
-          },
-          "secret": {
-            "type": "string",
-            "maxLength": 1024,
-            "minLength": 8,
-            "title": "Secret",
-            "description": "Shared secret used to sign outgoing webhook payloads (HMAC). Must be between 8 and 1024 characters."
-          },
-          "event_types": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Event Types",
-            "description": "List of event type strings to subscribe to. An empty list subscribes to all event types."
-          }
-        },
-        "type": "object",
-        "required": [
-          "callback_url",
-          "secret"
-        ],
-        "title": "WebhookRegistrationCreate",
-        "description": "Request payload for webhook registration."
-      },
-      "WebhookRegistrationRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "Unique identifier of the webhook registration."
-          },
-          "callback_url": {
-            "type": "string",
-            "title": "Callback Url",
-            "description": "The HTTPS URL that receives webhook POST requests."
-          },
-          "owner_id": {
-            "title": "Owner Id",
-            "description": "UUID of the owner associated with this registration, if any.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "event_types": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Event Types",
-            "description": "List of subscribed event type strings."
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active",
-            "description": "Whether this webhook registration is currently active and will receive events."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "Timestamp when the webhook registration was created."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "callback_url",
-          "is_active",
-          "created_at"
-        ],
-        "title": "WebhookRegistrationRead",
-        "description": "Webhook registration response."
-      },
-      "WorkScope": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 5000,
-            "minLength": 1,
-            "title": "Description"
-          },
-          "category": {
-            "title": "Category",
-            "type": "string",
-            "maxLength": 128,
-            "nullable": true
-          },
-          "in_scope": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "In Scope"
-          },
-          "out_of_scope": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Out Of Scope"
-          },
-          "acceptance_criteria": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "minItems": 1,
-            "title": "Acceptance Criteria"
-          },
-          "technology_stack": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Technology Stack"
-          },
-          "references": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "References"
-          }
-        },
-        "type": "object",
-        "required": [
-          "title",
-          "description",
-          "in_scope",
-          "acceptance_criteria"
-        ],
-        "title": "WorkScope",
-        "description": "Structured work definition for the pact."
       },
       "WrappedValidationError": {
         "title": "WrappedValidationError",
