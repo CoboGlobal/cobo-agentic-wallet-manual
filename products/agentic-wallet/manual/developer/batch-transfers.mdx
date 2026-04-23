@@ -15,8 +15,9 @@ RECIPIENTS=("0xAddr1" "0xAddr2" "0xAddr3")
 AMOUNTS=("10" "15" "20")
 
 for i in "${!RECIPIENTS[@]}"; do
-  caw tx transfer "$PACT_ID" \
-    --to "${RECIPIENTS[$i]}" \
+  caw tx transfer \
+    --pact-id "$PACT_ID" \
+    --dst-address "${RECIPIENTS[$i]}" \
     --token-id SETH_USDC \
     --amount "${AMOUNTS[$i]}" \
     --chain-id SETH \
@@ -60,8 +61,7 @@ const transfers = [
 
 const results = await Promise.allSettled(
   transfers.map((item) =>
-    client.transferTokens({
-      wallet_id: walletId,
+    txApi.transferTokens(walletId, {
       chain_id: 'SETH',
       dst_addr: item.dst_addr,
       token_id: 'SETH_USDC',

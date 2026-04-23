@@ -10,7 +10,7 @@ Each chain requires its own derived address before a wallet can operate on that 
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw address create <WALLET_UUID> --chain-id SETH
+caw address create --chain-id SETH
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -24,10 +24,9 @@ print(address["address"])
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const address = await client.createWalletAddress({
-  wallet_uuid: walletUuid,
+const address = (await walletsApi.createWalletAddress(walletUuid, {
   chain_type: 'SETH',
-});
+})).data.result;
 console.log(address.address);
 ```
 </Tab>
@@ -38,7 +37,7 @@ console.log(address.address);
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw address list <WALLET_UUID>
+caw address list
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -50,7 +49,7 @@ for addr in addresses.get("items", []):
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const addresses = await client.listWalletAddresses({ wallet_uuid: walletUuid });
+const addresses = (await walletsApi.listWalletAddresses(walletUuid)).data.result;
 for (const addr of addresses.items ?? []) {
   console.log(addr.address, addr.chain_id);
 }
@@ -63,7 +62,7 @@ for (const addr of addresses.items ?? []) {
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw wallet balance <WALLET_UUID>
+caw wallet balance
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -75,7 +74,7 @@ for b in balances.get("items", []):
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const balances = await client.listBalances({ wallet_uuid: walletUuid });
+const balances = (await balanceApi.listBalances(walletUuid)).data.result;
 for (const b of balances.items ?? []) {
   console.log(b.token_id, b.balance, b.chain_id);
 }

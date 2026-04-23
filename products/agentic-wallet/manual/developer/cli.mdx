@@ -8,7 +8,7 @@ Use this path when you want the fastest way to get from download to a first work
 
 ## Install
 
-The `caw` CLI is a standalone binary. The CLI's environment default is `prod`.
+The `caw` CLI is a standalone binary.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/CoboGlobal/cobo-agentic-wallet/master/install.sh | bash
@@ -28,7 +28,7 @@ caw --version
 
 ## Onboard and pair with the wallet owner
 
-Run the interactive onboarding wizard. You will need an invitation code from the wallet owner.
+Run the interactive onboarding wizard. You will need an invitation code from the wallet owner — see [Install the agent skill](/products/agentic-wallet/manual/owners/install-skill) for how to apply for one.
 
 ```bash
 caw onboard --wait --invitation-code <invitation-code>
@@ -84,7 +84,7 @@ caw pact submit --intent "Test USDC transfer on Sepolia" --execution-plan "Trans
 ```bash
 caw pact status --pact-id <PACT_ID>
 ```
-<Note>Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`.</Note>
+<Note>Required flags are `--intent`, `--execution-plan`, `--policies`, and `--completion-conditions`. See [Submit and manage pacts](/products/agentic-wallet/manual/developer/pacts) for the full pact lifecycle and [Pact policy reference](/products/agentic-wallet/manual/reference/pact-policies) for the policy schema and all available rule fields.</Note>
 
 ## Explore your wallet
 
@@ -106,10 +106,10 @@ PACT_ID=<pact-id>
 DST=0x1111111111111111111111111111111111111111
 
 # Allowed transfer
-caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 1 --chain-id SETH
+caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH --amount 1 --chain-id SETH
 
 # Oversized transfer — triggers policy denial
-caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH_USDC --amount 500 --chain-id SETH
+caw tx transfer --pact-id "$PACT_ID" --dst-address "$DST" --token-id SETH --amount 500 --chain-id SETH
 ```
 
 On denial, output includes `code`, `reason`, `details`, and `suggestion`.

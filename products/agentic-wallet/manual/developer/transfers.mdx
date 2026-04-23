@@ -10,8 +10,9 @@ Transfers are the most common CAW operation. A runtime submits a transfer with a
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx transfer <PACT_ID> \
-  --to 0xRecipient... \
+caw tx transfer \
+  --pact-id <PACT_ID> \
+  --dst-address 0xRecipient... \
   --token-id SETH_USDC \
   --amount 50 \
   --chain-id SETH \
@@ -37,14 +38,13 @@ print(result["status"])
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const result = await client.transferTokens({
-  wallet_id: walletUuid,
+const result = (await txApi.transferTokens(walletUuid, {
   chain_id: 'SETH',
   dst_addr: '0xRecipient...',
   token_id: 'SETH_USDC',
   amount: '50',
   request_id: 'invoice-001',
-});
+})).data.result;
 console.log(result.status);
 ```
 </Tab>
@@ -97,13 +97,12 @@ if result.get("status") == "pending_approval":
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const result = await client.transferTokens({
-  wallet_id: walletUuid,
+const result = (await txApi.transferTokens(walletUuid, {
   chain_id: 'SETH',
   dst_addr: '0xRecipient...',
   token_id: 'SETH_USDC',
   amount: '800',
-});
+})).data.result;
 
 if (result.status === 'pending_approval') {
   console.log(result.pending_operation_id);

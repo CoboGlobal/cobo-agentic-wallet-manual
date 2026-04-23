@@ -92,22 +92,23 @@ except PolicyDeniedError as exc:
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-import { PolicyDeniedError } from 'cobo-agentic-wallet';
-
+// The TypeScript SDK has no PolicyDeniedError class.
+// Policy denials arrive as HTTP 403 exceptions — catch as a raw error object.
 try {
-  await client.transferTokens({
-    wallet_id: walletUuid,
+  await txApi.transferTokens(walletUuid, {
     chain_id: 'SETH',
     dst_addr: '0xRecipient...',
     token_id: 'SETH_USDC',
     amount: '500',
   });
-} catch (err) {
-  if (err instanceof PolicyDeniedError) {
-    const limitValue = err.denial.details?.limit_value;
+} catch (error) {
+  const resp = (error as {
+    response?: { status?: number; data?: { error?: { code?: string; details?: Record<string, unknown> } } };
+  })?.response;
+  if (resp?.status === 403) {
+    const limitValue = resp.data?.error?.details?.limit_value;
     const correctedAmount = String(limitValue ?? '100');
-    await client.transferTokens({
-      wallet_id: walletUuid,
+    await txApi.transferTokens(walletUuid, {
       chain_id: 'SETH',
       dst_addr: '0xRecipient...',
       token_id: 'SETH_USDC',
