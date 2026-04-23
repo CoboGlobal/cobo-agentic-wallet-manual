@@ -10,7 +10,7 @@ Wallets are created and owned by a principal. Owners have unrestricted access; r
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw onboard provision --token <PAIRING_CODE>
+caw onboard
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -21,7 +21,7 @@ print(wallet["uuid"])
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const wallet = await client.createWallet({ name: 'Treasury' });
+const wallet = (await walletsApi.createWallet({ name: 'Treasury' })).data.result;
 console.log(wallet.uuid);
 ```
 </Tab>
@@ -32,7 +32,7 @@ console.log(wallet.uuid);
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw wallet get <WALLET_UUID>
+caw wallet get
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -43,7 +43,7 @@ print(wallet["name"], wallet["status"])
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const wallet = await client.getWallet({ wallet_uuid: walletUuid });
+const wallet = (await walletsApi.getWallet(walletUuid)).data.result;
 console.log(wallet.name, wallet.status);
 ```
 </Tab>
@@ -55,7 +55,6 @@ console.log(wallet.name, wallet.status);
 <Tab title="CLI">
 ```bash
 caw wallet list
-caw wallet list --archived
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -65,7 +64,7 @@ wallets = await owner_client.list_wallets(limit=50, offset=0)
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const wallets = await client.listWallets({ limit: 50, offset: 0 });
+const wallets = (await walletsApi.listWallets(undefined, undefined, 0, 50)).data.result;
 ```
 </Tab>
 </Tabs>
@@ -79,38 +78,18 @@ from cobo_agentic_wallet_api.models.wallet_update import WalletUpdate
 
 await owner_client.update_wallet(
     wallet_uuid,
-    WalletUpdate(name="Main Treasury", metadata={"env": "prod"}),
+    WalletUpdate(name="Main Treasury", metadata={"region": "us-east"}),
 )
 ```
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-await client.updateWallet({
-  wallet_uuid: walletUuid,
+await walletsApi.updateWallet(walletUuid, {
   name: 'Main Treasury',
-  metadata: { env: 'prod' },
+  metadata: { region: 'us-east' },
 });
 ```
 </Tab>
 </Tabs>
 
-## Archive a wallet
-
-<Tabs>
-<Tab title="CLI">
-```bash
-caw wallet archive <WALLET_UUID>
-```
-</Tab>
-<Tab title="Python SDK">
-```python
-await owner_client.archive_wallet(wallet_uuid)
-```
-</Tab>
-<Tab title="TypeScript SDK">
-```typescript
-await client.archiveWallet({ wallet_uuid: walletUuid });
-```
-</Tab>
-</Tabs>
 

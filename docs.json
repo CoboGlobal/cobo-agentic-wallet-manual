@@ -206,7 +206,6 @@
             "pages": [
               "products/agentic-wallet/manual/reference/overview",
               "products/agentic-wallet/manual/reference/changelog",
-
               {
                 "group": "Identity",
                 "pages": [
@@ -319,6 +318,12 @@
                 "pages": [
                   "products/agentic-wallet/manual/reference/deposit",
                   "products/agentic-wallet/manual/reference/list-tokens"
+                ]
+              },
+              {
+                "group": "Recipes",
+                "pages": [
+                  "products/agentic-wallet/manual/reference/search-recipes"
                 ]
               }
             ]

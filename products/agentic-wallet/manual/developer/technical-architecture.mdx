@@ -76,7 +76,7 @@ The Python SDK is a pure Python client library that all Python developer-facing 
 | Layer | What it is |
 |---|---|
 | `WalletAPIClient` (Python) | Async HTTP client — direct access to all Cobo Agentic Wallet service endpoints |
-| `WalletAPIClient` (TypeScript) | Promise-based HTTP client with full TypeScript types — same endpoint coverage as the Python client |
+| TypeScript SDK (raw API classes) | Promise-based HTTP client with full TypeScript types — instantiate individual API classes (`TransactionsApi`, `PactsApi`, `WalletsApi`, etc.) from `@cobo/agentic-wallet` |
 | `AgentWalletToolkit` | 20 canonical runtime tools covering wallet discovery, pact flows, transfers, contract calls, signing, payments, fee estimation, transaction tracking, audit, and delegation |
 | Framework adapters | LangChain, OpenAI Agents — each wraps the toolkit in the framework's tool format |
 | CLI (`caw`) | Shell command interface for developers and AI coding assistants |

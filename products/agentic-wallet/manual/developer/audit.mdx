@@ -40,12 +40,14 @@ for entry in logs.get("items", []):
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const logs = await client.listAuditLogs({
-  wallet_id: walletId,
-  action: 'transfer.initiate',
-  result: 'denied',
-  limit: 50,
-});
+const logs = (await auditApi.listAuditLogs(
+  walletId,          // wallet_id
+  agentId,           // principal_id
+  'transfer.initiate', // action
+  'denied',          // result
+  undefined, undefined, undefined, undefined, undefined,
+  50,                // limit
+)).data.result;
 
 for (const entry of logs.items ?? []) {
   console.log(
@@ -174,12 +176,10 @@ logs = await owner_client.list_audit_logs(
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const logs = await client.listAuditLogs({
-  wallet_id: walletId,
-  action: 'transfer.initiate',
-  result: 'denied',
-  limit: 50,
-});
+const logs = (await auditApi.listAuditLogs(
+  walletId, undefined, 'transfer.initiate', 'denied',
+  undefined, undefined, undefined, undefined, undefined, 50,
+)).data.result;
 ```
 </Tab>
 </Tabs>

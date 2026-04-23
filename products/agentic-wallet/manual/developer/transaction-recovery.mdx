@@ -1,6 +1,6 @@
 ---
-title: "Transaction recovery"
-description: "Speed up or drop stuck transactions and understand when to use each path."
+title: "Speed up or cancel transactions"
+description: "Replace a pending transaction with a higher-fee version to speed it up, or cancel it by dropping the nonce."
 ---
 
 For EVM-style pending transactions, CAW supports two recovery flows:
@@ -13,8 +13,7 @@ For EVM-style pending transactions, CAW supports two recovery flows:
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx speedup <TRANSACTION_UUID> \
-  --fee '{"fee_type":"EVM_EIP_1559","max_fee_per_gas":"50000000000","max_priority_fee_per_gas":"2000000000"}'
+caw tx speedup --tx-id <TRANSACTION_UUID>
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -32,15 +31,13 @@ result = await client.speedup_transaction(
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-const result = await client.speedupTransaction({
-  wallet_uuid: walletId,
-  transaction_uuid: transactionUuid,
+const result = (await txApi.speedupTransaction(walletId, transactionUuid, {
   fee: {
     fee_type: 'EVM_EIP_1559',
     max_fee_per_gas: '50000000000',
     max_priority_fee_per_gas: '2000000000',
   },
-});
+})).data.result;
 ```
 </Tab>
 </Tabs>
@@ -50,7 +47,7 @@ const result = await client.speedupTransaction({
 <Tabs>
 <Tab title="CLI">
 ```bash
-caw tx drop <TRANSACTION_UUID>
+caw tx drop --tx-id <TRANSACTION_UUID>
 ```
 </Tab>
 <Tab title="Python SDK">
@@ -63,10 +60,7 @@ await client.drop_transaction(
 </Tab>
 <Tab title="TypeScript SDK">
 ```typescript
-await client.dropTransaction({
-  wallet_uuid: walletId,
-  transaction_uuid: transactionUuid,
-});
+await txApi.dropTransaction(walletId, transactionUuid, {});
 ```
 </Tab>
 </Tabs>
