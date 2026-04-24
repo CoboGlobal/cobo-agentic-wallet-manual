@@ -28,7 +28,7 @@ caw --version
 
 ## Onboard and pair with the wallet owner
 
-Run the interactive onboarding wizard. You will need an invitation code from the wallet owner — see [Install the agent skill](/products/agentic-wallet/manual/owners/install-skill) for how to apply for one.
+Run the interactive onboarding wizard. You will need an invitation code — [apply for early access](https://agenticwallet.cobo.com/agentic-wallet/waitlist/apply) to get one.
 
 ```bash
 caw onboard --wait --invitation-code <invitation-code>
@@ -77,7 +77,7 @@ Before executing blockchain actions, submit a pact to request delegated access f
 
 - Submit a pact requesting transfer permissions
 ```bash
-caw pact submit --intent "Test USDC transfer on Sepolia" --execution-plan "Transfer 1 USDC on Sepolia for testing." --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{"chain_in":["SETH"],"token_in":[{"chain_id": "SETH", "token_id": "SETH_USDC"}]},"deny_if":{"amount_gt":"1"}}}]' --completion-conditions '[{"type":"tx_count","threshold":"1"}]'
+caw pact submit --intent "Test ETH transfer on Sepolia" --execution-plan "Transfer 1 ETH on Sepolia for testing." --policies '[{"name":"allow-transfer","type":"transfer","rules":{"effect":"allow","when":{"chain_in":["SETH"],"token_in":[{"chain_id": "SETH", "token_id": "SETH"}]},"deny_if":{"amount_gt":"1"}}}]' --completion-conditions '[{"type":"tx_count","threshold":"1"}]'
 ```
 
 - Once active, get the pact ID and check its status:
@@ -95,7 +95,7 @@ caw wallet get
 # Check balance
 caw wallet balance
 
-# Get wallet details
+# List addresses
 caw address list
 ```
 

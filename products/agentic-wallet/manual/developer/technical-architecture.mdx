@@ -14,19 +14,16 @@ For most developers, this page is background context. The canonical onboarding p
 ```mermaid
 flowchart TD
     subgraph AI["**Your Runtime**"]
-        sdk["MCP + CLI + SDK & integrations
-        LangChain / OpenAI / Agno / TypeScript"]
+        sdk["MCP + CLI + SDK & integrations<br/>LangChain / OpenAI / Agno / TypeScript"]
     end
 
     subgraph Human["**Human (You)**"]
-        im["Cobo Agentic Wallet app
-        Pair · Approve · Policies · Notifications"]
+        im["Cobo Agentic Wallet app<br/>Pair · Approve · Policies · Notifications"]
     end
 
     nl["**Human Interface Service**"]
 
-    core["**Cobo Agentic Wallet Service**
-    Identity · Wallet · Delegation · Policy Engine..."]
+    core["**Cobo Agentic Wallet Service**<br/>Identity · Wallet · Delegation · Policy Engine..."]
 
     AI -->|"REST API (X-API-Key)"| core
     Human -->|"mobile app"| nl

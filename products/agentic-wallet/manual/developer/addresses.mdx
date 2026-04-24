@@ -17,7 +17,7 @@ caw address create --chain-id SETH
 ```python
 address = await owner_client.create_wallet_address(
     wallet_uuid=wallet_uuid,
-    chain_type="SETH",
+    chain_id="SETH",
 )
 print(address["address"])
 ```
@@ -25,7 +25,7 @@ print(address["address"])
 <Tab title="TypeScript SDK">
 ```typescript
 const address = (await walletsApi.createWalletAddress(walletUuid, {
-  chain_type: 'SETH',
+  chain_id: 'SETH',
 })).data.result;
 console.log(address.address);
 ```

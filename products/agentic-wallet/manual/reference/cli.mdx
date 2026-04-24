@@ -51,8 +51,8 @@ Policy denials are written to stderr with structured context and a non-zero exit
 Download and install a caw CLI binary from the official download server.
 
 Fetches the binary, verifies its checksum, and replaces the current binary
-in-place. Omit --version to install the latest release. Use --check to check
-for a newer version without installing.
+in-place. --version is required. Use --check to verify a version is available
+without installing.
 
 ```bash
 caw update
@@ -61,7 +61,7 @@ caw update
 | Option | Default | Description |
 |---|---|---|
 | `--check` | — | Check for updates without installing |
-| `--version` | — | Target version to install (default: latest) |
+| `--version` | — | Target version to install (required), e.g. v1.2.3 |
 
 ## `caw version`
 
@@ -747,7 +747,6 @@ caw onboard
 
 | Option | Default | Description |
 |---|---|---|
-| `--env` | — | Cobo environment: sandbox, dev, or prod (default: prod, env: CAW_ENV) |
 | `--invitation-code` | — | Invitation code |
 | `--agent-name` | — | Optional display name for the agent (provision) and, when set, names the wallet \"`<name>`'s Wallet\" |
 | `--session-id` | — | Interactive onboarding session id. If omitted or not found, a new session is created |
@@ -1564,6 +1563,8 @@ caw pact submit
 | `--execution-plan` | Yes | — | Concrete on-chain steps the agent will perform after approval (markdown). Suggested sections: # Summary, # Operations, # Risk Controls |
 | `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
 | `--policies` | Yes | — | JSON array of policy objects. Each has \"name\", \"type\" (transfer, contract_call, or message_sign), and \"rules\" (effect, when, deny_if, review_if) |
+| `--name` | No | — | Human-readable name for this pact (optional) |
+| `--recipe-ids` | No | `nil` | Comma-separated recipe IDs to associate with this pact (optional), e.g. recipe-abc,recipe-xyz |
 
 ### `revoke`
 
