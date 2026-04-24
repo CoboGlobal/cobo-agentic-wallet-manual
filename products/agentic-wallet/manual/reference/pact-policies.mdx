@@ -1,25 +1,65 @@
 ---
-title: "Pact policy reference"
-description: "Complete reference for the policy schema used in pact submissions."
+title: "Pact policies and completion conditions"
+description: "JSON reference for the two required arrays in every pact submission: completion conditions that auto-terminate the pact, and policies that constrain which operations the agent can perform."
 ---
+
+Every pact submission includes two top-level JSON arrays:
+
+```json
+{
+  "completion_conditions": [ ... ],
+  "policies": [ ... ]
+}
+```
+
+**Completion conditions** define when the pact automatically ends — time elapsed, transactions executed, or amount spent. The pact is revoked as soon as any one condition is met.
+
+**Policies** define what the agent is allowed to do while the pact is active — which chains, tokens, contracts, or message types are permitted, and what limits apply.
+
+---
+
+## Completion conditions
+
+Completion conditions determine when a pact automatically ends. At least one is required. The pact completes when **any** condition is satisfied, after which access is revoked immediately. Types cannot be duplicated within a pact.
+
+| Type | Threshold | Description |
+|---|---|---|
+| `tx_count` | string (integer) | Complete after N successful transactions — e.g. `"1"` for a one-time operation |
+| `amount_spent` | string (decimal) | Complete after cumulative token amount reaches this — e.g. `"1000"` for 1000 USDC |
+| `amount_spent_usd` | string (decimal) | Complete after cumulative USD spend reaches this — e.g. `"500"` |
+| `time_elapsed` | string (seconds) | Complete after N seconds from pact activation — e.g. `"2592000"` for 30 days |
+
+```json
+[
+  {"type": "tx_count", "threshold": "12"},
+  {"type": "time_elapsed", "threshold": "7776000"}
+]
+```
+
+This pact ends after 12 transactions or 90 days, whichever comes first.
+
+---
+
+## Policies
 
 Policies are the rules that constrain what an agent can do within a pact. Every operation the runtime submits is evaluated against the policies you define.
 
-## How the engine works
+### How the engine works
 
 The policy engine evaluates every operation against all applicable policies and outputs one of three decisions: **allow**, **require_approval**, or **deny**.
 
-### Evaluation order (within a policy)
+#### Evaluation order (within a policy)
 
-1. Check `deny_if` — if hit, deny immediately
-2. Check `review_if` / `always_review` — if hit, pause for owner approval
-3. Otherwise, allow
+1. Match `when` conditions — if not matched, the policy is skipped
+2. Check `deny_if` — if hit, deny immediately
+3. Check `review_if` / `always_review` — if hit, pause for owner approval
+4. Otherwise, allow
 
-### Default-deny semantics
+#### Default-deny semantics
 
 Pact-level policies use **fail-closed** semantics: if the operation does not match any policy's `when` conditions, it is automatically denied. Every operation the agent needs to perform must be explicitly covered by a policy.
 
-### Final decision
+#### Final decision
 
 When multiple policies apply:
 
@@ -27,7 +67,7 @@ When multiple policies apply:
 - No deny, but any review triggered → **require_approval**
 - Otherwise → **allow**
 
-## Policy structure
+### Policy structure
 
 Each policy in the `policies` array has this shape:
 
@@ -337,6 +377,19 @@ Use dot notation to address nested fields:
 
 **Supported operators:** `eq`, `neq`, `in`, `not_in`, `gt`, `gte`, `lt`, `lte`
 
+#### Path resolution failures
+
+When a path cannot be resolved, the rule does not match:
+
+| Situation | Result |
+|---|---|
+| Intermediate field missing or `null` | No match |
+| `*` applied to a non-array | No match |
+| `[N]` index out of bounds | No match |
+| `.length` applied to a non-array | No match |
+| Empty array + `eq`, `in`, `gt`, `gte`, `lt`, `lte` | `false` (no match) |
+| Empty array + `neq`, `not_in` | `true` (matches) |
+
 ### `deny_if` — rate limits
 
 | Field | Type | Description |
@@ -418,28 +471,6 @@ For EVM chains, the engine checks that the request `chain_id` matches `domain.ch
 }
 ```
 </CodeGroup>
-
----
-
-## Completion conditions
-
-Completion conditions determine when a pact automatically ends. At least one is required. The pact completes when **any** condition is satisfied, after which access is revoked immediately.
-
-| Type | Threshold | Description |
-|---|---|---|
-| `tx_count` | string (integer) | Complete after N successful transactions — e.g. `"1"` for a one-time operation |
-| `amount_spent` | string (decimal) | Complete after cumulative token amount reaches this — e.g. `"1000"` for 1000 USDC |
-| `amount_spent_usd` | string (decimal) | Complete after cumulative USD spend reaches this — e.g. `"500"` |
-| `time_elapsed` | string (seconds) | Complete after N seconds from pact activation — e.g. `"2592000"` for 30 days |
-
-```json
-[
-  {"type": "tx_count", "threshold": "12"},
-  {"type": "time_elapsed", "threshold": "7776000"}
-]
-```
-
-This pact ends after 12 transactions or 90 days, whichever comes first.
 
 ---
 

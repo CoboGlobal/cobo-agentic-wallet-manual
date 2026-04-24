@@ -44,6 +44,8 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
 
 ```json
 {
+  "intent": "DCA $500/week into ETH on Base for 3 months",
+  "execution_plan": "# Summary\nWeekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.\n\n# Operations\n- Swap $500 USDC → ETH via Uniswap V3 on Base weekly\n\n# Risk Controls\n- Per-swap cap: $550 (includes slippage buffer)\n- Rolling 24h limit: $600, max 5 swaps",
   "policies": [
     {
       "name": "allow-uniswap-base",
@@ -86,7 +88,7 @@ A DCA trader pact that allows weekly $500 ETH purchases on Base for 3 months:
 }
 ```
 
-For the full policy schema, see [Pact policy reference](/products/agentic-wallet/manual/reference/pact-policies).
+For the full policies and completion conditions schema, see [Pact policies and completion conditions](/products/agentic-wallet/manual/reference/pact-policies).
 
 ## Pact lifecycle
 

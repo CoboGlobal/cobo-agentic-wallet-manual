@@ -3,7 +3,7 @@
   "info": {
     "title": "Cobo Agentic Wallet Service",
     "description": "Unified wallet engine for human and agent principals",
-    "version": "1.1.0"
+    "version": "1.2.1"
   },
   "paths": {
     "/health": {
@@ -7290,6 +7290,16 @@
             "type": "array",
             "nullable": true
           },
+          "recipe_ids": {
+            "title": "Recipe Ids",
+            "description": "IDs of recipes associated with this pact.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "nullable": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -7432,6 +7442,16 @@
             "maxLength": 255,
             "minLength": 1,
             "nullable": true
+          },
+          "recipe_ids": {
+            "title": "Recipe Ids",
+            "description": "IDs of recipes (from the recipes table) to associate with this pact.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "nullable": true
           }
         },
         "type": "object",
@@ -7535,6 +7555,16 @@
             ],
             "title": "Expires At",
             "description": "When the pact expires."
+          },
+          "recipe_ids": {
+            "title": "Recipe Ids",
+            "description": "IDs of recipes associated with this pact.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "nullable": true
           },
           "operator": {
             "description": "Operator principal. Null if the principal row is missing (e.g. legacy data).",
@@ -11783,6 +11813,7 @@
           "INSUFFICIENT_PERMISSION",
           "APPROVAL_REQUIRED",
           "APPROVAL_REQUIRED_UNPAIRED",
+          "PACT_SUBMIT_ALWAYS_REVIEW_UNPAIRED",
           "PACT_NOT_FOUND",
           "PACT_WALLET_NOT_FOUND",
           "PACT_WRONG_STATUS",
@@ -12549,11 +12580,7 @@
           },
           "pagination": {
             "$ref": "#/components/schemas/WaasPagination",
-            "default": {
-              "before": "",
-              "after": "",
-              "total_count": 0
-            }
+            "deprecated": true
           }
         },
         "type": "object",
@@ -12571,11 +12598,7 @@
           },
           "pagination": {
             "$ref": "#/components/schemas/WaasPagination",
-            "default": {
-              "before": "",
-              "after": "",
-              "total_count": 0
-            }
+            "deprecated": true
           }
         },
         "type": "object",

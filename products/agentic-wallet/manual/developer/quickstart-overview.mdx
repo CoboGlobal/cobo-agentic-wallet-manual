@@ -13,6 +13,14 @@ CAW in developer mode is simple:
 
 That means you can build a bot, agent, or automation that transfers tokens, makes payments, signs messages, or calls contracts without building your own wallet control layer.
 
+## AI coding agent support
+
+If you are building with an AI coding agent (Claude Code, Cursor, Windsurf, etc.), install the CAW developer skill to give it context on the SDK and CLI:
+
+```bash
+npx skills add CoboGlobal/cobo-agentic-wallet --skill cobo-agentic-wallet-developer --yes --global
+```
+
 ## Canonical path
 
 If you want the fastest path from zero to a real runnable flow, use this sequence:
@@ -56,20 +64,22 @@ The primary onboarding branch is language, not framework.
 <Tabs>
 <Tab title="Python">
 
-Use this if your runtime logic is Python-first or you expect to adopt LangChain or OpenAI Agents SDK later.
+Use this if your runtime logic is Python-first or you expect to adopt a Python agent framework later.
 
 1. Run [CLI Setup](/products/agentic-wallet/manual/developer/cli)
 2. Run [Python SDK](/products/agentic-wallet/manual/developer/api-client-python)
-3. Expand to [LangChain](/products/agentic-wallet/manual/developer/langchain) or [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai)
+3. Expand to [LangChain](/products/agentic-wallet/manual/developer/langchain), [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai), [Agno](/products/agentic-wallet/manual/developer/agno), or [CrewAI](/products/agentic-wallet/manual/developer/crewai)
+4. Or use the [MCP Server](/products/agentic-wallet/manual/developer/mcp) if your client already speaks MCP
 
 </Tab>
 <Tab title="TypeScript">
 
-Use this if your runtime is Node.js or TypeScript-first, or you plan to integrate with TypeScript LangChain/OpenAI stacks.
+Use this if your runtime is Node.js or TypeScript-first, or you plan to integrate with a TypeScript agent framework.
 
 1. Run [CLI Setup](/products/agentic-wallet/manual/developer/cli)
 2. Run [TypeScript SDK](/products/agentic-wallet/manual/developer/api-client-typescript)
-3. Expand to [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai) or [LangChain](/products/agentic-wallet/manual/developer/langchain)
+3. Expand to [OpenAI Agents SDK](/products/agentic-wallet/manual/developer/openai), [LangChain](/products/agentic-wallet/manual/developer/langchain), [Vercel AI SDK](/products/agentic-wallet/manual/developer/vercel-ai-sdk), or [Mastra](/products/agentic-wallet/manual/developer/mastra)
+4. Or use the [MCP Server](/products/agentic-wallet/manual/developer/mcp) if your client already speaks MCP
 
 </Tab>
 </Tabs>
