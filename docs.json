@@ -205,7 +205,6 @@
             "group": "API reference",
             "pages": [
               "products/agentic-wallet/manual/reference/overview",
-              "products/agentic-wallet/manual/reference/changelog",
               {
                 "group": "Identity",
                 "pages": [
