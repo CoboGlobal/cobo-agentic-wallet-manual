@@ -79,7 +79,7 @@ Local wallet commands (list, current) operate on credentials stored on this
 machine. Platform commands (get, balance, rename, archive, pair) call the Cobo
 Agentic Wallet service and require an active wallet with valid credentials.
 
-Run "caw wallet --help" for a full list of subcommands.
+Run 'caw wallet --help' for a full list of subcommands.
 
 ```bash
 caw wallet
@@ -89,7 +89,7 @@ caw wallet
 
 List all wallets stored on this machine. Each wallet corresponds to one
 Cobo Agentic Wallet and holds the credentials and metadata needed to call the
-Cobo Agentic Wallet service. The active wallet is marked with "active": true.
+Cobo Agentic Wallet service. The active wallet is marked with 'active': true.
 
 ```bash
 caw wallet list
@@ -97,9 +97,9 @@ caw wallet list
 
 ### `current`
 
-Without --wallet-id: shows the currently active wallet.
-With --wallet-id: switches the active wallet to the given one.
---wallet-id is the UUID of the wallet to switch to; obtain it from "caw wallet list".
+Without --wallet-uuid: shows the currently active wallet.
+With --wallet-uuid: switches the active wallet to the given one.
+--wallet-uuid is the UUID of the wallet to switch to; obtain it from 'caw wallet list'.
 
 ```bash
 caw wallet current
@@ -107,7 +107,7 @@ caw wallet current
 
 | Option | Default | Description |
 |---|---|---|
-| `--wallet-id` | — | UUID of the wallet to switch to; if omitted, shows the currently active wallet |
+| `--wallet-uuid` | — | UUID of the wallet to switch to; if omitted, shows the currently active wallet |
 | `--show-api-key` | — | Include the API key in the output (sensitive; omitted by default) |
 
 ### `get`
@@ -120,7 +120,8 @@ caw wallet get
 
 ### `balance`
 
-List token balances for the active wallet on the Cobo platform.
+List all token balances for the active wallet. Optionally filter by
+--token-id, --chain-id, or --address to narrow the results.
 
 ```bash
 caw wallet balance
@@ -150,7 +151,8 @@ caw wallet rename
 Initiate pairing and obtain a one-time pairing token (8-digit code) for the
 user to enter in the Cobo Agentic Wallet app. Share the code with the user through a
 secure channel. Use caw wallet pair-status to monitor whether the user has
-completed pairing.
+completed pairing. To verify pairing completion at any time, run caw status
+and check the wallet_paired boolean.
 
 ```bash
 caw wallet pair
@@ -168,6 +170,22 @@ by caw wallet pair.
 ```bash
 caw wallet pair-status
 ```
+
+### `archive`
+
+Archive a wallet locally. Archived wallets are hidden from 'caw wallet list'
+but no server-side changes are made. Use --list to view all archived wallets,
+or --rollback with a wallet UUID to restore one.
+
+```bash
+caw wallet archive
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--wallet-uuid` | — | UUID of the wallet to archive |
+| `--list` | — | List all archived wallet UUIDs |
+| `--rollback` | — | Restore an archived wallet by UUID |
 
 ## `caw tx`
 
@@ -191,6 +209,9 @@ policy denies the transfer, the command exits non-zero and writes structured
 denial details to stderr. If a policy requires manual approval, the transfer is
 queued as a pending operation.
 
+Pass --request-id as an idempotency key — retrying with the same value returns
+the existing record without re-submitting.
+
 ```bash
 caw tx transfer
 ```
@@ -212,8 +233,10 @@ caw tx transfer
 Submit a smart contract call from a wallet.
 
 For EVM chains (e.g. SETH, BASE_ETH), provide --contract and --calldata.
+EVM addresses must be exactly 42 characters (0x + 40 hex digits).
 For Solana (SOL), provide --instructions as a JSON array of SolInstruction
 objects and optionally --address-lookup-tables.
+Solana addresses must be 43–44 characters (Base58).
 
 The call is evaluated against active policies before submission.
 
@@ -238,6 +261,7 @@ caw tx call
 ### `list`
 
 List transaction records for the active wallet, newest first.
+Filterable by --status, --token-id, --chain-id, --address, and --type.
 
 ```bash
 caw tx list
@@ -258,7 +282,7 @@ Retrieve the full details of a single transaction record.
 
 Provide either --tx-id (the record UUID from caw tx list or submit response) or
 --request-id (the same request_id you passed on the submit call). The wallet is
-taken from your active wallet (use "caw wallet current" to check).
+taken from your active wallet (use 'caw wallet current' to check).
 
 The response includes status, amounts, fees, and any policy evaluation results.
 
@@ -273,7 +297,8 @@ caw tx get
 
 ### `estimate-transfer-fee`
 
-Estimate the network fee for a token transfer without submitting it.
+Estimate the network fee for a token transfer without submitting it and
+without running policy checks.
 
 Provide the same flags you intend to use for caw tx transfer. The response
 includes the estimated fee amount and the token used to pay it.
@@ -363,7 +388,7 @@ caw tx speedup
 Sign a message using a wallet address.
 
 --pact-id is the pact that scopes the signing key and wallet; obtain it from
-"caw pact list" or a pact submit response.
+'caw pact list' or a pact submit response.
 
 ```bash
 caw tx sign-message
@@ -392,8 +417,9 @@ caw address
 
 ### `list`
 
-List all on-chain addresses associated with the active wallet. Use
-"caw wallet current" to check which wallet is active.
+List all on-chain addresses associated with the active wallet. Run this
+before creating a new address to check whether one already exists for
+a given chain. Use 'caw wallet current' to check which wallet is active.
 
 ```bash
 caw address list
@@ -401,7 +427,9 @@ caw address list
 
 ### `create`
 
-Generate a new on-chain address for the active wallet and chain.
+Generate a new on-chain address for the active wallet on the specified
+chain. The response includes a compatible_chains field listing all chain
+IDs that share this address (e.g. all EVM chains share one address).
 
 ```bash
 caw address create
@@ -451,7 +479,7 @@ caw meta chains
 Retrieve detailed information about a specific blockchain by its chain ID.
 
 --chain-id is the Cobo chain identifier, e.g. SETH or BASE_ETH. Use
-"caw meta chains" to list all supported chain IDs.
+'caw meta chains' to list all supported chain IDs.
 
 ```bash
 caw meta chain-info
@@ -497,7 +525,7 @@ caw meta search-tokens
 Get current market prices for one or more Cobo asset coins.
 
 --asset-coins is a comma-separated list of Cobo asset coin IDs, e.g. BTC,ETH.
-Use "caw meta tokens" to discover supported IDs.
+Use 'caw meta tokens' to discover supported IDs.
 
 ```bash
 caw meta prices
@@ -572,7 +600,7 @@ caw pending list
 | Option | Default | Description |
 |---|---|---|
 | `--limit` | `50` | Maximum number of results to return (1–200) |
-| `--status` | — | Filter by status, e.g. pending_approval, executing, completed, rejected |
+| `--status` | — | Filter by status: pending, executing, rejected, executed |
 
 ### `get`
 
@@ -581,7 +609,7 @@ the operation type, current status, policy context, and any available result
 payload.
 
 --operation-id is the ID of the pending operation to retrieve; obtain IDs from
-"caw pending list".
+'caw pending list'.
 
 ```bash
 caw pending get
@@ -598,7 +626,7 @@ action is irreversible — once approved, the operation will begin executing
 immediately if all other policy conditions are satisfied.
 
 --operation-id is the ID of the pending operation to approve; obtain IDs from
-"caw pending list".
+'caw pending list'.
 
 ```bash
 caw pending approve
@@ -615,7 +643,7 @@ Reject a pending operation, preventing it from executing. This action is
 irreversible.
 
 --operation-id is the ID of the pending operation to reject; obtain IDs from
-"caw pending list".
+'caw pending list'.
 
 ```bash
 caw pending reject
@@ -807,7 +835,7 @@ Perform an HTTP request and automatically handle 402 Payment Required
 responses using the x402 or MPP machine-payment protocols.
 
 `<pact-id>` is the pact UUID used to resolve the paying wallet and the
-pact-scoped API key (same behavior as "caw tx transfer `<pact-id>`"). `<url>` is
+pact-scoped API key (same behavior as 'caw tx transfer `<pact-id>`'). `<url>` is
 the endpoint to fetch. When a 402 is received, caw detects the payment
 protocol from the response headers (unless overridden), pays using the wallet
 bound to the pact, and retries the request with the payment headers.
@@ -874,7 +902,7 @@ Close a single active MPP payment session. By default the session is closed
 via protocol negotiation with the relay server. Use --force to bypass the
 relay server and submit an on-chain requestClose transaction directly; after a
 force-close there is a 15-minute grace period before you can reclaim funds
-with "caw payment session withdraw".
+with 'caw payment session withdraw'.
 
 The session is closed under the pact that originally opened it (persisted in
 active.json). Pass --pact-id to override when that pact has been rotated or
@@ -917,7 +945,7 @@ caw payment session close-all
 
 Reclaim deposited funds from an MPP channel that has been closed on-chain
 and whose grace period has expired. The session must be in 'close_requested'
-status; use "caw payment session close --force" to initiate an on-chain close
+status; use 'caw payment session close --force' to initiate an on-chain close
 if it is not.
 
 The withdraw is signed under the pact that opened the session. Pass
@@ -940,7 +968,7 @@ Start a local HTTP proxy that intercepts outgoing requests and automatically
 handles payment challenges using the x402 or MPP protocol.
 
 `<pact-id>` is the pact UUID used to resolve the paying wallet and the
-pact-scoped API key (same behavior as "caw tx transfer `<pact-id>`"). All
+pact-scoped API key (same behavior as 'caw tx transfer `<pact-id>`'). All
 payments signed by the gateway are authorized under that pact.
 
 Two proxy modes are available. In forward mode the proxy accepts plain HTTP
@@ -999,10 +1027,9 @@ caw export-key
 
 ## `caw status`
 
-Check backend connectivity and wallet status in a single call.
-Returns three fields: healthy (whether the backend API is reachable),
-wallet_status (the current wallet lifecycle state such as active or pending),
-and wallet_paired (whether the wallet ownership pairing has been completed).
+Show a compact wallet snapshot: whether the backend is reachable (healthy),
+the current wallet lifecycle state (wallet_status, e.g. active or pending),
+and whether ownership pairing has been completed (wallet_paired boolean).
 
 ```bash
 caw status
@@ -1038,6 +1065,10 @@ caw util abi
 #### `encode`
 
 Encode a function call into hex calldata for use with caw tx call --calldata.
+Pass numeric arguments as decimal strings (e.g. "1000000"), not raw integers.
+Tuple arguments must be encoded as nested JSON arrays.
+Token amounts must always be in the token's smallest unit (e.g. 0.001 WETH = 1000000000000000).
+Always verify the result with caw util abi decode before submitting.
 
 Examples:
 ```bash
@@ -1111,7 +1142,7 @@ caw util abi selector
 Send a raw eth_call to an EVM contract and return the hex result.
 
 Use this when you already have ABI-encoded calldata. For a higher-level
-command that handles encoding and decoding automatically, use "caw util eth-call".
+command that handles encoding and decoding automatically, use 'caw util eth-call'.
 
 Example:
 ```bash
@@ -1200,10 +1231,13 @@ caw util base64 decode
 
 ### `eth-call`
 
-Encode calldata from an ABI, call the contract via eth_call, and decode
-the return value — all in one command.
+Read on-chain contract state by calling a view function: encodes calldata,
+calls the contract via eth_call, and decodes the return value automatically.
+Use --abi erc20 to query standard ERC-20 methods (name, symbol, decimals,
+balanceOf, allowance) without writing a full ABI. --args is a JSON array of
+positional arguments; omit for zero-argument methods.
 
-For raw eth_call without encoding/decoding, use "caw util abi call".
+For raw eth_call without encoding/decoding, use 'caw util abi call'.
 
 Examples:
 ```bash
@@ -1243,8 +1277,8 @@ caw pact
 
 ### `list`
 
-List pacts accessible to the authenticated principal. Results are
-paginated.
+List pacts accessible to the authenticated principal. Filter by
+--status (e.g. active, pending_approval, completed). Results are paginated.
 
 ```bash
 caw pact list
@@ -1253,7 +1287,6 @@ caw pact list
 | Option | Default | Description |
 |---|---|---|
 | `--status` | — | Filter by pact status: pending_approval, active, rejected, completed, expired, or revoked |
-| `--wallet-id` | — | Filter by wallet UUID |
 | `--limit` | `50` | Maximum number of results to return (1–200) |
 
 ### `status`
@@ -1261,8 +1294,8 @@ caw pact list
 Fetch the current status of a pact by its ID, triggering lazy activation
 if the pact is ready to become active.
 
---pact-id is returned when you run "caw pact submit", or found via "caw pact
-list".
+--pact-id is returned when you run 'caw pact submit', or found via 'caw pact
+list'.
 
 ```bash
 caw pact status
@@ -1277,8 +1310,8 @@ caw pact status
 Show the full detail of a pact, including its spec, status, policies, and
 completion conditions.
 
---pact-id is returned when you run "caw pact submit", or found via "caw pact
-list".
+--pact-id is returned when you run 'caw pact submit', or found via 'caw pact
+list'.
 
 ```bash
 caw pact show
@@ -1294,8 +1327,8 @@ List all lifecycle events recorded for a pact in chronological order.
 Events capture state transitions such as submission, approval, activation,
 and revocation.
 
---pact-id is returned when you run "caw pact submit", or found via "caw pact
-list".
+--pact-id is returned when you run 'caw pact submit', or found via 'caw pact
+list'.
 
 ```bash
 caw pact events
@@ -1308,29 +1341,14 @@ caw pact events
 
 ### `submit`
 
-Submit a new pact request. A pact grants an agent delegated
-access to the wallet, scoped by policies (spending caps, chain/token
-filters, address constraints, approval thresholds) and completion conditions
-(transaction count, amount spent, or elapsed time) that automatically
-terminate the delegation when reached.
+Submit a new pact request. A pact grants an agent delegated access to the wallet, scoped by policies (spending caps, chain/token filters, address constraints, approval thresholds) and completion conditions (transaction count, amount spent, or elapsed time) that automatically terminate the delegation when reached.
 
 caw pact submit Flag Reference
 
-Translate the user's request into caw pact submit flags. Each row maps one
-aspect of the user's intent to the corresponding flag and describes how to
-derive the value.
+Translate the user's request into caw pact submit flags. Each row maps one aspect of the user's intent to the corresponding flag and describes how to derive the value.
 
-Least privilege: Default to the narrowest scope — shortest duration,
-tightest token/chain/contract allowlist, and lowest spend cap that fulfills
-the user's intent. Only widen when the user explicitly asks.
+Least privilege: Default to the narrowest scope — shortest duration, tightest token/chain/contract allowlist, and lowest spend cap that fulfills the user's intent. Only widen when the user explicitly asks.
 
-| Flag | Required | Notes | How to Derive from User Input |
-|---|---|---|---|
-| --intent `<text>` | yes | Natural language description of the pact's purpose | Distill into action + asset + chain: "buy $500 ETH weekly" → "Weekly DCA: $500 ETH on Ethereum". |
-| --original-intent `<text>` | no | User's original message(s) that triggered this request | Capture raw message(s) as typed. If refined across multiple messages, concatenate chronologically. |
-| --policies `<json>` | yes | JSON array of detailed risk control policy definitions: chain/token/contract allowlists, per-tx caps, rolling limits, review thresholds. | See Policy Reference below. |
-| --completion-conditions `<json>` | yes | JSON array of completion conditions. | See Completion Conditions below. |
-| --execution-plan `<text>` | yes | Concrete on-chain steps the agent will perform post-approval. | See Execution Plan below. |
 Complete Example
 
 User request: "Help me transfer 1000 USDC to 0xABC...123 on Base"
@@ -1362,34 +1380,15 @@ caw pact submit \
 
 Execution Plan (--execution-plan)
 
-Describe the operations the agent will run after the pact is active. Use
-these sections:
+Describe the operations the agent will run after the pact is active. Use these sections:
 
 - \# Summary — one-line goal
 - \# Operations — concrete calls/transfers (token, amount, target contract)
 - \# Risk Controls — per-tx cap, daily cap, etc
 
-Example — "buy $500 ETH weekly on Base":
-
-```markdown
-# Summary
-Weekly DCA: swap $500 USDC to ETH on Base via Uniswap V3.
-
-# Operations
-- Approve USDC spend on Uniswap V3 Router (0x2626...1e481) if needed
-- Swap $500 USDC → ETH via Uniswap V3 on Base
-- Repeat weekly
-
-# Risk Controls
-- Per-swap cap: $550 (includes slippage buffer)
-- Rolling 24h limit: $600
-```
-
 Completion Conditions (--completion-conditions)
 
-JSON array defining when a pact is considered complete. Each object has
-type and threshold (required). At least one condition is required. Types
-cannot be duplicated within a pact.
+JSON array defining when a pact is considered complete. Each object has type and threshold (required). At least one condition is required. Types cannot be duplicated within a pact.
 
 | Type | Threshold | Description |
 |---|---|---|
@@ -1398,18 +1397,11 @@ cannot be duplicated within a pact.
 | amount_spent_usd | string (decimal) | Complete after cumulative USD spend reaches threshold. E.g., "3000". Note: transactions without price data won't increment progress. |
 | time_elapsed | string (seconds) | Complete after N seconds from pact activation. E.g., "3600" (1 hour). |
 
-Multiple conditions can be set; the pact completes when any one is satisfied
-(any-of semantics). Once complete, the pact is revoked immediately and no
-further operations can be executed under it.
+Multiple conditions can be set; the pact completes when any one is satisfied (any-of semantics). Once complete, the pact is revoked immediately and no further operations can be executed under it.
 
 Policy Reference (--policies)
 
-Policies constrain operations within a pact via the --policies flag. Each
-policy targets a specific operation type (transfer, contract_call, or
-message_sign) and always uses allow effect. Default-deny semantics apply:
-any operation not matching the when conditions of at least one policy is
-automatically denied — no implicit pass-through. Always define policies
-that explicitly cover every operation the agent needs to perform.
+Policies constrain operations within a pact via the --policies flag. Each policy targets a specific operation type (transfer, contract_call, or message_sign) and always uses allow effect. Default-deny semantics apply: any operation not matching the when conditions of at least one policy is automatically denied — no implicit pass-through. Always define policies that explicitly cover every operation the agent needs to perform.
 
 Policy Structure
 
@@ -1437,32 +1429,6 @@ Policy Structure
 | rules.review_if | Optional | Soft-block conditions — thresholds that require owner approval before proceeding |
 | rules.always_review | Optional | When true, every operation matching when requires owner approval. Use for sensitive or high-risk tasks. |
 
-Evaluation flow:
-
-```
-Operation
-  │
-  ▼
-Match any policy's when? ──No──► DENY
-  │
-  Yes
-  │
-  ▼
-Hit deny_if limit? ──Yes──► DENY
-  │
-  No
-  │
-  ▼
-Exceed review_if threshold? ──No──► ALLOW
-  │
-  Yes
-  │
-  ▼
-Pause for owner approval
-  │
-  ├── approved ──► ALLOW
-  └── rejected ──► DENY
-```
 
 Allowlist Conditions (when)
 
@@ -1479,7 +1445,8 @@ For contract_call policies (EVM):
 | Field | Type | Description |
 |---|---|---|
 | chain_in | string[] | Restrict to specific chains |
-| target_in | ContractTargetRef[] | Restrict to specific contract addresses. E.g. [\{"chain_id":"BASE_ETH", "contract_addr":"0x..."\}] |
+| target_in | ContractTargetRef[] | ALL contracts the tx touches: primary contract + ERC-20 token (approve target) + factory/quoter. E.g. [\{"chain_id":"BASE_ETH","contract_addr":"0xRouter..."\},\{"chain_id":"BASE_ETH","contract_addr":"0xUSDC..."\}]. Missing entries cause silent policy denials. |
+
 
 For contract_call policies (Solana):
 
@@ -1558,13 +1525,13 @@ caw pact submit
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--intent` | Yes | — | Natural language description of the pact's purpose, e.g. \"Weekly DCA: $500 ETH on Ethereum\" |
-| `--original-intent` | No | — | Raw user message(s) that triggered this request; concatenate chronologically for multi-turn sessions |
-| `--execution-plan` | Yes | — | Concrete on-chain steps the agent will perform after approval (markdown). Suggested sections: # Summary, # Operations, # Risk Controls |
-| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met |
-| `--policies` | Yes | — | JSON array of policy objects. Each has \"name\", \"type\" (transfer, contract_call, or message_sign), and \"rules\" (effect, when, deny_if, review_if) |
+| `--intent` | Yes | — | Natural language description of the pact's purpose. Distill into action + asset + chain: \"buy $500 ETH weekly\" → \"Weekly DCA: $500 ETH on Ethereum\". |
+| `--original-intent` | No | — | Raw user message(s) that triggered this request. Capture as typed; concatenate chronologically for multi-turn sessions. E.g. \"Help me transfer 1000 USDC to 0xABC...123 on Base\" |
+| `--execution-plan` | Yes | — | Concrete on-chain steps the agent will perform after approval (markdown). Sections: # Summary (one-line goal), # Operations (calls/transfers), # Risk Controls (caps/limits). E.g. \"# Summary\\nTransfer 1000 USDC to 0xABC...123 on Base.\\n\\n# Operations\\n- Transfer 1000 USDC to 0xABC...123 on Base\\n\\n# Risk Controls\\n- Per-tx cap: $1001\\n- One-time transfer only\" |
+| `--completion-conditions` | Yes | — | JSON array of conditions that auto-terminate the pact. Each object has \"type\" (tx_count, amount_spent, amount_spent_usd, or time_elapsed) and \"threshold\". The pact completes when any one is met. E.g. [\{\"type\":\"tx_count\",\"threshold\":\"1\"\}] |
+| `--policies` | Yes | — | JSON array of policy objects. For contract_call type: target_in MUST cover ALL contracts the tx touches — primary contract + ERC-20 token (approve target) + factory/quoter. Missing entries cause policy rejections. |
 | `--name` | No | — | Human-readable name for this pact (optional) |
-| `--recipe-ids` | No | `nil` | Comma-separated recipe IDs to associate with this pact (optional), e.g. recipe-abc,recipe-xyz |
+| `--recipe-slugs` | No | `nil` | Recipe slugs to link this pact to the authoritative recipe (recommended). Run 'caw recipe search' first to get the slug. E.g. uniswap-v3-swap,aave-supply |
 
 ### `revoke`
 
@@ -1631,10 +1598,11 @@ caw recipe
 
 ### `search`
 
-Search the recipe knowledge base using a natural language query via
-LightRAG. Returns relevant recipe documents, knowledge graph entities, and
-relationships that match the query. Results can be filtered by chain or
-token symbol and tuned via search mode and token budgets.
+Search the recipe knowledge base before executing DeFi operations to load
+domain knowledge: contract addresses, ABIs, execution steps, and risk notes
+for the target protocol. Use --keywords to specify protocol name or token
+symbols, and --chain to filter by chain. Always run this before contract
+calls on unfamiliar protocols.
 
 ```bash
 caw recipe search
@@ -1642,10 +1610,6 @@ caw recipe search
 
 | Option | Required | Default | Description |
 |---|---|---|---|
-| `--query` | Yes | — | Natural language search query [required] |
-| `--source` | No | — | Document source: graph or knowledge |
-| `--limit` | No | `0` | Max results for knowledge search |
+| `--keywords` | Yes | `nil` | Keywords to search for (e.g. uniswap, USDC) [required] |
+| `--limit` | No | `0` | Max results to return |
 | `--chain` | No | — | Filter by chain symbol (e.g. ethereum, solana, bitcoin) |
-| `--token` | No | — | Filter by token symbol (e.g. ETH, USDT, BTC) |
-| `--keywords` | No | `nil` | Keywords for filtering documents (knowledge search) |
-| `--search-type` | No | — | Search type: vector, keyword, or hybrid (knowledge search) |
