@@ -3,7 +3,7 @@
   "info": {
     "title": "Cobo Agentic Wallet Service",
     "description": "Unified wallet engine for human and agent principals",
-    "version": "1.2.1"
+    "version": "1.2.4"
   },
   "paths": {
     "/health": {
@@ -1302,6 +1302,76 @@
         }
       }
     },
+    "/api/v1/wallets/recent-addresses": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "List recent addresses for current user",
+        "description": "This operation retrieves the most recently used recipient addresses across all transfers initiated by the current principal (across all their wallets). Results are ordered from most to least recent.",
+        "operationId": "list_recent_addresses_by_user",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "The maximum number of addresses to return. Range: [1, 50].",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "The maximum number of addresses to return. Range: [1, 50]."
+          },
+          {
+            "name": "token_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "Filter records by token ID (for example, `SETH`, `SETH_USDC`). Use the Cobo token ID format. If omitted, all tokens are returned.",
+              "title": "Token Id",
+              "type": "string",
+              "nullable": true
+            },
+            "description": "Filter records by token ID (for example, `SETH`, `SETH_USDC`). Use the Cobo token ID format. If omitted, all tokens are returned."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_RecentAddressRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/wallets": {
       "post": {
         "tags": [
@@ -1620,7 +1690,7 @@
           "Wallets"
         ],
         "summary": "Initiate wallet reshare",
-        "description": "This operation initiates a key reshare for the specified wallet. Only the **wallet owner** may call this endpoint (for example, after completing wallet pairing).\n\nThe operation creates a WaaS **Signing** key share holder group for the provided TSS `node_id`, binds that node to the owner principal, then submits a `KeyGenFromKeyGroup` TSS request to derive a new signing group from the vault's existing main group.\n\n<Note>Reshare is asynchronous. Poll the wallet TSS callback endpoint or the WaaS TSS request status to track completion.</Note>",
+        "description": "This operation initiates a key reshare for the specified wallet. Only the **wallet owner** may call this endpoint (for example, after completing wallet pairing).\n\nThe operation creates a WaaS **Signing** key share holder group for the provided TSS `node_id`, binds that node to the owner principal, then submits a `KeyGenFromKeyGroup` TSS request to derive a new signing group from the vault's existing main group.\n\nOptional: `token` — when set, the backend resolves the matching claim row's purpose (`pair` requires the row to be `paired`; `restore` requires a **confirmed (paired) restore** code minted after the first pair flow, and it must be used before expiry).\n\n<Note>Reshare is asynchronous. Poll the wallet TSS callback endpoint or the WaaS TSS request status to track completion.</Note>",
         "operationId": "wallet_reshare",
         "parameters": [
           {
@@ -1661,6 +1731,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StandardResponse_WalletReshareResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wallets/restore-node": {
+      "post": {
+        "tags": [
+          "Wallets"
+        ],
+        "summary": "Restore local TSS node binding",
+        "description": "Called by the app after restoring its local TSS node files from backup. The node binding is scoped to the authenticated principal, not a specific wallet, because one app node may hold key shares for multiple vaults.",
+        "operationId": "restore_node",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletRestoreNodeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_WalletRestoreNodeResponse_"
                 }
               }
             }
@@ -1928,7 +2052,7 @@
           "Wallets"
         ],
         "summary": "Get pair info by wallet",
-        "description": "This operation retrieves the most recent pairing record for the specified wallet, including the associated agent and wallet details. Wallet view permission is required. Use the wallet UUID obtained from the List all wallets operation.",
+        "description": "This operation retrieves the most recent **pair-claim** record for the specified wallet (i.e. `token_purpose=pair`), including the associated agent and wallet details. Restore tokens are not surfaced here — query a restore by its token via `GET /pairs/{token}`. Wallet view permission is required. Use the wallet UUID obtained from the List all wallets operation.",
         "operationId": "get_pair_info_by_wallet",
         "parameters": [
           {
@@ -1982,7 +2106,7 @@
           "Wallets"
         ],
         "summary": "Get pair info by token",
-        "description": "This operation retrieves pairing information by the 8-digit pairing code, including the agent and wallet details. No authentication is required - the code itself serves as the access credential.",
+        "description": "This operation retrieves pairing information by the 8-digit pairing code, including the agent and wallet details. `pair` tokens are not owner-bound before confirmation and may be queried with the code alone, while `restore` tokens require the caller to be the owner bound when the restore code was generated.",
         "operationId": "get_pair_info",
         "parameters": [
           {
@@ -1992,6 +2116,16 @@
             "schema": {
               "type": "string",
               "title": "Token"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Api-Key",
+              "type": "string",
+              "nullable": true
             }
           }
         ],
@@ -2024,8 +2158,8 @@
         "tags": [
           "Wallets"
         ],
-        "summary": "Initiate wallet pairing",
-        "description": "This operation generates an 8-digit pairing code that allows a human principal to pair ownership of an agent's wallet. The agent must own the wallet.\n\n<Note>The pairing code expires after 30 minutes. Only one pending pairing exists per wallet and agent; each new initiate rotates the code and invalidates the previous one.</Note>",
+        "summary": "Initiate wallet pairing (or restore code)",
+        "description": "Only the **agent** (API key) calls this. The server sets **token_purpose** in the response.\n\n• If this agent does not yet have a `pair`+`completed` claim for the wallet, the agent must **own** the wallet; a `pair` code is issued for human claim/confirm.\n• After that first pair is complete, the same **agent** can call again to mint/rotate a `restore` code (e.g. human may already be owner).\n\n<Note>Codes expire after 30 minutes. Re-calling this rotates the single pending `pair` or pending `restore` row (per wallet+agent) and invalidates the previous code.</Note>",
         "operationId": "initiate_wallet_pair",
         "parameters": [
           {
@@ -2089,7 +2223,7 @@
           "Wallets"
         ],
         "summary": "Confirm wallet pairing",
-        "description": "This operation allows a human principal to confirm ownership pairing of an agent's wallet using the 8-digit pairing code generated by the Initiate wallet pairing operation. Pairing transfers wallet ownership to the human, creates a delegation granting the agent access, and links the agent to the human as its owner.",
+        "description": "This operation allows a human principal to confirm a pair / restore claim using the 8-digit code generated by the Initiate wallet pairing operation. The backend resolves the token's purpose from the matching claim row:\n\n* `pair`: first-time bind — transfers wallet/vault/pact/delegation/policy ownership from the agent to the human and provisions the agent (full-access scopes, no longer temporary).\n* `restore`: same-principal share rebuild — the caller must be the current wallet owner; ownership is unchanged. The pair row is marked `paired` so the owner can issue a follow-up reshare to rebuild key shares.",
         "operationId": "confirm_wallet_pair",
         "parameters": [
           {
@@ -2523,62 +2657,16 @@
             "description": "The maximum number of addresses to return. Range: [1, 50]."
           },
           {
-            "name": "X-API-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "title": "X-Api-Key",
-              "type": "string",
-              "nullable": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StandardResponse_list_RecentAddressRead__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WrappedValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wallets/recent-addresses": {
-      "get": {
-        "tags": [
-          "Transactions"
-        ],
-        "summary": "List recent addresses for current user",
-        "description": "This operation retrieves the most recently used recipient addresses across all transfers initiated by the current principal (across all their wallets). Results are ordered from most to least recent.",
-        "operationId": "list_recent_addresses_by_user",
-        "parameters": [
-          {
-            "name": "limit",
+            "name": "token_id",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "maximum": 50,
-              "minimum": 1,
-              "description": "The maximum number of addresses to return. Range: [1, 50].",
-              "default": 10,
-              "title": "Limit"
+              "description": "Filter records by token ID (for example, `SETH`, `SETH_USDC`). Use the Cobo token ID format. If omitted, all tokens are returned.",
+              "title": "Token Id",
+              "type": "string",
+              "nullable": true
             },
-            "description": "The maximum number of addresses to return. Range: [1, 50]."
+            "description": "Filter records by token ID (for example, `SETH`, `SETH_USDC`). Use the Cobo token ID format. If omitted, all tokens are returned."
           },
           {
             "name": "X-API-Key",
@@ -4940,6 +5028,90 @@
         }
       }
     },
+    "/api/v1/recipes/pact-templates": {
+      "get": {
+        "tags": [
+          "Recipes"
+        ],
+        "summary": "List pact templates",
+        "description": "List all pact templates. Optionally filter by recipe_slug. Requires service credential authentication.",
+        "operationId": "list_pact_templates",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 0,
+              "description": "Number of items to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of items to return.",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of items to return."
+          },
+          {
+            "name": "recipe_slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "Filter by exact recipe slug.",
+              "title": "Recipe Slug",
+              "type": "string",
+              "nullable": true
+            },
+            "description": "Filter by exact recipe slug."
+          },
+          {
+            "name": "X-Assistant-Service-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "title": "X-Assistant-Service-Key",
+              "type": "string",
+              "nullable": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse_list_PactTemplateRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WrappedValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/suggestions/{key}": {
       "get": {
         "tags": [
@@ -5009,7 +5181,7 @@
               "temporary"
             ],
             "title": "Status",
-            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unpaired temporary mode."
+            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: deprecated legacy value kept for backward compatibility and planned for removal in a future major release."
           },
           "owner_linked": {
             "type": "boolean",
@@ -5202,64 +5374,6 @@
         ],
         "title": "ApiKeyPublicRead",
         "description": "Public API key response payload without delegation internals."
-      },
-      "ApplicableLimitRead": {
-        "properties": {
-          "subject_type": {
-            "type": "string",
-            "title": "Subject Type",
-            "description": "The subject type for this limit (for example, `principal`, `delegation`)."
-          },
-          "subject_id": {
-            "type": "string",
-            "title": "Subject Id",
-            "description": "The subject ID this limit applies to."
-          },
-          "operation_type": {
-            "type": "string",
-            "title": "Operation Type",
-            "description": "The operation type this limit governs (for example, `transfer`, `contract_call`)."
-          },
-          "window": {
-            "type": "string",
-            "title": "Window",
-            "description": "The rolling time window for this limit (for example, `rolling_1h`, `rolling_24h`)."
-          },
-          "metric": {
-            "type": "string",
-            "title": "Metric",
-            "description": "The metric being limited (for example, `amount`, `tx_count`)."
-          },
-          "limit_value": {
-            "type": "string",
-            "title": "Limit Value",
-            "description": "The limit threshold as a decimal string."
-          },
-          "increment": {
-            "type": "string",
-            "title": "Increment",
-            "description": "The amount this operation would contribute toward the limit, as a decimal string."
-          },
-          "source_policy_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Source Policy Id",
-            "description": "The ID of the policy that defined this limit."
-          }
-        },
-        "type": "object",
-        "required": [
-          "subject_type",
-          "subject_id",
-          "operation_type",
-          "window",
-          "metric",
-          "limit_value",
-          "increment",
-          "source_policy_id"
-        ],
-        "title": "ApplicableLimitRead",
-        "description": "Represents a spending limit that applies to a given operation, returned in dry-run and pending operation responses."
       },
       "AuditAction": {
         "type": "string",
@@ -6111,10 +6225,10 @@
             "description": "The maximum priority fee (tip) per gas, in wei."
           },
           "gas_limit": {
-            "type": "string",
-            "minLength": 1,
             "title": "Gas Limit",
-            "description": "The gas limit for this transaction."
+            "description": "The gas limit for this transaction. If omitted the backend estimates it.",
+            "type": "string",
+            "nullable": true
           },
           "token_id": {
             "type": "string",
@@ -6128,7 +6242,6 @@
         "required": [
           "max_fee_per_gas",
           "max_priority_fee_per_gas",
-          "gas_limit",
           "token_id"
         ],
         "title": "EIP1559FeeRequest",
@@ -7290,12 +7403,11 @@
             "type": "array",
             "nullable": true
           },
-          "recipe_ids": {
-            "title": "Recipe Ids",
-            "description": "IDs of recipes associated with this pact.",
+          "recipe_slugs": {
+            "title": "Recipe Slugs",
+            "description": "Slugs of recipes associated with this pact.",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "type": "array",
             "nullable": true
@@ -7443,12 +7555,11 @@
             "minLength": 1,
             "nullable": true
           },
-          "recipe_ids": {
-            "title": "Recipe Ids",
-            "description": "IDs of recipes (from the recipes table) to associate with this pact.",
+          "recipe_slugs": {
+            "title": "Recipe Slugs",
+            "description": "Slugs of recipes (from the recipes table) to associate with this pact.",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "type": "array",
             "nullable": true
@@ -7556,12 +7667,11 @@
             "title": "Expires At",
             "description": "When the pact expires."
           },
-          "recipe_ids": {
-            "title": "Recipe Ids",
-            "description": "IDs of recipes associated with this pact.",
+          "recipe_slugs": {
+            "title": "Recipe Slugs",
+            "description": "Slugs of recipes associated with this pact.",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "type": "array",
             "nullable": true
@@ -7584,6 +7694,44 @@
         ],
         "title": "PactSummary",
         "description": "Lightweight pact item for list responses."
+      },
+      "PactTemplateRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "recipe_slug": {
+            "type": "string",
+            "title": "Recipe Slug"
+          },
+          "template": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Template"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "recipe_slug",
+          "template",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PactTemplateRead",
+        "description": "Response for a pact template."
       },
       "PactUpdateCompletionConditionsRequest": {
         "properties": {
@@ -7665,6 +7813,7 @@
           "valid",
           "expired",
           "paired",
+          "completed",
           "not_found"
         ],
         "title": "PairTokenStatus",
@@ -8065,327 +8214,6 @@
         "title": "PendingOperationType",
         "description": "Operations that can be queued for approval."
       },
-      "PolicyCreate": {
-        "properties": {
-          "scope": {
-            "$ref": "#/components/schemas/PolicyScope",
-            "description": "Policy scope. Possible values: `global` (platform-wide, DENY only), `wallet` (wallet-scoped), `delegation` (delegation-scoped, ALLOW only)."
-          },
-          "wallet_id": {
-            "title": "Wallet Id",
-            "description": "UUID of the wallet this policy applies to. Required when `scope=wallet`; derived from the delegation when `scope=delegation`; must be null for `scope=global`.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "delegation_id": {
-            "title": "Delegation Id",
-            "description": "UUID of the delegation this policy applies to. Required when `scope=delegation`; must be null for other scopes.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Name"
-          },
-          "policy_type": {
-            "$ref": "#/components/schemas/PolicyType",
-            "description": "Policy category. Possible values: `transfer`, `contract_call`, `message_sign`."
-          },
-          "rules": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Rules",
-            "description": "Policy rule configuration. Structure depends on `policy_type`."
-          },
-          "priority": {
-            "type": "integer",
-            "title": "Priority",
-            "description": "Evaluation priority. Higher values take precedence when multiple policies match.",
-            "default": 0
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active",
-            "description": "Whether this policy is active. `true`: enforced. `false`: disabled.",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "scope",
-          "name",
-          "policy_type",
-          "rules"
-        ],
-        "title": "PolicyCreate"
-      },
-      "PolicyDryRunRequest": {
-        "properties": {
-          "wallet_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Wallet Id",
-            "description": "UUID of the wallet to evaluate policies against."
-          },
-          "delegation_id": {
-            "title": "Delegation Id",
-            "description": "UUID of the delegation to include in the evaluation. Null for owner-initiated operations.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "operation_type": {
-            "$ref": "#/components/schemas/PendingOperationType",
-            "description": "Operation type to simulate. Possible values: `transfer`, `contract_call`, `message_sign`."
-          },
-          "amount": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Amount",
-            "description": "Amount for the simulated operation as a decimal string. For `contract_call`, use `0` if no value is sent."
-          },
-          "chain_id": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Chain Id",
-            "description": "Cobo chain ID for the simulated operation (for example, `SETH`, `BASE_ETH`, `SOL`)."
-          },
-          "token_id": {
-            "title": "Token Id",
-            "description": "Cobo token ID for the simulated transfer (for example, `SETH`, `SETH_USDC`). Required for `transfer` operations.",
-            "type": "string",
-            "maxLength": 100,
-            "nullable": true
-          },
-          "dst_addr": {
-            "title": "Dst Addr",
-            "description": "Destination on-chain address. Required for `transfer` operations.",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "contract_addr": {
-            "title": "Contract Addr",
-            "description": "EVM-only contract address.",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "calldata": {
-            "title": "Calldata",
-            "description": "EVM-only calldata payload.",
-            "type": "string",
-            "maxLength": 8192,
-            "nullable": true
-          },
-          "instructions": {
-            "title": "Instructions",
-            "description": "Solana-only instruction payloads.",
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "principal_id": {
-            "title": "Principal Id",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "wallet_id",
-          "operation_type",
-          "amount",
-          "chain_id"
-        ],
-        "title": "PolicyDryRunRequest"
-      },
-      "PolicyDryRunResult": {
-        "properties": {
-          "effect": {
-            "type": "string",
-            "title": "Effect",
-            "description": "The policy decision effect. Possible values: `allow`, `deny`, `pending_approval`."
-          },
-          "reason": {
-            "type": "string",
-            "title": "Reason",
-            "description": "A human-readable explanation of the policy decision."
-          },
-          "denied_by_policy_id": {
-            "title": "Denied By Policy Id",
-            "description": "The ID of the policy that denied this operation, if the effect is `deny`.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "approval_trigger_policy_ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array",
-            "title": "Approval Trigger Policy Ids",
-            "description": "The IDs of policies that triggered an approval requirement."
-          },
-          "applicable_limits": {
-            "items": {
-              "$ref": "#/components/schemas/ApplicableLimitRead"
-            },
-            "type": "array",
-            "title": "Applicable Limits",
-            "description": "The spending limits that apply to this operation."
-          },
-          "tier_evaluations": {
-            "items": {
-              "$ref": "#/components/schemas/TierEvaluationRead"
-            },
-            "type": "array",
-            "title": "Tier Evaluations",
-            "description": "Per-tier policy evaluation details."
-          },
-          "details": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Details",
-            "description": "Additional details about the policy evaluation."
-          }
-        },
-        "type": "object",
-        "required": [
-          "effect",
-          "reason"
-        ],
-        "title": "PolicyDryRunResult",
-        "description": "Result payload for dry-run endpoint."
-      },
-      "PolicyRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id",
-            "description": "The policy ID."
-          },
-          "owner_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Owner Id",
-            "description": "The ID of the principal that owns this policy."
-          },
-          "scope": {
-            "$ref": "#/components/schemas/PolicyScope",
-            "description": "The policy scope. Possible values: `global`, `wallet`, `delegation`."
-          },
-          "wallet_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Wallet Id",
-            "description": "The wallet ID this policy applies to. Only set for `wallet` and `delegation` scope policies."
-          },
-          "delegation_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delegation Id",
-            "description": "The delegation ID this policy applies to. Only set for `delegation` scope policies."
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "The policy name."
-          },
-          "created_by": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Created By",
-            "description": "The ID of the principal that created this policy."
-          },
-          "policy_type": {
-            "$ref": "#/components/schemas/PolicyType",
-            "description": "The policy type. Possible values: `transfer`, `contract_call`, `message_sign`."
-          },
-          "rules": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Rules",
-            "description": "The policy rule configuration."
-          },
-          "priority": {
-            "type": "integer",
-            "title": "Priority",
-            "description": "The policy priority. Higher values take precedence."
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active",
-            "description": "Whether this policy is currently active. `true`: active. `false`: disabled."
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "description": "The timestamp when this policy was created, in ISO 8601 format."
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At",
-            "description": "The timestamp when this policy was last updated, in ISO 8601 format."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "owner_id",
-          "scope",
-          "wallet_id",
-          "delegation_id",
-          "name",
-          "created_by",
-          "policy_type",
-          "rules",
-          "priority",
-          "is_active",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "PolicyRead",
-        "description": "Policy response payload."
-      },
-      "PolicyScope": {
-        "type": "string",
-        "enum": [
-          "global",
-          "wallet",
-          "delegation"
-        ],
-        "title": "PolicyScope",
-        "description": "Supported policy scopes."
-      },
       "PolicyType": {
         "type": "string",
         "enum": [
@@ -8395,36 +8223,6 @@
         ],
         "title": "PolicyType",
         "description": "Supported policy categories.\n\nSubset of ``caw_types.transaction.UserTransactionOperationType`` —\nvalues are shared so UT operation_type strings can be compared directly\nagainst PolicyType. Deposit is excluded because deposits are not\npolicy-gated."
-      },
-      "PolicyUpdate": {
-        "properties": {
-          "name": {
-            "title": "Name",
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "nullable": true
-          },
-          "rules": {
-            "title": "Rules",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
-          "priority": {
-            "title": "Priority",
-            "type": "integer",
-            "nullable": true
-          },
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "PolicyUpdate",
-        "description": "Patch payload for a policy."
       },
       "PrincipalCreate": {
         "properties": {
@@ -8498,8 +8296,9 @@
           "is_temporary": {
             "type": "boolean",
             "title": "Is Temporary",
-            "description": "Whether this is a temporary agent not yet bound to an owner.",
-            "default": false
+            "description": "Deprecated legacy field. Temporary-agent mode has been retired and this value is always `false` for newly provisioned agents.",
+            "default": false,
+            "deprecated": true
           },
           "owner_principal_id": {
             "title": "Owner Principal Id",
@@ -8541,6 +8340,15 @@
         "title": "PrincipalCreateResult",
         "description": "Create principal response payload with idempotency metadata."
       },
+      "PrincipalNodeStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "archived"
+        ],
+        "title": "PrincipalNodeStatus",
+        "description": "``principal_nodes.status`` — lifecycle of a principal ↔ TSS node binding.\n\n* ``ACTIVE``: node currently participates in the wallet's MPC.\n* ``ARCHIVED``: node retired (e.g. restore success retires the old human's TSS node).\n  Keeps history while freeing up ``node_id`` for reuse under the partial unique index."
+      },
       "PrincipalRead": {
         "properties": {
           "id": {
@@ -8572,8 +8380,9 @@
           "is_temporary": {
             "type": "boolean",
             "title": "Is Temporary",
-            "description": "Whether this is a temporary agent not yet bound to an owner. Temporary agents are created during agent-first provisioning and become permanent after activation.",
-            "default": false
+            "description": "Deprecated legacy field. Temporary-agent mode has been retired and this value is always `false` for newly provisioned agents.",
+            "default": false,
+            "deprecated": true
           },
           "owner_principal_id": {
             "title": "Owner Principal Id",
@@ -8684,7 +8493,7 @@
               "temporary"
             ],
             "title": "Status",
-            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: legacy unpaired temporary mode."
+            "description": "The agent's current status. `active`: the agent is ready for use. `temporary`: deprecated legacy value kept for backward compatibility and planned for removal in a future major release."
           },
           "owner_id": {
             "title": "Owner Id",
@@ -8737,567 +8546,6 @@
         "title": "RecentAddressRead",
         "description": "Recent recipient address from transfer history."
       },
-      "RecipeCategoryRead": {
-        "properties": {
-          "category": {
-            "type": "string",
-            "title": "Category"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "category",
-          "count"
-        ],
-        "title": "RecipeCategoryRead"
-      },
-      "RecipeCounterResult": {
-        "properties": {
-          "recipe_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Recipe Id"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "recipe_id",
-          "count"
-        ],
-        "title": "RecipeCounterResult"
-      },
-      "RecipeCreate": {
-        "properties": {
-          "slug": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "title": "Slug"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Description"
-          },
-          "content_markdown": {
-            "type": "string",
-            "title": "Content Markdown",
-            "default": ""
-          },
-          "chains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Chains"
-          },
-          "tokens": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Tokens"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "category": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Category"
-          },
-          "example_prompts": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Example Prompts"
-          },
-          "icon": {
-            "title": "Icon",
-            "description": "Icon URL",
-            "default": "https://d.cobo.com/public/logos/logo_placeholder.png",
-            "type": "string",
-            "maxLength": 512,
-            "nullable": true
-          },
-          "author_name": {
-            "title": "Author Name",
-            "type": "string",
-            "maxLength": 128,
-            "nullable": true
-          },
-          "sdk_example_path": {
-            "title": "Sdk Example Path",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "locale": {
-            "type": "string",
-            "maxLength": 8,
-            "title": "Locale",
-            "default": "en"
-          },
-          "featured": {
-            "type": "boolean",
-            "title": "Featured",
-            "default": false
-          },
-          "verified": {
-            "type": "boolean",
-            "title": "Verified",
-            "default": false
-          },
-          "auto_publish": {
-            "type": "boolean",
-            "title": "Auto Publish",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "slug",
-          "title",
-          "description"
-        ],
-        "title": "RecipeCreate"
-      },
-      "RecipeCreateResult": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "slug": {
-            "type": "string",
-            "title": "Slug"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "status": {
-            "$ref": "#/components/schemas/RecipeStatus",
-            "description": "Initial publication status after creation. Possible values: `draft`, `pending_review`, `published`, `rejected`."
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "slug",
-          "url",
-          "status"
-        ],
-        "title": "RecipeCreateResult",
-        "description": "Result returned after creating or submitting a recipe."
-      },
-      "RecipeDetailRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "slug": {
-            "type": "string",
-            "title": "Slug"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "example_prompts": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Example Prompts"
-          },
-          "chains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Chains",
-            "description": "Blockchain identifiers this recipe applies to (for example, `ethereum`, `solana`)."
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags",
-            "description": "Descriptive tags for filtering and discovery."
-          },
-          "category": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Category",
-            "description": "Category labels used to group recipes in the library."
-          },
-          "icon": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Icon"
-          },
-          "author_name": {
-            "type": "string",
-            "title": "Author Name"
-          },
-          "status": {
-            "$ref": "#/components/schemas/RecipeStatus",
-            "description": "Publication status of the recipe. Possible values: `draft`, `pending_review`, `published`, `rejected`."
-          },
-          "featured": {
-            "type": "boolean",
-            "title": "Featured",
-            "description": "When `true`, the recipe is highlighted in the library. When `false`, it appears in the standard listing."
-          },
-          "verified": {
-            "type": "boolean",
-            "title": "Verified",
-            "description": "When `true`, the recipe has been reviewed and verified by the platform. When `false`, it is community-submitted."
-          },
-          "view_count": {
-            "type": "integer",
-            "title": "View Count",
-            "description": "Total number of times this recipe has been viewed."
-          },
-          "use_count": {
-            "type": "integer",
-            "title": "Use Count",
-            "description": "Total number of times this recipe has been used to start a task."
-          },
-          "share_count": {
-            "type": "integer",
-            "title": "Share Count",
-            "description": "Total number of times this recipe has been shared."
-          },
-          "search_count": {
-            "type": "integer",
-            "title": "Search Count",
-            "description": "Total number of times this recipe has appeared in search results."
-          },
-          "locale": {
-            "type": "string",
-            "title": "Locale"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          },
-          "content_markdown": {
-            "type": "string",
-            "title": "Content Markdown"
-          },
-          "tokens": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Tokens"
-          },
-          "knowledgehub_doc_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Knowledgehub Doc Id"
-          },
-          "sdk_example_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sdk Example Path"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "slug",
-          "title",
-          "description",
-          "example_prompts",
-          "chains",
-          "tags",
-          "category",
-          "icon",
-          "author_name",
-          "status",
-          "featured",
-          "verified",
-          "view_count",
-          "use_count",
-          "share_count",
-          "search_count",
-          "locale",
-          "created_at",
-          "updated_at",
-          "content_markdown",
-          "tokens",
-          "knowledgehub_doc_id",
-          "sdk_example_path"
-        ],
-        "title": "RecipeDetailRead"
-      },
-      "RecipeDocument": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "source": {
-            "$ref": "#/components/schemas/RecipeSearchSource"
-          },
-          "metadata": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Metadata"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "content",
-          "source"
-        ],
-        "title": "RecipeDocument",
-        "description": "Unified document response."
-      },
-      "RecipeLibrarySortBy": {
-        "type": "string",
-        "enum": [
-          "popular",
-          "newest",
-          "most_used"
-        ],
-        "title": "RecipeLibrarySortBy"
-      },
-      "RecipeRead": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "slug": {
-            "type": "string",
-            "title": "Slug"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "example_prompts": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Example Prompts",
-            "description": "Sample prompts that demonstrate how to invoke this recipe."
-          },
-          "chains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Chains",
-            "description": "Blockchain identifiers this recipe applies to (for example, `ethereum`, `solana`)."
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags",
-            "description": "Descriptive tags for filtering and discovery."
-          },
-          "category": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Category",
-            "description": "Category labels used to group recipes in the library."
-          },
-          "icon": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Icon"
-          },
-          "author_name": {
-            "type": "string",
-            "title": "Author Name"
-          },
-          "status": {
-            "$ref": "#/components/schemas/RecipeStatus",
-            "description": "Publication status of the recipe. Possible values: `draft`, `pending_review`, `published`, `rejected`."
-          },
-          "featured": {
-            "type": "boolean",
-            "title": "Featured",
-            "description": "When `true`, the recipe is highlighted in the library. When `false`, it appears in the standard listing."
-          },
-          "verified": {
-            "type": "boolean",
-            "title": "Verified",
-            "description": "When `true`, the recipe has been reviewed and verified by the platform. When `false`, it is community-submitted."
-          },
-          "view_count": {
-            "type": "integer",
-            "title": "View Count",
-            "description": "Total number of times this recipe has been viewed."
-          },
-          "use_count": {
-            "type": "integer",
-            "title": "Use Count",
-            "description": "Total number of times this recipe has been used to start a task."
-          },
-          "share_count": {
-            "type": "integer",
-            "title": "Share Count",
-            "description": "Total number of times this recipe has been shared."
-          },
-          "search_count": {
-            "type": "integer",
-            "title": "Search Count",
-            "description": "Total number of times this recipe has appeared in search results."
-          },
-          "locale": {
-            "type": "string",
-            "title": "Locale"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "slug",
-          "title",
-          "description",
-          "example_prompts",
-          "chains",
-          "tags",
-          "category",
-          "icon",
-          "author_name",
-          "status",
-          "featured",
-          "verified",
-          "view_count",
-          "use_count",
-          "share_count",
-          "search_count",
-          "locale",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "RecipeRead",
-        "description": "Recipe library entry returned from the API."
-      },
-      "RecipeReviewAction": {
-        "type": "string",
-        "enum": [
-          "approve",
-          "reject"
-        ],
-        "title": "RecipeReviewAction"
-      },
-      "RecipeReviewRequest": {
-        "properties": {
-          "action": {
-            "$ref": "#/components/schemas/RecipeReviewAction"
-          }
-        },
-        "type": "object",
-        "required": [
-          "action"
-        ],
-        "title": "RecipeReviewRequest"
-      },
       "RecipeSearchResponse": {
         "properties": {
           "source": {
@@ -9324,220 +8572,6 @@
           "knowledge"
         ],
         "title": "RecipeSearchSource"
-      },
-      "RecipeStatus": {
-        "type": "string",
-        "enum": [
-          "draft",
-          "submitted",
-          "published",
-          "archived",
-          "rejected"
-        ],
-        "title": "RecipeStatus",
-        "description": "Lifecycle status for a recipe record."
-      },
-      "RecipeSubmissionCreate": {
-        "properties": {
-          "slug": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "title": "Slug"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Description"
-          },
-          "content_markdown": {
-            "type": "string",
-            "title": "Content Markdown",
-            "default": ""
-          },
-          "chains": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Chains"
-          },
-          "tokens": {
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Tokens"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "category": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Category"
-          },
-          "example_prompts": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Example Prompts"
-          },
-          "icon": {
-            "title": "Icon",
-            "description": "Icon URL",
-            "default": "https://d.cobo.com/public/logos/logo_placeholder.png",
-            "type": "string",
-            "maxLength": 512,
-            "nullable": true
-          },
-          "author_name": {
-            "title": "Author Name",
-            "type": "string",
-            "maxLength": 128,
-            "nullable": true
-          },
-          "sdk_example_path": {
-            "title": "Sdk Example Path",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "locale": {
-            "type": "string",
-            "maxLength": 8,
-            "title": "Locale",
-            "default": "en"
-          }
-        },
-        "type": "object",
-        "required": [
-          "slug",
-          "title",
-          "description"
-        ],
-        "title": "RecipeSubmissionCreate"
-      },
-      "RecipeUpdate": {
-        "properties": {
-          "title": {
-            "title": "Title",
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "nullable": true
-          },
-          "description": {
-            "title": "Description",
-            "type": "string",
-            "minLength": 1,
-            "nullable": true
-          },
-          "content_markdown": {
-            "title": "Content Markdown",
-            "type": "string",
-            "nullable": true
-          },
-          "chains": {
-            "title": "Chains",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "tokens": {
-            "title": "Tokens",
-            "additionalProperties": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "type": "object",
-            "nullable": true
-          },
-          "tags": {
-            "title": "Tags",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "category": {
-            "title": "Category",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "example_prompts": {
-            "title": "Example Prompts",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "icon": {
-            "title": "Icon",
-            "type": "string",
-            "maxLength": 512,
-            "nullable": true
-          },
-          "author_name": {
-            "title": "Author Name",
-            "type": "string",
-            "maxLength": 128,
-            "nullable": true
-          },
-          "featured": {
-            "title": "Featured",
-            "type": "boolean",
-            "nullable": true
-          },
-          "verified": {
-            "title": "Verified",
-            "type": "boolean",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/RecipeStatus",
-            "nullable": true
-          },
-          "sdk_example_path": {
-            "title": "Sdk Example Path",
-            "type": "string",
-            "maxLength": 255,
-            "nullable": true
-          },
-          "locale": {
-            "title": "Locale",
-            "type": "string",
-            "maxLength": 8,
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "title": "RecipeUpdate"
       },
       "RejectPendingOperationRequest": {
         "properties": {
@@ -9595,7 +8629,9 @@
         "properties": {
           "query": {
             "type": "string",
-            "title": "Query"
+            "title": "Query",
+            "description": "Natural language search query (optional)",
+            "default": ""
           },
           "source": {
             "$ref": "#/components/schemas/RecipeSearchSource",
@@ -9632,14 +8668,12 @@
           },
           "search_type": {
             "description": "Search type: 'vector', 'keyword', or 'hybrid'",
+            "default": "keyword",
             "$ref": "#/components/schemas/KnowledgeSearchType",
             "nullable": true
           }
         },
         "type": "object",
-        "required": [
-          "query"
-        ],
         "title": "SearchRecipesRequest",
         "description": "Request payload for recipe knowledge-base search."
       },
@@ -10435,68 +9469,6 @@
         ],
         "title": "StandardResponse[PendingOperationRead]"
       },
-      "StandardResponse_PolicyDryRunResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/PolicyDryRunResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[PolicyDryRunResult]"
-      },
-      "StandardResponse_PolicyRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/PolicyRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[PolicyRead]"
-      },
       "StandardResponse_PrincipalCreateResult_": {
         "properties": {
           "success": {
@@ -10589,130 +9561,6 @@
           "result"
         ],
         "title": "StandardResponse[ProvisionResponse]"
-      },
-      "StandardResponse_RecipeCounterResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/RecipeCounterResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[RecipeCounterResult]"
-      },
-      "StandardResponse_RecipeCreateResult_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/RecipeCreateResult"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[RecipeCreateResult]"
-      },
-      "StandardResponse_RecipeDetailRead_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/RecipeDetailRead"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[RecipeDetailRead]"
-      },
-      "StandardResponse_RecipeDocument_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "$ref": "#/components/schemas/RecipeDocument"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[RecipeDocument]"
       },
       "StandardResponse_RecipeSearchResponse_": {
         "properties": {
@@ -11241,6 +10089,37 @@
         ],
         "title": "StandardResponse[WalletReshareResponse]"
       },
+      "StandardResponse_WalletRestoreNodeResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "result": {
+            "$ref": "#/components/schemas/WalletRestoreNodeResponse"
+          },
+          "suggestion": {
+            "type": "string",
+            "title": "Suggestion",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "StandardResponse[WalletRestoreNodeResponse]"
+      },
       "StandardResponse_WalletTssCallbackResponse_": {
         "properties": {
           "success": {
@@ -11478,7 +10357,7 @@
         ],
         "title": "StandardResponse[list[FaucetTokenItem]]"
       },
-      "StandardResponse_list_PolicyRead__": {
+      "StandardResponse_list_PactTemplateRead__": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -11487,7 +10366,7 @@
           },
           "result": {
             "items": {
-              "$ref": "#/components/schemas/PolicyRead"
+              "$ref": "#/components/schemas/PactTemplateRead"
             },
             "type": "array",
             "title": "Result"
@@ -11511,7 +10390,7 @@
         "required": [
           "result"
         ],
-        "title": "StandardResponse[list[PolicyRead]]"
+        "title": "StandardResponse[list[PactTemplateRead]]"
       },
       "StandardResponse_list_PrincipalRead__": {
         "properties": {
@@ -11582,76 +10461,6 @@
           "result"
         ],
         "title": "StandardResponse[list[RecentAddressRead]]"
-      },
-      "StandardResponse_list_RecipeCategoryRead__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/RecipeCategoryRead"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[RecipeCategoryRead]]"
-      },
-      "StandardResponse_list_RecipeRead__": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "default": true
-          },
-          "result": {
-            "items": {
-              "$ref": "#/components/schemas/RecipeRead"
-            },
-            "type": "array",
-            "title": "Result"
-          },
-          "suggestion": {
-            "type": "string",
-            "title": "Suggestion",
-            "default": ""
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "default": ""
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "result"
-        ],
-        "title": "StandardResponse[list[RecipeRead]]"
       },
       "StandardResponse_list_TokenCandidate__": {
         "properties": {
@@ -11797,26 +10606,41 @@
         "type": "string",
         "enum": [
           "ONBOARD_COMPLETE",
-          "PAIR_SUBMIT_SUCCESS",
-          "PACT_SUBMIT_SUCCESS_UNPAIRED",
-          "PACT_SUBMIT_SUCCESS_PAIRED",
           "WALLET_NOT_FOUND",
           "WALLET_NOT_READY",
           "WALLET_MISSING_COBO_ID",
-          "WALLET_UNSUPPORTED_CHAIN",
+          "PAIR_SUBMIT_SUCCESS",
+          "RESTORE_PAIR_SUBMIT_SUCCESS",
           "WALLET_PAIR_WALLET_NOT_FOUND",
           "WALLET_PAIR_TOKEN_EXPIRED",
           "WALLET_PAIR_AGENT_NOT_FOUND",
           "WALLET_PAIR_CONFLICT",
           "WALLET_PAIR_CODE_EXHAUSTED",
           "WALLET_PAIR_ALREADY_PAIRED",
-          "INSUFFICIENT_PERMISSION",
-          "APPROVAL_REQUIRED",
-          "APPROVAL_REQUIRED_UNPAIRED",
+          "RECIPE_SEARCH_AUTHORITATIVE",
+          "ETH_CALL_REVERT",
+          "ABI_ENCODE_TYPE_HINT",
+          "PACT_SUBMIT_SUCCESS_UNPAIRED",
+          "PACT_SUBMIT_SUCCESS_PAIRED",
+          "PACT_REVOKE_SUCCESS",
           "PACT_SUBMIT_ALWAYS_REVIEW_UNPAIRED",
+          "PACT_SUBMIT_MISSING_RECIPE_SLUGS",
+          "PACT_SUBMIT_CONTRACT_CALL_EMPTY_TARGET_IN",
+          "PACT_SUBMIT_CONTRACT_CALL_SINGLE_TARGET_IN",
+          "PACT_SUBMIT_MISSING_DENY_IF",
           "PACT_NOT_FOUND",
           "PACT_WALLET_NOT_FOUND",
           "PACT_WRONG_STATUS",
+          "TX_TRANSFER_SUCCESS",
+          "TX_CALL_SUCCESS",
+          "TX_SIGN_MESSAGE_SUCCESS",
+          "TX_DROP_SUCCESS",
+          "TX_SPEEDUP_SUCCESS",
+          "TX_IDEMPOTENT_REUSE",
+          "INSUFFICIENT_PERMISSION",
+          "APPROVAL_REQUIRED",
+          "APPROVAL_REQUIRED_UNPAIRED",
+          "WALLET_UNSUPPORTED_CHAIN",
           "METADATA_CHAIN_NOT_FOUND"
         ],
         "title": "SuggestionKey"
@@ -11855,49 +10679,6 @@
         "type": "object",
         "title": "TelemetryConfigResponse",
         "description": "CLI telemetry feature-flag configuration."
-      },
-      "TierEvaluationRead": {
-        "properties": {
-          "tier": {
-            "type": "string",
-            "title": "Tier",
-            "description": "The policy evaluation tier (for example, `global`, `wallet`, `delegation`)."
-          },
-          "policy_type": {
-            "type": "string",
-            "title": "Policy Type",
-            "description": "The policy type evaluated in this tier."
-          },
-          "matched_allow_policy_ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array",
-            "title": "Matched Allow Policy Ids",
-            "description": "The IDs of allow policies that matched this operation."
-          },
-          "matched_deny_policy_id": {
-            "title": "Matched Deny Policy Id",
-            "description": "The ID of the deny policy that matched this operation, if any.",
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "allow_required": {
-            "type": "boolean",
-            "title": "Allow Required",
-            "description": "Whether an allow policy is required at this tier. `true`: no matching allow policy means the operation is blocked.",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "tier",
-          "policy_type"
-        ],
-        "title": "TierEvaluationRead",
-        "description": "Represents the policy evaluation outcome for a single tier (global, wallet, or delegation) within a dry-run response."
       },
       "TokenCandidate": {
         "properties": {
@@ -12018,7 +10799,8 @@
           "waas",
           "alchemy",
           "pimlico",
-          "node_rpc"
+          "node_rpc",
+          "caw"
         ],
         "title": "TransactionProvider"
       },
@@ -13158,6 +11940,13 @@
       },
       "WalletPairConfirm": {
         "properties": {
+          "wallet_id": {
+            "title": "Wallet Id",
+            "description": "Optional wallet ID to bind the confirmation token to. When provided, the token must belong to this wallet.",
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "token": {
             "type": "string",
             "maxLength": 8,
@@ -13178,7 +11967,12 @@
         "properties": {
           "token_status": {
             "$ref": "#/components/schemas/PairTokenStatus",
-            "description": "The status of the pairing token. Possible values: `valid`, `expired`, `paired`, `not_found`."
+            "description": "The status of the pairing token. Possible values: `valid` (code not yet used), `expired`, `paired` (human confirmed; first reshare still required), `completed` (first pair or restore reshare has consumed this code), `not_found`."
+          },
+          "token_purpose": {
+            "description": "Which flow this token belongs to. `pair` = initial agent→human ownership claim; `restore` = post-completion recovery code that re-shares to a new human key share. `null` only when `token_status=not_found`.",
+            "$ref": "#/components/schemas/WalletPairTokenPurpose",
+            "nullable": true
           },
           "token": {
             "title": "Token",
@@ -13218,7 +12012,7 @@
           "wallet_id"
         ],
         "title": "WalletPairInitiate",
-        "description": "Request payload for an agent to generate a wallet pairing token."
+        "description": "Request payload for Initiate wallet pairing (agent-only).\n\nThe server returns ``token_purpose=pair`` (before the first pair claim is ``completed``) or\n``token_purpose=restore`` (after it is ``completed``). Both variants live on the same\n``wallet_claims`` row set."
       },
       "WalletPairInitiateRead": {
         "properties": {
@@ -13260,7 +12054,11 @@
           },
           "status": {
             "$ref": "#/components/schemas/WalletPairStatus",
-            "description": "The pairing status. Possible values: `pending`, `completed`."
+            "description": "The pairing status. Possible values: `pending`, `paired`, `completed`."
+          },
+          "token_purpose": {
+            "$ref": "#/components/schemas/WalletPairTokenPurpose",
+            "description": "`pair` = initial claim flow; `restore` = post-completion recovery code."
           },
           "expires_at": {
             "type": "string",
@@ -13280,6 +12078,16 @@
             "title": "Updated At",
             "description": "The timestamp when the pairing record was last updated, in ISO 8601 format."
           },
+          "agent": {
+            "description": "The agent principal that initiated pairing. Included on initiate and confirm responses.",
+            "$ref": "#/components/schemas/WalletPairAgentInfo",
+            "nullable": true
+          },
+          "wallet": {
+            "description": "The wallet being paired. Included on initiate and confirm responses.",
+            "$ref": "#/components/schemas/WalletPairWalletInfo",
+            "nullable": true
+          },
           "pair_link": {
             "type": "string",
             "title": "Pair Link",
@@ -13294,6 +12102,7 @@
           "agent_principal_id",
           "token",
           "status",
+          "token_purpose",
           "expires_at",
           "created_at",
           "updated_at",
@@ -13342,7 +12151,11 @@
           },
           "status": {
             "$ref": "#/components/schemas/WalletPairStatus",
-            "description": "The pairing status. Possible values: `pending`, `completed`."
+            "description": "The pairing status. Possible values: `pending`, `paired`, `completed`."
+          },
+          "token_purpose": {
+            "$ref": "#/components/schemas/WalletPairTokenPurpose",
+            "description": "`pair` = initial claim flow; `restore` = post-completion recovery code."
           },
           "expires_at": {
             "type": "string",
@@ -13361,6 +12174,16 @@
             "format": "date-time",
             "title": "Updated At",
             "description": "The timestamp when the pairing record was last updated, in ISO 8601 format."
+          },
+          "agent": {
+            "description": "The agent principal that initiated pairing. Included on initiate and confirm responses.",
+            "$ref": "#/components/schemas/WalletPairAgentInfo",
+            "nullable": true
+          },
+          "wallet": {
+            "description": "The wallet being paired. Included on initiate and confirm responses.",
+            "$ref": "#/components/schemas/WalletPairWalletInfo",
+            "nullable": true
           }
         },
         "type": "object",
@@ -13371,6 +12194,7 @@
           "agent_principal_id",
           "token",
           "status",
+          "token_purpose",
           "expires_at",
           "created_at",
           "updated_at"
@@ -13382,10 +12206,20 @@
         "type": "string",
         "enum": [
           "pending",
+          "paired",
           "completed"
         ],
         "title": "WalletPairStatus",
         "description": "Wallet pairing lifecycle statuses."
+      },
+      "WalletPairTokenPurpose": {
+        "type": "string",
+        "enum": [
+          "pair",
+          "restore"
+        ],
+        "title": "WalletPairTokenPurpose",
+        "description": "Which flow this claim row represents (pair claim vs post-completion restore)."
       },
       "WalletPairWalletInfo": {
         "properties": {
@@ -13501,6 +12335,15 @@
             "minLength": 1,
             "title": "Node Id",
             "description": "The human principal's TSS node id (bound to the wallet owner)."
+          },
+          "token": {
+            "title": "Token",
+            "description": "Optional 8-digit code. The backend resolves the token's purpose (`pair` vs `restore`) from the matching claim row: `pair` requires a **post-confirm (paired) claim** row; `restore` requires a **confirmed (paired) restore** code and must be used before it expires. Omit in older app versions.",
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 8,
+            "pattern": "^\\d{8}$",
+            "nullable": true
           }
         },
         "type": "object",
@@ -13523,6 +12366,40 @@
         ],
         "title": "WalletReshareResponse",
         "description": "WaaS TSS request id for the reshare operation."
+      },
+      "WalletRestoreNodeRequest": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Node Id",
+            "description": "The restored app TSS node id to bind to the authenticated principal."
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id"
+        ],
+        "title": "WalletRestoreNodeRequest",
+        "description": "Request payload for restoring the current app's local TSS node binding."
+      },
+      "WalletRestoreNodeResponse": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PrincipalNodeStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "status"
+        ],
+        "title": "WalletRestoreNodeResponse",
+        "description": "Current principal node binding after restore."
       },
       "WalletStatus": {
         "type": "string",

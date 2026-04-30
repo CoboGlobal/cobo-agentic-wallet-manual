@@ -226,6 +226,7 @@
                   "products/agentic-wallet/manual/reference/get-wallet",
                   "products/agentic-wallet/manual/reference/update-wallet",
                   "products/agentic-wallet/manual/reference/wallet-reshare",
+                  "products/agentic-wallet/manual/reference/restore-node",
                   "products/agentic-wallet/manual/reference/wallet-tss-callback",
                   "products/agentic-wallet/manual/reference/create-wallet-address",
                   "products/agentic-wallet/manual/reference/list-wallet-addresses",
@@ -245,13 +246,13 @@
               {
                 "group": "Transactions",
                 "pages": [
+                  "products/agentic-wallet/manual/reference/list-recent-addresses-by-user",
                   "products/agentic-wallet/manual/reference/transfer-tokens",
                   "products/agentic-wallet/manual/reference/estimate-transfer-fee",
                   "products/agentic-wallet/manual/reference/contract-call",
                   "products/agentic-wallet/manual/reference/estimate-contract-call-fee",
                   "products/agentic-wallet/manual/reference/message-sign",
                   "products/agentic-wallet/manual/reference/list-recent-addresses",
-                  "products/agentic-wallet/manual/reference/list-recent-addresses-by-user",
                   "products/agentic-wallet/manual/reference/drop-transaction",
                   "products/agentic-wallet/manual/reference/speedup-transaction",
                   "products/agentic-wallet/manual/reference/handle-waas-webhook",

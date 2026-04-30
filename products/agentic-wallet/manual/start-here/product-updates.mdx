@@ -3,6 +3,24 @@ title: "Product updates"
 description: "What's new in Cobo Agentic Wallet — app, API, and SDKs."
 ---
 
+## April 30, 2026 — Wallet recovery, expanded toolkit, and pact controls
+
+**Skills, CLI, SDKs, and API**
+
+- Toolkit now exposes 14 additional tools — including `contract_call`, `submit_pact`, `list_pacts`, `payment`, fee estimation, and transaction record lookups — giving agents broader onchain capability out of the box
+- Pacts can now be linked to recipes (`--recipe-slugs`) and given human-readable names; policies and completion conditions can be updated after submission
+- New pending operations API lets agents and owners programmatically list, approve, and reject pending approvals
+- `caw recipe search` now uses `--keywords` instead of `--query` for more precise protocol lookups
+- Wallet restore flow: agents can generate a new pairing code after initial pairing to re-share key shares to a new device without transferring ownership
+
+**Cobo Agentic Wallet app**
+
+- Support restoring your wallet on a new device using a new pairing code from your agent
+- Added support for speeding up and dropping transactions.
+- Optimize pact approval cards UI
+
+---
+
 ## April 20, 2026 — Initial release
 
 Cobo Agentic Wallet is now available.
